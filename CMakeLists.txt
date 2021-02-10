@@ -23,20 +23,37 @@ set(CVS_RUNTIME_DIR "${CMAKE_INSTALL_FULL_BINDIR}")
 set(CVS_CONFIG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}")
 set(CVS_DATA_DIR "${CMAKE_INSTALL_FULL_DATADIR}")
 
-add_library(${PROJECT_NAME} INTERFACE)
+set(CVSPipeline_MAIN ${PROJECT_NAME}_main)
+set(CVSPipeline_LAUNCHER ${PROJECT_NAME}Launcher)
 
+add_library(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
     PRIVATE
-        include/common/factory.hpp
+        include/cvs/common/factory.hpp
+        include/cvs/pipeline/ipipeline.hpp
+
+        src/pipeline/pipeline.hpp
+        src/pipeline/pipeline.cpp
+    )
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        include
     )
 
-
-set(CVSPipeline_MAIN ${PROJECT_NAME}_main)
 add_library(${CVSPipeline_MAIN})
 target_sources(${CVSPipeline_MAIN}
     PRIVATE
         src/main.cpp
     )
 target_link_libraries(${CVSPipeline_MAIN}
+        ${PROJECT_NAME}
+    )
+
+add_executable(${CVSPipeline_LAUNCHER})
+target_sources(${CVSPipeline_LAUNCHER}
+    PRIVATE
+        src/main.cpp
+    )
+target_link_libraries(${CVSPipeline_LAUNCHER}
         ${PROJECT_NAME}
     )

@@ -49,11 +49,11 @@ struct FactoryHelper {
 
 }  // namespace cvs::common
 
-#define REGISTER_TYPE(iface, name, creator)                                                               \
-  std::string name##_##iface##_factory_helper_fun() {                                                     \
-    static stitching::core::FactoryHelper name##_##iface##_factory_helper(#name, std::function(creator)); \
-    return name##_##iface##_factory_helper.key_val;                                                       \
-  }                                                                                                       \
+#define REGISTER_TYPE(iface, name, creator)                                                           \
+  std::string name##_##iface##_factory_helper_fun() {                                                 \
+    static cvs::common::FactoryHelper name##_##iface##_factory_helper(#name, std::function(creator)); \
+    return name##_##iface##_factory_helper.key_val;                                                   \
+  }                                                                                                   \
   static const std::string iface##name##Key = name##_##iface##_factory_helper_fun()
 
 #define DEFINE_TYPE(iface, name)                                  \
