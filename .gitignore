@@ -1,0 +1,22 @@
+# Qt Creator
+*.user
+*.orig
+
+# CLion
+.idea/
+cmake-build-*/
+
+# Generic build directory
+build/
+
+# In-source build artifacts
+CMakeFiles/
+CMakeDirectoryInformation.cmake
+progress.marks
+
+# Dataset
+data/
+
+# qmake
+.obj/
+Makefile
