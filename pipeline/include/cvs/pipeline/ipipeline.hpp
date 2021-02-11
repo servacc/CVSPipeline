@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cvs/common/configuration.hpp>
+
 #include <filesystem>
 #include <memory>
 
@@ -9,9 +11,9 @@ class IPipeline {
  public:
   virtual ~IPipeline() = default;
 
-  virtual void init(std::filesystem::path) = 0;
-  virtual int  exec()                      = 0;
-  virtual void free()                      = 0;
+  virtual void init(common::ConfigurationPtr) = 0;
+  virtual int  exec()                         = 0;
+  virtual void free()                         = 0;
 };
 
 using IPipelineUPtr = std::unique_ptr<IPipeline>;
