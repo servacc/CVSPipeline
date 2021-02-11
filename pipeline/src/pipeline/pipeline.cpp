@@ -2,9 +2,11 @@
 
 #include <cvs/common/factory.hpp>
 
-REGISTER_TYPE(IPipeline, DefaultPipeline, [](const std::string&) -> cvs::pipeline::IPipelinePtr {
-  return std::make_shared<cvs::pipeline::impl::Pipeline>();
-});
+REGISTER_TYPE(IPipeline,
+              DefaultPipeline,
+              [](const std::string&, cvs::common::ConfigurationPtr) -> cvs::pipeline::IPipelinePtr {
+                return std::make_shared<cvs::pipeline::impl::Pipeline>();
+              });
 
 namespace cvs::pipeline::impl {
 
