@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.18)
 
 include(cmake/Helpers.cmake)
 git_description(GIT_DESCRIPTOR GIT_TAG GIT_COMMIT_COUNT)
