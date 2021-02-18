@@ -35,13 +35,19 @@ struct Config_static_object {
   ))>;
 
   static Parse_return_type parse(const boost::property_tree::ptree &source) {
-    const auto& object = source.get_child_optional(name);
-    if (!object) {
-      // TODO: logs
-      return std::nullopt;
-    }
+    // if name is empty, then it's a root object
+    if constexpr (std::size(name) > 0) {
+      const auto &object = source.get_child_optional(name);
+      if (!object) {
+        // TODO: logs
+        return std::nullopt;
+      }
 
-    return std::make_optional(helper<Types>(object.get(), std::make_index_sequence<types_number>{})); // TODO: finish
+      return std::make_optional(helper<Types>(object.get(), std::make_index_sequence<types_number>{}));
+    }
+    else {
+      return std::make_optional(helper<Types>(source, std::make_index_sequence<types_number>{}));
+    }
   }
 };
 
@@ -87,13 +93,28 @@ using Concatenate_tuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
     typedef Dummy<Dummy_##name::value + 1, \
       Concatenate_tuples<Dummy_##name::Tuple, std::tuple<Config_static_value<type, name##_name> > >
 
-// TODO: fix tuple forwarding
-#define CONFIG_OBJECT(name, ...) \
+#define Object(name, ...)  0> Dummy_##name; \
+  protected:                                          \
+    struct name##_type {    \
+    __VA_OPT__(                  \
+      protected:                 \
+        typedef Dummy<0, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
+        static constexpr char const name##_name[] = #name;             \
+      public:                                                      \
+        using Parser = Config_static_object<name##_name, Dummy_tail::Tuple, Dummy_tail::value>; \
+    )                           \
+    };                                      \
+    static constexpr char const name##_name[] = #name;                                      \
+    typedef Dummy<Dummy_##name::value + 1, \
+      Concatenate_tuples<Dummy_##name::Tuple, std::tuple<name##_type::Parser> >
+
+
+#define Config_object(name, ...) \
   struct name {    \
   __VA_OPT__(                  \
     protected:                 \
       typedef Dummy<0, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
-      static constexpr char const name##_name[] = #name;             \
+      static constexpr char const name##_name[] = "";             \
     public:                                                      \
       using Parser = Config_static_object<name##_name, Dummy_tail::Tuple, Dummy_tail::value>; \
   )                           \
