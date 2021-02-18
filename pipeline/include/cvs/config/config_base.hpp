@@ -13,22 +13,53 @@
 
 #include <boost/property_tree/ptree.hpp>
 
-template <auto &name, typename Parent, typename... Values_types>
-class Config_static_object {
-  static std::optional<Parent> parse(const boost::property_tree::ptree &source) {
-    source.get_value_optional<Subtype>(); // TODO: finish
+struct Config_base {
+  static auto parse(const boost::property_tree::ptree &source) {
+
+  }
+};
+
+template <auto& name, typename Types, size_t types_number>
+struct Config_static_object {
+  //static constexpr auto _name = name;
+  //protected:
+  template <class Tuple, size_t... indexes>
+  static auto helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
+    return std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
+  }
+
+  using Parse_return_type =
+  std::optional<decltype(helper<Types>(
+      std::declval<boost::property_tree::ptree>(),
+      std::make_index_sequence<types_number>{}
+  ))>;
+
+  static Parse_return_type parse(const boost::property_tree::ptree &source) {
+    const auto& object = source.get_child_optional(name);
+    if (!object) {
+      // TODO: logs
+      return std::nullopt;
+    }
+
+    return std::make_optional(helper<Types>(object.get(), std::make_index_sequence<types_number>{})); // TODO: finish
   }
 };
 
 // TODO: fix (use name)
 template <class Subtype, auto &name>
-class Config_static_value {
-  auto parse(const boost::property_tree::ptree &source) {
-    source.get_value_optional<Subtype>();
+struct Config_static_value {
+  static std::optional<Subtype> parse(const boost::property_tree::ptree &source) {
+    const auto& value = source.get_optional<Subtype>(name);
+    if (!value) {
+      // TODO: logs
+      return std::nullopt;
+    }
+
+    return value.get();
   }
 };
 
-template <class Subtype, class Parent, size_t index>
+template <class Subtype, size_t index>
 class Config_value {
   Subtype _value;
 
@@ -40,7 +71,7 @@ class Config_value {
 };
 
 template <size_t dummy_head, class Accumulating_tuple, size_t dummy_tail = 0>
-class Dummy {
+struct Dummy {
   static constexpr size_t value = dummy_head;
   using Tuple = Accumulating_tuple;
 };
@@ -50,21 +81,20 @@ using Concatenate_tuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
 
 #define Value(type, name) 0> Dummy_##name; \
   public:                     \
-    Config_value<type, Self, Dummy_##name::value> name; \
-  protected:                  \
-//    inline static Config_static_value<type> static##name { register_field<Config_value<type>>() };\
+    Config_value<type, Dummy_##name::value> name; \
+  protected:                               \
+    static constexpr char const name##_name[] = #name;                                      \
     typedef Dummy<Dummy_##name::value + 1, \
-      Concatenate_tuples<Dummy_##name::Tuple, std::tuple<Config_static_value<type, #name> > >
+      Concatenate_tuples<Dummy_##name::Tuple, std::tuple<Config_static_value<type, name##_name> > >
 
 // TODO: fix tuple forwarding
 #define CONFIG_OBJECT(name, ...) \
   struct name {    \
-    private: \
-      static constexpr size_t _number_of_types = count_arguments(__VA_OPT__(#__VA_ARGS__)); \
   __VA_OPT__(                  \
     protected:                 \
-      typedef Dummy<0, std::tuple<> __VA_ARGS__ 0> Dummy_tail;                   \
-    public:                      \
-      using Parser = Config_static_object<"", name, Dummy_tail::Tuple> \
+      typedef Dummy<0, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
+      static constexpr char const name##_name[] = #name;             \
+    public:                                                      \
+      using Parser = Config_static_object<name##_name, Dummy_tail::Tuple, Dummy_tail::value>; \
   )                           \
   };
