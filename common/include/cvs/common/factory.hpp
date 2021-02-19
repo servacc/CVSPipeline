@@ -14,6 +14,11 @@ class Factory {
   using CreatorFun = std::function<std::shared_ptr<T>(Args...)>;
   using KeyType    = std::string;
 
+  // ABI version
+  // Must be incremented with every change in class Factory layout or its inline functions
+  static constexpr int kVersion = 0;
+  static const int version;
+
   template <typename T, typename... Args>
   static void registrate(const KeyType &key, CreatorFun<T, const KeyType &, Args...> fun) {
     //    SPDLOG_LOGGER_INFO(getLogger("stitching.factory"), "Register {}", key);
