@@ -24,34 +24,50 @@ struct Config_base {
   }
 };
 
-template <auto& name, typename Types, size_t types_number>
+template <auto& name, typename Types>
 struct Config_static_object {
-  //static constexpr auto _name = name;
-  //protected:
+ protected:
   template <class Tuple, size_t... indexes>
-  static auto helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
-    return std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
+  using Result_type =
+  std::optional<decltype(std::make_tuple(
+      std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>()).value()...
+  ))>;
+
+  template <class Tuple, size_t... indexes>
+  static
+  Result_type<Types, indexes...>
+  helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
+
+    auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
+    if ((std::get<indexes>(result) && ...)) {
+      return std::make_optional(std::make_tuple(std::get<indexes>(result).value()...));
+    }
+    else {
+      return std::nullopt;
+    }
   }
 
+ public:
   using Parse_return_type =
-  std::optional<decltype(helper<Types>(
+  decltype(helper<Types>(
       std::declval<boost::property_tree::ptree>(),
-      std::make_index_sequence<types_number>{}
-  ))>;
+      std::make_index_sequence<std::tuple_size<Types>::value>{}
+  ));
+
 
   static Parse_return_type parse(const boost::property_tree::ptree &source) {
     // if name is empty, then it's a root object
-    if constexpr (std::size(name) > 0) {
+    if constexpr (length(name) > 0) {
       const auto &object = source.get_child_optional(name);
       if (!object) {
         // TODO: logs
         return std::nullopt;
       }
 
-      return std::make_optional(helper<Types>(object.get(), std::make_index_sequence<types_number>{}));
+      return helper<Types>(object.get(), std::make_index_sequence<std::tuple_size<Types>::value>{});
     }
     else {
-      return std::make_optional(helper<Types>(source, std::make_index_sequence<types_number>{}));
+      return helper<Types>(source, std::make_index_sequence<std::tuple_size<Types>::value>{});
     }
   }
 };
@@ -81,10 +97,11 @@ class Config_value {
   }
 };
 
-template <size_t dummy_head, class Accumulating_tuple, size_t dummy_tail = 0>
+template <size_t dummy_head, class Parsers_tuple, class Fields_pointers_tuple, size_t dummy_tail = 0>
 struct Dummy {
   static constexpr size_t value = dummy_head;
-  using Tuple = Accumulating_tuple;
+  using Parsers = Parsers_tuple;
+  using Pointers = Fields_pointers_tuple;
 };
 
 template <typename... Tuples>
