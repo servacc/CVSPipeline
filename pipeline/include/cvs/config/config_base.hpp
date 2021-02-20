@@ -142,7 +142,7 @@ constexpr auto get_name(const char (&string)[string_size]) {
   }
 }
 
-#define Value(type, name) 0> Dummy_##name; \
+#define Value(name, type) 0> Dummy_##name; \
   public:                     \
     type _##name; \
   protected:                               \
