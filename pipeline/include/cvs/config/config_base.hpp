@@ -109,16 +109,27 @@ struct Config_static_object {
   }
 };
 
-template <class Subtype, auto &name>
+template <class Subtype, auto &name, bool is_optional = false>
 struct Config_static_value {
-  static std::optional<Subtype> parse(const boost::property_tree::ptree &source) {
+  using Result_type = typename std::conditional<is_optional, std::optional<Subtype>, Subtype >::type;
+
+  static std::optional<Result_type> parse(const boost::property_tree::ptree &source) {
     const auto& value = source.get_optional<Subtype>(name);
+    std::optional<Subtype> result;
     if (!value) {
       // TODO: logs
-      return std::nullopt;
+      result = std::nullopt;
+    }
+    else {
+      result = value.get();
     }
 
-    return value.get();
+    if constexpr (is_optional) {
+      return std::make_optional(result);
+    }
+    else {
+      return result;
+    }
   }
 };
 
@@ -142,14 +153,23 @@ constexpr auto get_name(const char (&string)[string_size]) {
   }
 }
 
-#define Value(name, type) 0> Dummy_##name; \
+#define Value_base(name, type, is_optional) 0> Dummy_##name; \
+  protected:                                                 \
+    static constexpr char const name##_name[] = #name;       \
+    using Config_static_type_##name = Config_static_value<type, name##_name, is_optional>; \
   public:                     \
-    type _##name; \
-  protected:                               \
-    static constexpr char const name##_name[] = #name; \
-    typedef Dummy<Dummy_##name::Parent, \
-      Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_value<type, name##_name> > >, \
-      Concatenate_tuples<Dummy_##name::Pointers, std::tuple<Self::Field_pointer<type, &Self::_##name> > >
+    Config_static_type_##name ::Result_type _##name; \
+    typedef Dummy<                                           \
+      Dummy_##name::Parent, \
+      Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
+      Concatenate_tuples<                                    \
+        Dummy_##name::Pointers,             \
+        std::tuple<Self::Field_pointer<Config_static_type_##name ::Result_type, &Self::_##name> \
+      >                                                      \
+    >
+
+#define Value_optional(name, type) Value_base(name, type, true)
+#define Value(name, type) Value_base(name, type, false)
 
 
 #define Object_main_part(name, type_suffix, is_name_string_empty, ...) \
