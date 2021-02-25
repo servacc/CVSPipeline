@@ -147,19 +147,6 @@ struct Dummy {
   using Pointers = Fields_pointers_tuple;
 };
 
-template <typename... Tuples>
-using Concatenate_tuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
-
-template <bool erase, size_t string_size>
-constexpr auto get_name(const char (&string)[string_size]) {
-  if constexpr (erase) {
-    return "";
-  }
-  else {
-    return string;
-  }
-}
-
 #define Value_base(name, type, is_optional) 0> Dummy_##name; \
   protected:                                                 \
     static constexpr char const name##_name[] = #name;       \
@@ -168,8 +155,8 @@ constexpr auto get_name(const char (&string)[string_size]) {
     Config_static_type_##name ::Result_type _##name; \
     typedef Dummy<                                           \
       Dummy_##name::Parent, \
-      Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
-      Concatenate_tuples<                                    \
+      Utils::Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
+      Utils::Concatenate_tuples<                                    \
         Dummy_##name::Pointers,             \
         std::tuple<Self::Field_pointer<Config_static_type_##name ::Result_type, &Self::_##name> \
       >                                                      \
@@ -190,7 +177,7 @@ constexpr auto get_name(const char (&string)[string_size]) {
       struct Field_pointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
                    \
       typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
-      static constexpr auto name##_name = get_name<is_name_string_empty>(#name);                          \
+      static constexpr auto name##_name = Utils::get_name<is_name_string_empty>(#name);                          \
       name##type_suffix() = default;                                                       \
                                                                                     \
       using Parsers = Config_static_object<name##_name, Dummy_tail::Parsers, is_optional>;              \
@@ -213,8 +200,8 @@ constexpr auto get_name(const char (&string)[string_size]) {
   protected:                                    \
     typedef Dummy<                                                          \
       Self, \
-      Concatenate_tuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
-      Concatenate_tuples<                                                   \
+      Utils::Concatenate_tuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
+      Utils::Concatenate_tuples<                                                   \
         Dummy_##object_name::Pointers,                                      \
         std::tuple<Self::Field_pointer<Utils::Optional_wrapper<object_name##_type, is_optional>, &Self::_##object_name> \
       >                                                                     \

@@ -2,6 +2,19 @@
 
 namespace Utils {
 
+template <typename... Tuples>
+using Concatenate_tuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
+
+template <bool erase, size_t string_size>
+constexpr auto get_name(const char (&string)[string_size]) {
+  if constexpr (erase) {
+    return "";
+  }
+  else {
+    return string;
+  }
+}
+
 constexpr size_t length(const char *str) {
   return (*str == 0) ? 0 : length(str + 1) + 1;
 }
