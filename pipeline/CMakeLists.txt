@@ -9,6 +9,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/imodulemanager.hpp
         include/cvs/config/config.h
         include/cvs/config/config_base.hpp
+        include/cvs/config/config_utils.hpp
 
         src/pipeline/pipeline.hpp
         src/pipeline/modulemanager.hpp

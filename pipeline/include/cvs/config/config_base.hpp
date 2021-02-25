@@ -13,16 +13,22 @@
 
 #include <boost/property_tree/ptree.hpp>
 
+#include "config_utils.hpp"
 
-constexpr size_t length(const char* string) {
-  return (*string == 0) ? 0 : length(string + 1) + 1;
-}
 
 class Config_base {
   template <class Pointers, size_t index, class Object_type, class Data>
   static constexpr void helper(Object_type& object, Data&& data) {
-    object.*std::tuple_element<index, Pointers>::type::ptr =
-        typename std::tuple_element<index, Pointers>::type::Value_type(std::get<index>(std::forward<Data>(data)));
+    using Target_type = typename std::tuple_element<index, Pointers>::type::Value_type;
+    auto& target = object.*std::tuple_element<index, Pointers>::type::ptr;
+    const auto& data_value = std::get<index>(data);
+
+    if constexpr (Utils::Is_optional<Target_type>::value) {
+      target = data_value ? Target_type(data_value.value()) : std::nullopt;
+    }
+    else {
+      target = Target_type(data_value);
+    }
   }
 
   template <class Pointers, class Object_type, class Data, std::size_t... indexes>
@@ -40,7 +46,6 @@ class Config_base {
         std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Data>>>{}
     );
   }
-
 
  protected:
 
@@ -61,26 +66,29 @@ class Config_base {
   }
 };
 
-template <auto& name, typename Types>
+template <auto& name, typename Types, bool is_optional = false>
 struct Config_static_object {
  protected:
   template <class Tuple, size_t... indexes>
-  using Result_type =
-  std::optional<decltype(std::make_tuple(
+  using Result_intermediate_type =
+    Utils::Optional_wrapper<decltype(std::make_tuple(
       std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>()).value()...
-  ))>;
+    )), is_optional>;
+
+  template <class Tuple, size_t... indexes>
+  using Result_type = std::optional<Result_intermediate_type<Types, indexes...> >;
 
   template <class Tuple, size_t... indexes>
   static
-  Result_type<Types, indexes...>
-  helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
+    Result_type<Types, indexes...>
+      helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
 
     auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
     if ((std::get<indexes>(result) && ...)) {
       return std::make_optional(std::make_tuple(std::get<indexes>(result).value()...));
     }
     else {
-      return std::nullopt;
+      return Result_type<Types, indexes...>(Result_intermediate_type<Types, indexes...>{});
     }
   }
 
@@ -90,7 +98,6 @@ struct Config_static_object {
       std::declval<boost::property_tree::ptree>(),
       std::make_index_sequence<std::tuple_size<Types>::value>{}
   ));
-
 
   static Parse_return_type parse(const boost::property_tree::ptree &source) {
     // if name is empty, then it's a root object
@@ -172,7 +179,7 @@ constexpr auto get_name(const char (&string)[string_size]) {
 #define Value(name, type) Value_base(name, type, false)
 
 
-#define Object_main_part(name, type_suffix, is_name_string_empty, ...) \
+#define Object_main_part(name, type_suffix, is_name_string_empty, is_optional, ...) \
   __VA_OPT__(                                                          \
       friend Dummy_##name ::Parent; \
       friend Config_base;                                              \
@@ -186,7 +193,7 @@ constexpr auto get_name(const char (&string)[string_size]) {
       static constexpr auto name##_name = get_name<is_name_string_empty>(#name);                          \
       name##type_suffix() = default;                                                       \
                                                                                     \
-      using Parsers = Config_static_object<name##_name, Dummy_tail::Parsers>;              \
+      using Parsers = Config_static_object<name##_name, Dummy_tail::Parsers, is_optional>;              \
       using Pointers = Dummy_tail::Pointers;                           \
     public:                                                            \
       template <class Tuple>                                                               \
@@ -195,24 +202,31 @@ constexpr auto get_name(const char (&string)[string_size]) {
       } \
   )
 
-#define Object(object_name, ...)  0> Dummy_##object_name; \
+#define Object_base(object_name, is_optional, ...)  0> Dummy_##object_name; \
   protected:                                          \
     struct object_name##_type {                           \
-      Object_main_part(object_name, _type, false, __VA_ARGS__) \
+      Object_main_part(object_name, _type, false, is_optional, __VA_ARGS__) \
     };                                      \
   public:                                 \
-    object_name##_type _##object_name;                    \
+    Utils::Optional_wrapper<object_name##_type, is_optional> _##object_name;                    \
     \
   protected:                                    \
-    typedef Dummy<Self, \
+    typedef Dummy<                                                          \
+      Self, \
       Concatenate_tuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
-      Concatenate_tuples<Dummy_##object_name::Pointers, std::tuple<Self::Field_pointer<object_name##_type, &Self::_##object_name> > >
+      Concatenate_tuples<                                                   \
+        Dummy_##object_name::Pointers,                                      \
+        std::tuple<Self::Field_pointer<Utils::Optional_wrapper<object_name##_type, is_optional>, &Self::_##object_name> \
+      >                                                                     \
+    >
 
+#define Object_optional(object_name, ...) Object_base(object_name, true, __VA_ARGS__)
+#define Object(object_name, ...) Object_base(object_name, false, __VA_ARGS__)
 
 #define Config_object(name, ...) \
   class name {                  \
     using Dummy_##name = Dummy<name, void, void, 0>; \
-    Object_main_part(name,, true, __VA_ARGS__) \
+    Object_main_part(name,, true, false, __VA_ARGS__) \
    public:\
     static const std::optional<name> parse_and_make(const boost::property_tree::ptree &source) {   \
       return Config_base::make<name> (source);       \
