@@ -2,6 +2,5 @@
 
 namespace cvs::common {
 
-const int Factory::version = Factory::kVersion;
-
+const int Factory::libVersion = Factory::kVersion;
 }
