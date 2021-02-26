@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 
 project(cvspipeline)
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 add_library(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
