@@ -116,9 +116,15 @@ struct Config_static_object {
   }
 };
 
-template <class Subtype, auto &name, bool is_optional = false>
+enum class Config_value_kind {
+  BASE,
+  OPTIONAL,
+  WITH_DEFAULT_VALUE,
+};
+
+template <class Subtype, auto &name, Config_value_kind value_type, class Default_value_type = void>
 struct Config_static_value {
-  using Result_type = typename std::conditional<is_optional, std::optional<Subtype>, Subtype >::type;
+  using Result_type = Utils::Optional_wrapper<Subtype, (value_type == Config_value_kind::OPTIONAL)>;
 
   static std::optional<Result_type> parse(const boost::property_tree::ptree &source) {
     const auto& value = source.get_optional<Subtype>(name);
@@ -131,8 +137,17 @@ struct Config_static_value {
       result = value.get();
     }
 
-    if constexpr (is_optional) {
+    if constexpr (value_type == Config_value_kind::OPTIONAL) {
       return std::make_optional(result);
+    }
+    else if constexpr (value_type == Config_value_kind::WITH_DEFAULT_VALUE) {
+      static_assert(!std::is_same<Default_value_type, void>::value, "Default_value_type must be provided");
+      static_assert(
+          std::is_convertible<decltype(Default_value_type::value), Subtype>::value,
+          "Can't convert Default_value_type::value to Config_value_type"
+      );
+
+      return result ? result.value() : Default_value_type::value;
     }
     else {
       return result;
@@ -147,23 +162,29 @@ struct Dummy {
   using Pointers = Fields_pointers_tuple;
 };
 
-#define Value_base(name, type, is_optional) 0> Dummy_##name; \
-  protected:                                                 \
-    static constexpr char const name##_name[] = #name;       \
-    using Config_static_type_##name = Config_static_value<type, name##_name, is_optional>; \
+#define CONFIG_COMMA ,
+
+#define Value_base(name, type, config_value_kind, default_declaration, default_type) 0> Dummy_##name; \
+  protected:                                                                \
+    default_declaration                                                           \
+    static constexpr char const name##_name[] = #name;                      \
+    using Config_static_type_##name = Config_static_value<type, name##_name, config_value_kind default_type>; \
   public:                     \
     Config_static_type_##name ::Result_type _##name; \
     typedef Dummy<                                           \
       Dummy_##name::Parent, \
-      Utils::Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
-      Utils::Concatenate_tuples<                                    \
+      Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
+      Concatenate_tuples<                                    \
         Dummy_##name::Pointers,             \
         std::tuple<Self::Field_pointer<Config_static_type_##name ::Result_type, &Self::_##name> \
       >                                                      \
     >
 
-#define Value_optional(name, type) Value_base(name, type, true)
-#define Value(name, type) Value_base(name, type, false)
+#define Value(name, type) Value_base(name, type, Config_value_kind::BASE,,)
+#define Value_optional(name, type) Value_base(name, type, Config_value_kind::OPTIONAL,,)
+#define Value_default(name, type, default_value) Value_base(name, type, Config_value_kind::WITH_DEFAULT_VALUE, \
+  struct Default_value_##name_type { static constexpr auto value = default_value; }; , \
+  CONFIG_COMMA Default_value_##name_type)
 
 
 #define Object_main_part(name, type_suffix, is_name_string_empty, is_optional, ...) \
