@@ -4,7 +4,7 @@ project(cvspipeline)
 
 find_package(Boost REQUIRED)
 
-add_library(${PROJECT_NAME})
+add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME}
     PRIVATE
         include/cvs/pipeline/ipipeline.hpp

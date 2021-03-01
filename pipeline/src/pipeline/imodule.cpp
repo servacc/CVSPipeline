@@ -18,8 +18,8 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     return nullptr;
   }
 
-  const auto newModule    = lib.get<detail::IModuleConstructor *>("newModule");
-  const auto deleteModule = lib.get<detail::IModuleDestructor *>("deleteModule");
+  auto newModule    = &lib.get<detail::IModuleConstructor>("newModule");
+  auto deleteModule = &lib.get<detail::IModuleDestructor>("deleteModule");
 
   IModuleUPtr result{newModule(), deleteModule};
   if (!result->checkCompatibility()) {

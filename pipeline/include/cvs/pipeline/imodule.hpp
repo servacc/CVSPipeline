@@ -37,3 +37,7 @@ using IModuleUPtr = std::unique_ptr<IModule, std::function<detail::IModuleDestru
 IModuleUPtr makeModule(const boost::dll::shared_library &lib);
 
 }  // namespace cvs::pipeline
+
+#define REGISTER_MODULE(module)                                         \
+  extern "C" cvs::pipeline::IModule *newModule() { return new module; } \
+  extern "C" void                    deleteModule(cvs::pipeline::IModule *ptr) { delete ptr; }
