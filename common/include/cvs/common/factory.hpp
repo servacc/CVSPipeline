@@ -10,57 +10,70 @@ namespace cvs::common {
 
 class Factory {
  public:
-  template <typename T, typename... Args>
-  using CreatorFun = std::function<std::shared_ptr<T>(Args...)>;
-  using KeyType    = std::string;
+  template <typename Iface, typename FactoryFunction, typename KeyType>
+  static void registrateDefault(const KeyType &key) {
+    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<Iface>();
+    registrate(key, std::move(fun));
+  }
 
   // ABI version
   // Must be incremented with every change in class Factory layout or its inline functions
   static constexpr int kVersion = 0;
   static const int     libVersion;
-
-  template <typename T, typename... Args>
-  static void registrate(const KeyType &key, CreatorFun<T, const KeyType &, Args...> fun) {
-    //    SPDLOG_LOGGER_INFO(getLogger("stitching.factory"), "Register {}", key);
-    creatorsMap<T, const KeyType &, Args...>()[key] = std::move(fun);
+  template <typename Iface, typename FactoryFunction, typename KeyType>
+  static bool registrateDefaultIf(const KeyType &key) {
+    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<Iface>();
+    return registrateIf(key, std::move(fun));
   }
 
-  template <typename T, typename... Args>
-  static std::shared_ptr<T> create(const KeyType &key, Args... args) {
-    auto &creator_map = creatorsMap<T, const std::string &, Args...>();
+  template <typename FactoryFunction, typename KeyType>
+  static void registrate(const KeyType &key, std::function<FactoryFunction> fun) {
+    factoryFunctionsMap<KeyType, FactoryFunction>()[key] = std::move(fun);
+  }
+
+  template <typename FactoryFunction, typename KeyType>
+  static bool registrateIf(const KeyType &key, std::function<FactoryFunction> fun) {
+    if (!isRegistered<FactoryFunction>(key)) {
+      registrate(key, std::move(fun));
+      return true;
+    }
+
+    return false;
+  }
+
+  template <typename T, typename KeyType, typename... Args>
+  static T create(const KeyType &key, Args... args) {
+    auto &creator_map = factoryFunctionsMap<KeyType, T(Args...)>();
     if (auto iter = creator_map.find(key); iter != creator_map.end())
-      return iter->second(key, std::forward<Args>(args)...);
+      return iter->second(std::forward<Args>(args)...);
 
     return {};
   }
 
+  template <typename FactoryFunction, typename KeyType>
+  static bool isRegistered(const KeyType &key) {
+    auto &creator_map = factoryFunctionsMap<KeyType, FactoryFunction>();
+    return creator_map.find(key) != creator_map.end();
+  }
+
  private:
-  template <typename T, typename... Args>
-  static auto &creatorsMap() {
-    static std::map<KeyType, CreatorFun<T, Args...>> map;
+  template <typename FacFunction>
+  struct DefaultFactoryFunctionHelper;
+
+  template <typename Res, typename... Args>
+  struct DefaultFactoryFunctionHelper<Res(Args...)> {
+    template <typename Iface>
+    static auto createFunction() {
+      return std::function(
+          [](Args... args) -> std::unique_ptr<Iface> { return std::make_unique<Res>(std::forward<Args>(args)...); });
+    }
+  };
+
+  template <typename KeyType, typename FactoryFunction>
+  static auto &factoryFunctionsMap() {
+    static std::map<KeyType, std::function<FactoryFunction>> map;
     return map;
   }
 };
 
-struct FactoryHelper {
-  template <typename T, typename... Args>
-  FactoryHelper(const std::string &key, typename Factory::template CreatorFun<T, const std::string &, Args...> creator)
-      : key_val(key) {
-    Factory::registrate<T>(key, std::move(creator));
-  }
-
-  const std::string key_val;
-};
-
 }  // namespace cvs::common
-
-#define REGISTER_TYPE(iface, name, creator)                                                           \
-  std::string name##_##iface##_factory_helper_fun() {                                                 \
-    static cvs::common::FactoryHelper name##_##iface##_factory_helper(#name, std::function(creator)); \
-    return name##_##iface##_factory_helper.key_val;                                                   \
-  }                                                                                                   \
-  static const std::string iface##name##Key = name##_##iface##_factory_helper_fun()
-
-#define DEFINE_TYPE(iface, name)                                  \
-  std::string              name##_##iface##_factory_helper_fun(); \
-  static const std::string iface##name##Key = name##_##iface##_factory_helper_fun()
