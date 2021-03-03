@@ -1,6 +1,7 @@
 #include <cvs/config/config.h>
 
 #include <boost/property_tree/json_parser.hpp>
+#include <utility>
 
 std::optional<Config> Config::make(const std::string &file_name) {
 
@@ -17,7 +18,11 @@ std::optional<Config> Config::make(const std::string &file_name) {
 }
 
 Config::Config(const boost::property_tree::ptree &tree)
-  : _tree(tree)
+    : _tree(tree)
+{}
+
+Config::Config(const boost::property_tree::ptree &tree, std::string name)
+    : _tree(tree), _key(std::move(name))
 {}
 
 Config::Config(const boost::property_tree::ptree::value_type &iterator)
@@ -28,8 +33,10 @@ std::vector<Config> Config::get_children() const {
   return std::vector<Config>(_tree.begin(), _tree.end());
 }
 
-const std::string_view Config::get_name() const {
+std::string_view Config::get_name() const {
   return _key;
 }
 
-
+bool Config::has_value() const {
+  return !_tree.empty();
+}

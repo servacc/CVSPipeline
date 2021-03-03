@@ -1,9 +1,19 @@
 #pragma once
 
-#include "config_base.hpp"
+#include <string>
+#include <optional>
+#include <vector>
+
+#include <boost/property_tree/ptree.hpp>
+
 
 class Config {
+
  public:
+  explicit Config(const boost::property_tree::ptree &tree);
+  explicit Config(const boost::property_tree::ptree &tree, std::string name);
+  explicit Config(const boost::property_tree::ptree::value_type &iterator);
+
   // actually should be make(const std::string& file_content)
   static std::optional<Config> make(const std::string &file_name);
 
@@ -12,7 +22,7 @@ class Config {
     return Config_parser::parse_and_make(_tree);
   }
 
-  [[nodiscard]] const std::string_view get_name() const;
+  [[nodiscard]] std::string_view get_name() const;
 
   [[nodiscard]] std::vector<Config> get_children() const;
 
@@ -32,9 +42,7 @@ class Config {
     return _tree.get(name, default_value);
   }
 
- private:
-  explicit Config(const boost::property_tree::ptree &tree);
-  explicit Config(const boost::property_tree::ptree::value_type &iterator);
+  [[nodiscard]] bool has_value() const;
 
  private:
   boost::property_tree::ptree _tree;

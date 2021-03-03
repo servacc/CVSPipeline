@@ -14,6 +14,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "config_utils.hpp"
+#include "config.h"
 
 
 class Config_base {
@@ -151,6 +152,23 @@ struct Config_static_value {
     }
     else {
       return result;
+    }
+  }
+};
+
+template <auto &name>
+struct Config_static_value<Config, name, Config_value_kind::BASE, void> {
+
+  using Result_type = Config;
+
+  static Result_type parse(const boost::property_tree::ptree &source) {
+    const auto &object = source.get_child_optional(name);
+    if (!object) {
+      // TODO: logs
+      return Result_type(boost::property_tree::ptree());
+    }
+    else {
+      Result_type(object, name);
     }
   }
 };
