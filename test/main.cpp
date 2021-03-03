@@ -8,7 +8,8 @@ using namespace cvs::pipeline;
 int main() {
   boost::dll::shared_library lib{boost::dll::program_location().parent_path() / "libdummymodule.so",
                                  boost::dll::load_mode::rtld_global | boost::dll::load_mode::rtld_lazy};
-  const auto                 m = cvs::pipeline::makeModule(lib);
+
+  const auto m = cvs::pipeline::makeModule(lib);
   if (!m) {
     std::cerr << "Couldn't load dummy module\n";
     return 1;

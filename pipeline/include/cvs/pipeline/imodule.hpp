@@ -26,12 +26,12 @@ class IModule {
 };
 
 namespace detail {
-using IModuleConstructor = IModule *();
-using IModuleDestructor  = void(IModule *);
+using IModuleCreator = IModule *();
+using IModuleDeleter = void(IModule *);
 }  // namespace detail
 
 using IModulePtr  = std::shared_ptr<IModule>;
-using IModuleUPtr = std::unique_ptr<IModule, std::function<detail::IModuleDestructor>>;
+using IModuleUPtr = std::unique_ptr<IModule, std::function<detail::IModuleDeleter>>;
 
 // Returns nullptr on failure
 IModuleUPtr makeModule(const boost::dll::shared_library &lib);

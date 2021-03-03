@@ -9,6 +9,7 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     std::cerr << "Library is not loaded\n";
     return nullptr;
   }
+
   if (!lib.has("newModule")) {
     std::cerr << "Module doesn't define newModule\n";
     return nullptr;
@@ -18,8 +19,8 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     return nullptr;
   }
 
-  auto newModule    = &lib.get<detail::IModuleConstructor>("newModule");
-  auto deleteModule = &lib.get<detail::IModuleDestructor>("deleteModule");
+  auto newModule    = &lib.get<detail::IModuleCreator>("newModule");
+  auto deleteModule = &lib.get<detail::IModuleDeleter>("deleteModule");
 
   IModuleUPtr result{newModule(), deleteModule};
   if (!result->checkCompatibility()) {
