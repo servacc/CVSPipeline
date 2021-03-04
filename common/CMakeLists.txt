@@ -9,6 +9,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/common/configuration.hpp
 
         src/configuration.cpp
+        src/factory.cpp
     )
 target_include_directories(${PROJECT_NAME}
     PUBLIC
