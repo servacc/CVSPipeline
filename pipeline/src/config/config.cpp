@@ -34,5 +34,5 @@ std::string_view Config::get_name() const {
 }
 
 bool Config::has_value() const {
-  return !_tree.empty();
+  return !_key.empty();
 }
