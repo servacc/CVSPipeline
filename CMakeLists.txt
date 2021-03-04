@@ -25,11 +25,11 @@ set(CVS_DATA_DIR "${CMAKE_INSTALL_FULL_DATADIR}")
 
 add_compile_definitions(
     PROJECT_VERSION="${PROJECT_VERSION}"
-    PROJECT_DESCRIPTION="${PROJECT_DESCRIPTION}"
-)
+    PROJECT_DESCRIPTION="${PROJECT_DESCRIPTION}")
 
 add_subdirectory(common)
 add_subdirectory(pipeline)
 add_subdirectory(libmain)
 add_subdirectory(tool)
+
 add_subdirectory(test)

@@ -1,15 +1,12 @@
-cmake_minimum_required(VERSION 3.19)
+option(CVSPIPELINE_TESTS "Enable tests" OFF)
 
-project(cvspipeline_test)
+if(NOT CVSPIPELINE_TESTS)
+    return()
+endif()
 
-find_package(Boost REQUIRED COMPONENTS filesystem)
+if(NOT TARGET gtest)
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    add_subdirectory(../thirdparty/googletest googletest)
+endif()
 
-add_library(dummymodule SHARED)
-target_sources(dummymodule
-    PRIVATE
-        module.cpp
-    )
-target_link_libraries(dummymodule cvspipeline)
-
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} cvspipeline Boost::boost Boost::filesystem dl)
+add_subdirectory(tbbtest)
