@@ -10,8 +10,8 @@
 class Config {
 
  public:
-  explicit Config(const boost::property_tree::ptree &tree);
-  explicit Config(const boost::property_tree::ptree &tree, std::string name);
+  explicit Config() = default;
+  explicit Config(const boost::property_tree::ptree &tree, std::string name = "");
   explicit Config(const boost::property_tree::ptree::value_type &iterator);
 
   // actually should be make(const std::string& file_content)

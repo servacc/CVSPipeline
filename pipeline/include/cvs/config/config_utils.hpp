@@ -28,4 +28,35 @@ struct Is_optional : std::false_type {};
 template <typename T>
 struct Is_optional<std::optional<T> > : std::true_type {};
 
+template <class Wrapping_type>
+class OptionalKind {
+  const Wrapping_type& _reference;
+
+ public:
+  explicit OptionalKind(const Wrapping_type& reference) : _reference(reference) {};
+
+  [[nodiscard]] bool has_value() const {
+    return _reference.has_value();
+  }
+
+  const Wrapping_type& value() const {
+    return _reference;
+  }
+};
+
+template <class Wrapping_type>
+auto toOptionalKind(const Wrapping_type& value) {
+  if constexpr (Is_optional<Wrapping_type>::value) {
+    return value;
+  }
+  else {
+    return OptionalKind(value);
+  }
+}
+
+template<class T, class Value_type>
+constexpr bool has_value() {
+  return std::is_convertible<decltype(T::value), Value_type>::value;
+}
+
 }

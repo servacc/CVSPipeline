@@ -25,7 +25,8 @@ class Config_base {
     const auto& data_value = std::get<index>(data);
 
     if constexpr (Utils::Is_optional<Target_type>::value) {
-      target = data_value ? Target_type(data_value.value()) : std::nullopt;
+      target =
+        Utils::toOptionalKind(data_value) ? Target_type(Utils::toOptionalKind(data_value).value()) : std::nullopt;
     }
     else {
       target = Target_type(data_value);
@@ -73,7 +74,9 @@ struct Config_static_object {
   template <class Tuple, size_t... indexes>
   using Result_intermediate_type =
     Utils::Optional_wrapper<decltype(std::make_tuple(
-      std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>()).value()...
+      Utils::toOptionalKind(data_value)(
+        std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>())
+      ).value()...
     )), is_optional>;
 
   template <class Tuple, size_t... indexes>
@@ -86,10 +89,15 @@ struct Config_static_object {
 
     auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
     if ((std::get<indexes>(result) && ...)) {
-      return std::make_optional(std::make_tuple(std::get<indexes>(result).value()...));
+      return
+        std::make_optional(
+          std::make_tuple(
+            Utils::toOptionalKind(data_value)(std::get<indexes>(result)).value()...
+          )
+        );
     }
     else {
-      return Result_type<Types, indexes...>(Result_intermediate_type<Types, indexes...>{});
+      return Result_type<Types, indexes...>(std::nullopt);
     }
   }
 
@@ -156,19 +164,25 @@ struct Config_static_value {
   }
 };
 
-template <auto &name>
-struct Config_static_value<Config, name, Config_value_kind::BASE, void> {
+template <auto &name, Config_value_kind value_type>
+struct Config_static_value<Config, name, value_type, void> {
 
-  using Result_type = Config;
+  static_assert(value_type != Config_value_kind::WITH_DEFAULT_VALUE, "Config_static_value cannot be of kind DEFAULT");
+  using Result_type = Utils::Optional_wrapper<Config, (value_type == Config_value_kind::OPTIONAL)>;
 
   static Result_type parse(const boost::property_tree::ptree &source) {
     const auto &object = source.get_child_optional(name);
-    if (!object) {
+    Config result((boost::property_tree::ptree()));
+    if (object) {
       // TODO: logs
-      return Result_type(boost::property_tree::ptree());
+      result = std::move(Config(object.get(), name));
+    }
+
+    if constexpr (value_type == Config_value_kind::OPTIONAL) {
+      return std::make_optional(std::move(result));
     }
     else {
-      Result_type(object, name);
+      return std::move(result);
     }
   }
 };

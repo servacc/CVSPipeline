@@ -17,10 +17,6 @@ std::optional<Config> Config::make(const std::string &file_name) {
   return Config(root);
 }
 
-Config::Config(const boost::property_tree::ptree &tree)
-    : _tree(tree)
-{}
-
 Config::Config(const boost::property_tree::ptree &tree, std::string name)
     : _tree(tree), _key(std::move(name))
 {}
