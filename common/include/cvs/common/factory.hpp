@@ -10,9 +10,9 @@ namespace cvs::common {
 
 class Factory {
  public:
-  template <typename Iface, typename FactoryFunction, typename KeyType>
+  template <typename FactoryFunction, typename ImplType, typename KeyType>
   static void registrateDefault(const KeyType &key) {
-    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<Iface>();
+    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<ImplType>();
     registrate(key, std::move(fun));
   }
 
@@ -20,9 +20,10 @@ class Factory {
   // Must be incremented with every change in class Factory layout or its inline functions
   static constexpr int kVersion = 0;
   static const int     libVersion;
-  template <typename Iface, typename FactoryFunction, typename KeyType>
+  
+  template <typename FactoryFunction, typename ImplType, typename KeyType>
   static bool registrateDefaultIf(const KeyType &key) {
-    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<Iface>();
+    auto fun = DefaultFactoryFunctionHelper<FactoryFunction>::template createFunction<ImplType>();
     return registrateIf(key, std::move(fun));
   }
 
@@ -62,10 +63,9 @@ class Factory {
 
   template <typename Res, typename... Args>
   struct DefaultFactoryFunctionHelper<Res(Args...)> {
-    template <typename Iface>
+    template <typename ImplType>
     static auto createFunction() {
-      return std::function(
-          [](Args... args) -> std::unique_ptr<Iface> { return std::make_unique<Res>(std::forward<Args>(args)...); });
+      return std::function([](Args... args) -> Res { return std::make_unique<ImplType>(std::forward<Args>(args)...); });
     }
   };
 

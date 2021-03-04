@@ -8,8 +8,6 @@ namespace cvs::common {
 class Configuration {
  public:
   Configuration();
-
-  void init(std::filesystem::path);
 };
 
 using ConfigurationUPtr = std::unique_ptr<Configuration>;

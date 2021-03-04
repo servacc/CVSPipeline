@@ -9,9 +9,6 @@ namespace cvs::pipeline {
 class IModuleManager {
  public:
   virtual ~IModuleManager() = default;
-
-  virtual void init(common::ConfigurationPtr) = 0;
-  virtual void free()                         = 0;
 };
 
 using IModuleManagerPtr  = std::shared_ptr<IModuleManager>;
