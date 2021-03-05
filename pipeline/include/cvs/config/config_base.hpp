@@ -26,7 +26,9 @@ class Config_base {
 
     if constexpr (Utils::Is_optional<Target_type>::value) {
       target =
-        Utils::toOptionalKind(data_value) ? Target_type(Utils::toOptionalKind(data_value).value()) : std::nullopt;
+        Utils::toOptionalKind(data_value).has_value() ?
+          Target_type(Utils::toOptionalKind(data_value).value()) :
+          std::nullopt;
     }
     else {
       target = Target_type(data_value);
@@ -74,7 +76,7 @@ struct Config_static_object {
   template <class Tuple, size_t... indexes>
   using Result_intermediate_type =
     Utils::Optional_wrapper<decltype(std::make_tuple(
-      Utils::toOptionalKind(data_value)(
+      Utils::toOptionalKind(
         std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>())
       ).value()...
     )), is_optional>;
@@ -92,7 +94,7 @@ struct Config_static_object {
       return
         std::make_optional(
           std::make_tuple(
-            Utils::toOptionalKind(data_value)(std::get<indexes>(result)).value()...
+            Utils::toOptionalKind(std::get<indexes>(result)).value()...
           )
         );
     }
@@ -110,7 +112,7 @@ struct Config_static_object {
 
   static Parse_return_type parse(const boost::property_tree::ptree &source) {
     // if name is empty, then it's a root object
-    if constexpr (length(name) > 0) {
+    if constexpr (Utils::length(name) > 0) {
       const auto &object = source.get_child_optional(name);
       if (!object) {
         // TODO: logs
@@ -205,8 +207,8 @@ struct Dummy {
     Config_static_type_##name ::Result_type _##name; \
     typedef Dummy<                                           \
       Dummy_##name::Parent, \
-      Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
-      Concatenate_tuples<                                    \
+      Utils::Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
+      Utils::Concatenate_tuples<                                    \
         Dummy_##name::Pointers,             \
         std::tuple<Self::Field_pointer<Config_static_type_##name ::Result_type, &Self::_##name> \
       >                                                      \
