@@ -25,14 +25,16 @@ Config::Config(const boost::property_tree::ptree::value_type &iterator)
     : _tree(iterator.second), _key(iterator.first)
 {}
 
-std::vector<Config> Config::get_children() const {
+std::vector<Config> Config::getChildren() const {
   return std::vector<Config>(_tree.begin(), _tree.end());
 }
 
-std::string_view Config::get_name() const {
+std::string_view Config::getName() const {
   return _key;
 }
 
+// clang-format off
 bool Config::has_value() const {
+// clang-format on
   return !_key.empty();
 }

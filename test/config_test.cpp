@@ -30,22 +30,22 @@ const std::string parsing_test_json =
     "\"value\": \"" + std::to_string(TEST_JSON_VALUE) + "\"\n"
   "}";
 
-Config_object(Parsing_test_config,
-  Object(required,
-    Value(distance, std::remove_cv<decltype(TEST_JSON_REQUIRED_DISTANCE)>::type),
-    Value_optional(call, std::string),
-    Object(inner,
-      Value(value, std::remove_cv<decltype(TEST_JSON_REQUIRED_INNER_VALUE)>::type),
-      Value(hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
+CONFIG_OBJECT(ParsingTestConfig,
+  OBJECT( required,
+    VALUE( distance, std::remove_cv<decltype(TEST_JSON_REQUIRED_DISTANCE)>::type),
+    VALUE_OPTIONAL( call, std::string),
+    OBJECT( inner,
+      VALUE( value, std::remove_cv<decltype(TEST_JSON_REQUIRED_INNER_VALUE)>::type),
+      VALUE( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
     )
   ),
-  Object_optional(optional,
-    Value(distance, double),
-    Value_optional(hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
+  OBJECT_OPTIONAL( optional,
+    VALUE( distance, double),
+    VALUE_OPTIONAL( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
   ),
-  Value_default(length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),
-  Value(value, std::remove_cv<decltype(TEST_JSON_VALUE)>::type),
-  Value_optional(global, Config)
+  VALUE_DEFAULT( length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),
+  VALUE( value, std::remove_cv<decltype(TEST_JSON_VALUE)>::type),
+  VALUE_OPTIONAL( global, Config)
 )
 
 TEST(parsing_test, main_test) {
@@ -66,7 +66,7 @@ TEST(parsing_test, main_test) {
     FAIL() << "Unexpected unknown exception";
   }
 
-  auto test_result = Parsing_test_config::parse_and_make(root);
+  auto test_result = ParsingTestConfig::make(root);
 
   ASSERT_TRUE(test_result.has_value()) << "Parsing failed";
   EXPECT_EQ(test_result->_required._inner._value, TEST_JSON_REQUIRED_INNER_VALUE) << "required->inner->value parse failed";

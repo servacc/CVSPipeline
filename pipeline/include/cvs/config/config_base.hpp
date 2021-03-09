@@ -18,37 +18,37 @@
 #include "config.h"
 
 
-class Config_base {
+class ConfigBase {
   template <class Pointers, size_t index, class Object_type, class Data>
   static constexpr void helper(Object_type& object, Data&& data) {
-    using Target_type = typename std::tuple_element<index, Pointers>::type::Value_type;
+    using TargetType = typename std::tuple_element<index, Pointers>::type::Value_type;
     auto& target = object.*std::tuple_element<index, Pointers>::type::ptr;
     const auto& data_value = std::get<index>(data);
 
-    if constexpr (Utils::Is_optional<Target_type>::value) {
+    if constexpr (Utils::Is_optional<TargetType>::value) {
       target =
         Utils::toOptionalKind(data_value).has_value() ?
-          Target_type(Utils::toOptionalKind(data_value).value()) :
-          std::nullopt;
+        TargetType(Utils::toOptionalKind(data_value).value()) :
+        std::nullopt;
     }
     else {
-      target = Target_type(data_value);
+      target = TargetType(data_value);
     }
   }
 
   template <class Pointers, class Object_type, class Data, std::size_t... indexes>
-  static constexpr void make_from_tuple_impl(Object_type& object, Data&& data, std::index_sequence<indexes...>) {
+  static constexpr void makeFromTupleImpl(Object_type& object, Data&& data, std::index_sequence<indexes...>) {
     return (helper<Pointers, indexes>(object, data), ...);
   }
 
  public:
 
   template <class Pointers, class Object_type, class Data>
-  static constexpr void make_from_tuple_aggregate(Object_type& object, Data&& data) {
-    return make_from_tuple_impl<Pointers>(
-        object,
-        std::forward<Data>(data),
-        std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Data>>>{}
+  static constexpr void makeFromTuple(Object_type& object, Data&& data) {
+    return makeFromTupleImpl<Pointers>(
+      object,
+      std::forward<Data>(data),
+      std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Data>>>{}
     );
   }
 
@@ -72,22 +72,22 @@ class Config_base {
 };
 
 template <auto& name, typename Types, bool is_optional = false>
-struct Config_static_object {
+struct ConfigStaticObject {
  protected:
   template <class Tuple, size_t... indexes>
-  using Result_intermediate_type =
-    Utils::Optional_wrapper<decltype(std::make_tuple(
+  using ResultIntermediateType =
+    Utils::OptionalWrapper<decltype(std::make_tuple(
       Utils::toOptionalKind(
         std::tuple_element<indexes, Tuple>::type::parse(std::declval<boost::property_tree::ptree>())
       ).value()...
     )), is_optional>;
 
   template <class Tuple, size_t... indexes>
-  using Result_type = std::optional<Result_intermediate_type<Types, indexes...> >;
+  using ResultType = std::optional<ResultIntermediateType<Types, indexes...> >;
 
   template <class Tuple, size_t... indexes>
   static
-    Result_type<Types, indexes...>
+    ResultType<Types, indexes...>
       helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
 
     auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
@@ -100,18 +100,18 @@ struct Config_static_object {
         );
     }
     else {
-      return Result_intermediate_type<Types, indexes...>{};
+      return ResultIntermediateType<Types, indexes...>{};
     }
   }
 
  public:
-  using Parse_return_type =
+  using ParseReturnType =
   decltype(helper<Types>(
       std::declval<boost::property_tree::ptree>(),
       std::make_index_sequence<std::tuple_size<Types>::value>{}
   ));
 
-  static Parse_return_type parse(const boost::property_tree::ptree &source) {
+  static ParseReturnType parse(const boost::property_tree::ptree &source) {
     // if name is empty, then it's a root object
     if constexpr (Utils::length(name) > 0) {
       const auto &object = source.get_child_optional(name);
@@ -128,22 +128,22 @@ struct Config_static_object {
   }
 };
 
-enum class Config_value_kind {
+enum class ConfigValueKind {
   BASE,
   OPTIONAL,
   WITH_DEFAULT_VALUE,
 };
 
-template <class Subtype, auto &name, Config_value_kind value_type, class Default_value_type = void>
-struct Config_static_value {
+template <class Subtype, auto &name, ConfigValueKind value_type, class DefaultValueType = void>
+struct ConfigStaticValue {
   static_assert(
     !std::is_const_v<Subtype> && !std::is_reference_v<Subtype>,
     "Subtype must not be a constant or a reference"
   );
 
-  using Result_type = Utils::Optional_wrapper<Subtype, (value_type == Config_value_kind::OPTIONAL)>;
+  using ResultType = Utils::OptionalWrapper<Subtype, (value_type == ConfigValueKind::OPTIONAL)>;
 
-  static std::optional<Result_type> parse(const boost::property_tree::ptree &source) {
+  static std::optional<ResultType> parse(const boost::property_tree::ptree &source) {
     const auto& value = source.get_optional<Subtype>(name);
     std::optional<Subtype> result;
     if (!value) {
@@ -154,17 +154,17 @@ struct Config_static_value {
       result = value.get();
     }
 
-    if constexpr (value_type == Config_value_kind::OPTIONAL) {
+    if constexpr (value_type == ConfigValueKind::OPTIONAL) {
       return std::make_optional(result);
     }
-    else if constexpr (value_type == Config_value_kind::WITH_DEFAULT_VALUE) {
-      static_assert(!std::is_same<Default_value_type, void>::value, "Default_value_type must be provided");
+    else if constexpr (value_type == ConfigValueKind::WITH_DEFAULT_VALUE) {
+      static_assert(!std::is_same<DefaultValueType, void>::value, "Default_value_type must be provided");
       static_assert(
-          std::is_convertible<decltype(Default_value_type::value), Subtype>::value,
+          std::is_convertible<decltype(DefaultValueType::value), Subtype>::value,
           "Can't convert Default_value_type::value to Config_value_type"
       );
 
-      return result ? result.value() : Default_value_type::value;
+      return result ? result.value() : DefaultValueType::value;
     }
     else {
       return result;
@@ -172,13 +172,13 @@ struct Config_static_value {
   }
 };
 
-template <auto &name, Config_value_kind value_type>
-struct Config_static_value<Config, name, value_type, void> {
+template <auto &name, ConfigValueKind value_type>
+struct ConfigStaticValue<Config, name, value_type, void> {
 
-  static_assert(value_type != Config_value_kind::WITH_DEFAULT_VALUE, "Config_static_value cannot be of kind DEFAULT");
-  using Result_type = Utils::Optional_wrapper<Config, (value_type == Config_value_kind::OPTIONAL)>;
+  static_assert(value_type != ConfigValueKind::WITH_DEFAULT_VALUE, "ConfigStaticValue cannot be of kind DEFAULT");
+  using ResultType = Utils::OptionalWrapper<Config, (value_type == ConfigValueKind::OPTIONAL)>;
 
-  static Result_type parse(const boost::property_tree::ptree &source) {
+  static ResultType parse(const boost::property_tree::ptree &source) {
     const auto &object = source.get_child_optional(name);
     Config result((boost::property_tree::ptree()));
     if (object) {
@@ -186,7 +186,7 @@ struct Config_static_value<Config, name, value_type, void> {
       result = std::move(Config(object.get(), name));
     }
 
-    if constexpr (value_type == Config_value_kind::OPTIONAL) {
+    if constexpr (value_type == ConfigValueKind::OPTIONAL) {
       return std::make_optional(std::move(result));
     }
     else {
@@ -195,88 +195,88 @@ struct Config_static_value<Config, name, value_type, void> {
   }
 };
 
-template <class Parent_type, class Parsers_tuple, class Fields_pointers_tuple, size_t dummy_tail = 0>
+template <class ParentType, class ParsersTuple, class FieldsPointersTuple, size_t dummy_tail = 0>
 struct Dummy {
-  using Parent = Parent_type;
-  using Parsers = Parsers_tuple;
-  using Pointers = Fields_pointers_tuple;
+  using Parent = ParentType;
+  using Parsers = ParsersTuple;
+  using Pointers = FieldsPointersTuple;
 };
 
 #define CONFIG_COMMA ,
 
-#define Value_base(name, type, config_value_kind, default_declaration, default_type) 0> Dummy_##name; \
+#define VALUE_BASE(name, type, config_value_kind, default_declaration, default_type) 0> Dummy_##name; \
   protected:                                                                \
     default_declaration                                                           \
     static constexpr char const name##_name[] = #name;                      \
-    using Config_static_type_##name = Config_static_value<type, name##_name, config_value_kind default_type>; \
+    using Config_static_type_##name = ConfigStaticValue<type, name##_name, config_value_kind default_type>; \
   public:                     \
-    Config_static_type_##name ::Result_type _##name; \
+    Config_static_type_##name ::ResultType _##name; \
     typedef Dummy<                                           \
       Dummy_##name::Parent, \
-      Utils::Concatenate_tuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
-      Utils::Concatenate_tuples<                                    \
+      Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
+      Utils::ConcatenateTuples<                                    \
         Dummy_##name::Pointers,             \
-        std::tuple<Self::Field_pointer<Config_static_type_##name ::Result_type, &Self::_##name> \
+        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name> \
       >                                                      \
     >
 
-#define Value(name, type) Value_base(name, type, Config_value_kind::BASE,,)
-#define Value_optional(name, type) Value_base(name, type, Config_value_kind::OPTIONAL,,)
-#define Value_default(name, type, default_value) Value_base(name, type, Config_value_kind::WITH_DEFAULT_VALUE, \
+#define VALUE(name, type) VALUE_BASE(name, type, ConfigValueKind::BASE,,)
+#define VALUE_OPTIONAL(name, type) VALUE_BASE(name, type, ConfigValueKind::OPTIONAL,,)
+#define VALUE_DEFAULT(name, type, default_value) VALUE_BASE(name, type, ConfigValueKind::WITH_DEFAULT_VALUE, \
   struct Default_value_##name_type { static constexpr auto value = default_value; }; , \
   CONFIG_COMMA Default_value_##name_type)
 
 
-#define Object_main_part(name, type_suffix, is_name_string_empty, is_optional, ...) \
+#define OBJECT_MAIN_PART(name, type_suffix, is_name_string_empty, is_optional, ...) \
   __VA_OPT__(                                                          \
       friend Dummy_##name ::Parent; \
-      friend Config_base;                                              \
+      friend ConfigBase;                                              \
     protected:                                                         \
         \
       using Self = name##type_suffix;                           \
       template <class Value, Value name##type_suffix::* pointer> \
-      struct Field_pointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
+      struct FieldPointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
                    \
       typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
       static constexpr auto name##_name = Utils::get_name<is_name_string_empty>(#name);                          \
       name##type_suffix() = default;                                                       \
                                                                                     \
-      using Parsers = Config_static_object<name##_name, Dummy_tail::Parsers, is_optional>;              \
+      using Parsers = ConfigStaticObject<name##_name, Dummy_tail::Parsers, is_optional>;              \
       using Pointers = Dummy_tail::Pointers;                           \
     public:                                                            \
       template <class Tuple>                                                               \
       explicit name##type_suffix(Tuple arguments) {                                                \
-        Config_base::make_from_tuple_aggregate<Pointers>(*this, arguments);     \
+        ConfigBase::makeFromTuple<Pointers>(*this, arguments);     \
       } \
   )
 
-#define Object_base(object_name, is_optional, ...)  0> Dummy_##object_name; \
+#define OBJECT_BASE(object_name, is_optional, ...)  0> Dummy_##object_name; \
   protected:                                          \
     struct object_name##_type {                           \
-      Object_main_part(object_name, _type, false, is_optional, __VA_ARGS__) \
+      OBJECT_MAIN_PART(object_name, _type, false, is_optional, __VA_ARGS__) \
     };                                      \
   public:                                 \
-    Utils::Optional_wrapper<object_name##_type, is_optional> _##object_name;                    \
+    Utils::OptionalWrapper<object_name##_type, is_optional> _##object_name;                    \
     \
   protected:                                    \
     typedef Dummy<                                                          \
       Self, \
-      Utils::Concatenate_tuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
-      Utils::Concatenate_tuples<                                                   \
+      Utils::ConcatenateTuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
+      Utils::ConcatenateTuples<                                                   \
         Dummy_##object_name::Pointers,                                      \
-        std::tuple<Self::Field_pointer<Utils::Optional_wrapper<object_name##_type, is_optional>, &Self::_##object_name> \
+        std::tuple<Self::FieldPointer<Utils::OptionalWrapper<object_name##_type, is_optional>, &Self::_##object_name> \
       >                                                                     \
     >
 
-#define Object_optional(object_name, ...) Object_base(object_name, true, __VA_ARGS__)
-#define Object(object_name, ...) Object_base(object_name, false, __VA_ARGS__)
+#define OBJECT_OPTIONAL(object_name, ...) OBJECT_BASE(object_name, true, __VA_ARGS__)
+#define OBJECT(object_name, ...) OBJECT_BASE(object_name, false, __VA_ARGS__)
 
-#define Config_object(name, ...) \
+#define CONFIG_OBJECT(name, ...) \
   class name {                  \
     using Dummy_##name = Dummy<name, void, void, 0>; \
-    Object_main_part(name,, true, false, __VA_ARGS__) \
+    OBJECT_MAIN_PART(name,, true, false, __VA_ARGS__) \
    public:\
-    static std::optional<name> parse_and_make(const boost::property_tree::ptree &source) {   \
-      return Config_base::make<name> (source);       \
+    static std::optional<name> make(const boost::property_tree::ptree &source) {   \
+      return ConfigBase::make<name> (source);       \
     }                                                                                        \
   };

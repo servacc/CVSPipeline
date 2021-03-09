@@ -3,7 +3,7 @@
 namespace Utils {
 
 template <typename... Tuples>
-using Concatenate_tuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
+using ConcatenateTuples = decltype(std::tuple_cat(std::declval<Tuples>()...));
 
 template <bool erase, size_t string_size>
 constexpr auto get_name(const char (&string)[string_size]) {
@@ -20,7 +20,7 @@ constexpr size_t length(const char *str) {
 }
 
 template <class Type, bool is_optional = false>
-using Optional_wrapper = typename std::conditional<is_optional, std::optional<Type>, Type >::type;
+using OptionalWrapper = typename std::conditional<is_optional, std::optional<Type>, Type >::type;
 
 template <typename T, typename Enable = void>
 struct Is_optional : std::false_type {};
@@ -35,8 +35,10 @@ class OptionalKind {
  public:
   explicit OptionalKind(const Wrapping_type& reference) : _reference(reference) {};
 
+  // clang-format off
   [[nodiscard]] bool has_value() const {
     return _reference.has_value();
+  // clang-format on
   }
 
   const Wrapping_type& value() const {
@@ -52,11 +54,6 @@ auto toOptionalKind(const Wrapping_type& value) {
   else {
     return OptionalKind(value);
   }
-}
-
-template<class T, class Value_type>
-constexpr bool has_value() {
-  return std::is_convertible<decltype(T::value), Value_type>::value;
 }
 
 }
