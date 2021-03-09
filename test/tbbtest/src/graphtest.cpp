@@ -1,65 +1,82 @@
-//#include <boost/core/demangle.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace std::literals::string_literals;
 using namespace cvs;
 using namespace cvs::pipeline;
 using namespace cvs::pipeline::tbb;
+using namespace cvs::common;
+
+using ::testing::_;
 
 namespace {
 
-class StartElement : public IElement<int(bool*)> {
- public:
-  static auto make(common::Configuration) { return std::make_unique<StartElement>(); }
-
-  int process(bool* stop) override {
-    if (counter == 10) {
-      *stop = true;
-      return counter;
-    }
-    return counter++;
-  }
-
- public:
-  static int counter;
-};
-int StartElement::counter = 0;
-
-class AElement : public IElement<int(int)> {
+class AElement : public IElement<int(bool*)> {
  public:
   static auto make(common::Configuration) {
-    int n = 5;
-    return std::make_unique<AElement>(n);
+    auto e = std::make_unique<AElement>();
+
+    EXPECT_CALL(*e, process(_))
+        .WillOnce([](bool* stop) {
+          *stop = false;
+          return 10;
+        })
+        .WillOnce([](bool* stop) {
+          *stop = true;
+          return 10;
+        });
+
+    return e;
   }
 
-  AElement(int m)
-      : mul(m) {}
-
-  int process(int a) override { return a * mul; }
-
- private:
-  int mul;
+  MOCK_METHOD(int, process, (bool*), (override));
 };
 
-class BElement : public IElement<int(int, int)> {
+class BElement : public IElement<int(int)> {
  public:
-  static auto make(common::Configuration) { return std::make_unique<BElement>(); }
+  static auto make(common::Configuration) {
+    auto e = std::make_unique<BElement>();
+    EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> int { return a; });
+    return e;
+  }
 
-  int process(int a, int b) override { return a + b; }
+  MOCK_METHOD(int, process, (int), (override));
 };
 
-class CElement : public IElement<void(int)> {
+class CElement : public IElement<float(int)> {
  public:
-  static auto make(common::Configuration) { return std::make_unique<CElement>(); }
+  static auto make(common::Configuration) {
+    auto e = std::make_unique<CElement>();
+    EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> float { return a / 100.f; });
+    return e;
+  }
 
-  void process(int a) override { result.push_back(a); }
-
- public:
-  static std::vector<int> result;
+  MOCK_METHOD(float, process, (int), (override));
 };
-std::vector<int> CElement::result;
+
+class DElement : public IElement<float(int, float)> {
+ public:
+  static auto make(common::Configuration) {
+    auto e = std::make_unique<DElement>();
+    EXPECT_CALL(*e, process(10, 0.1f)).WillOnce([](int a, float b) -> float { return a + b; });
+    return e;
+  }
+
+  MOCK_METHOD(float, process, (int, float), (override));
+};
+
+class EElement : public IElement<void(float)> {
+ public:
+  static auto make(common::Configuration) {
+    auto e = std::make_unique<EElement>();
+    EXPECT_CALL(*e, process(10.1f));
+    return e;
+  }
+
+  MOCK_METHOD(void, process, (float), (override));
+};
 
 }  // namespace
 
@@ -70,39 +87,67 @@ class GraphTest : public ::testing::Test {
   static void SetUpTestCase() {
     registrateBase();
 
-    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Configuration), StartElement>("E_S"s);
-    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(common::Configuration), AElement>("E_A"s);
-    registrateElemetAndTbbHelper<IElementUPtr<int(int, int)>(common::Configuration), BElement>("E_B"s);
-    registrateElemetAndTbbHelper<IElementUPtr<void(int)>(common::Configuration), CElement>("E_C"s);
+    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(Configuration), AElement>("A"s);
+    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(Configuration), BElement>("B"s);
+    registrateElemetAndTbbHelper<IElementUPtr<float(int)>(Configuration), CElement>("C"s);
+    registrateElemetAndTbbHelper<IElementUPtr<float(int, float)>(Configuration), DElement>("D"s);
+    registrateElemetAndTbbHelper<IElementUPtr<void(float)>(Configuration), EElement>("E"s);
   }
 };
 
-TEST_F(GraphTest, create) {
-  using namespace cvs::pipeline;
-  common::Configuration cfg;
+TEST_F(GraphTest, branch_graph) {
+  // Graph:
+  //       A
+  //       |
+  //   Broadcast
+  //      / \
+  //     B   C
+  //      \ /
+  //     join
+  //       |
+  //       D
+  //       |
+  //       E
 
-  IExecutionGraphPtr graph = common::Factory::create<IExecutionGraphUPtr>(TbbDefaultName::graph_name).value_or(nullptr);
+  Configuration cfg;
+
+  IExecutionGraphPtr graph = Factory::create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);
 
-  auto start_node =
-      common::Factory::create<IExecutionNodeUPtr>("E_S"s, TbbDefaultName::source_name, cfg, graph).value_or(nullptr);
-  ASSERT_NE(nullptr, start_node);
+  auto a_node = Factory::create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, cfg, graph).value_or(nullptr);
+  auto b_node = Factory::create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
+  auto c_node = Factory::create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
+  auto d_node = Factory::create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
+  auto e_node = Factory::create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
 
-  auto c_node =
-      common::Factory::create<IExecutionNodeUPtr>("E_C"s, TbbDefaultName::function_name, cfg, graph).value_or(nullptr);
+  auto bc_node = Factory::create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast, cfg, graph).value_or(nullptr);
+  auto j_node  = Factory::create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, cfg, graph).value_or(nullptr);
+
+  ASSERT_NE(nullptr, a_node);
+  ASSERT_NE(nullptr, b_node);
   ASSERT_NE(nullptr, c_node);
+  ASSERT_NE(nullptr, d_node);
+  ASSERT_NE(nullptr, e_node);
 
-  auto sender = start_node->sender(0);
-  ASSERT_TRUE(sender.has_value());
-  ASSERT_TRUE(c_node->connect(sender, 0));
+  ASSERT_NE(nullptr, bc_node);
+  ASSERT_NE(nullptr, j_node);
+
+  ASSERT_TRUE(bc_node->connect(a_node->sender(0), 0));
+  ASSERT_TRUE(b_node->connect(bc_node->sender(0), 0));
+  ASSERT_TRUE(c_node->connect(bc_node->sender(0), 0));
+
+  ASSERT_TRUE(j_node->connect(b_node->sender(0), 0));
+  ASSERT_TRUE(j_node->connect(c_node->sender(0), 1));
+
+  ASSERT_TRUE(d_node->connect(j_node->sender(0), 0));
+
+  ASSERT_TRUE(e_node->connect(d_node->sender(0), 0));
 
   auto src_node =
-      std::dynamic_pointer_cast<ISourceExecutionNode<NodeType::Functional>>(IExecutionNodePtr(std::move(start_node)));
+      std::dynamic_pointer_cast<ISourceExecutionNode<NodeType::Functional>>(IExecutionNodePtr(std::move(a_node)));
   src_node->activate();
 
   graph->waitForAll();
-
-  EXPECT_EQ(StartElement::counter, CElement::result.size());
 }
 
 }  // namespace

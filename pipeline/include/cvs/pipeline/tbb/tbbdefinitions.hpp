@@ -5,13 +5,13 @@
 namespace cvs::pipeline::tbb {
 
 struct TbbDefaultName {
-  static const std::string graph_name;
+  static const std::string graph;
 
-  static const std::string broadcast_name;
+  static const std::string broadcast;
   static const std::string continue_name;
-  static const std::string function_name;
-  static const std::string join_name;
-  static const std::string source_name;
+  static const std::string function;
+  static const std::string join;
+  static const std::string source;
   static const std::string split_name;
 };
 

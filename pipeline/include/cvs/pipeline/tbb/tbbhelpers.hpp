@@ -126,16 +126,12 @@ void registrateElemetAndTbbHelper(std::string key) {
 
   // functional nodes
   registrateNode<BaseElement, TbbContinueNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::continue_name);
-  registrateNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source_name);
-  registrateNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(
-      TbbDefaultName::function_name);
+  registrateNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source);
+  registrateNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::function);
 
   // service nodes
-  registrateNode<Arg, TbbBroadcastNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::broadcast_name);
-  registrateNode<Res, TbbBroadcastNode, typename detail::is_not_same<Res, void>::type>(TbbDefaultName::broadcast_name);
-  registrateNode<Arg, TbbJoinNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::join_name);
-  registrateNode<Res, TbbJoinNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::join_name);
-  registrateNode<Arg, TbbSplitNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::split_name);
+  registrateNode<Res, TbbBroadcastNode, typename detail::is_not_same<Res, void>::type>(TbbDefaultName::broadcast);
+  registrateNode<Arg, TbbJoinNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::join);
   registrateNode<Res, TbbSplitNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::split_name);
 }
 

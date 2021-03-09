@@ -52,40 +52,41 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 
 template <typename FactoryFunction, typename Impl>
 void registrateElemetHelper(std::string key) {
+  using namespace cvs::common;
+
   using ElementPtr = typename std::function<FactoryFunction>::result_type;
   using Element    = typename ElementPtr::element_type;
-  using ElementFun = typename detail::RegistrationHelper<Element>::Fun;
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
   using Res        = typename detail::RegistrationHelper<Element>::Res;
 
-  common::Factory::registrateIf<FactoryFunction>(key, Impl::make);
+  Factory::registrateIf<FactoryFunction>(key, Impl::make);
 
-  common::Factory::registrateIf<IExecutionNodeUPtr(std::string, common::Configuration, IExecutionGraphPtr)>(
-      key,
-      [key](std::string node_name, common::Configuration cfg,
-            pipeline::IExecutionGraphPtr graph) -> pipeline::IExecutionNodeUPtr {
-        auto node_type = common::Factory::create<NodeType>(node_name);
+  Factory::registrateIf<IExecutionNodeUPtr(std::string, Configuration, IExecutionGraphPtr)>(
+      key, [key](std::string node_name, Configuration cfg, IExecutionGraphPtr graph) -> IExecutionNodeUPtr {
+        auto node_type = Factory::create<NodeType>(node_name);
         if (!node_type.has_value()) {
           std::cerr << "Node Type?" << std::endl;
           return {};
         }
 
         switch (node_type.value_or(NodeType::Unknown)) {
-          case ServiceIn: break;
-          case ServiceOut: break;
+          case ServiceIn:
+            return Factory::create<IExecutionNodeUPtr>(node_name, cfg, graph, std::shared_ptr<Arg>{}).value_or(nullptr);
+          case ServiceOut:
+            return Factory::create<IExecutionNodeUPtr>(node_name, cfg, graph, std::shared_ptr<Res>{}).value_or(nullptr);
           case Functional: {
-            auto element = common::Factory::create<std::unique_ptr<Element>>(key, cfg);
+            auto element = Factory::create<std::unique_ptr<Element>>(key, cfg);
             if (!element) {
               std::cerr << "Null element" << std::endl;
               return {};
             }
-            return common::Factory::create<cvs::pipeline::IExecutionNodeUPtr>(
-                       node_name, cfg, graph, std::shared_ptr<Element>{std::move(*element)})
+            return Factory::create<IExecutionNodeUPtr>(node_name, cfg, graph,
+                                                       std::shared_ptr<Element>{std::move(*element)})
                 .value_or(nullptr);
-          } break;
+          }
           default: {
             std::cerr << "Node type" << std::endl;
-          }
+          } break;
         }
 
         return {};

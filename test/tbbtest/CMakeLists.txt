@@ -6,4 +6,4 @@ target_sources(${PROJECT_NAME}
         src/graphtest.cpp
     )
 
-target_link_libraries(${PROJECT_NAME} gtest_main cvspipeline)
+target_link_libraries(${PROJECT_NAME} gmock_main cvspipeline)
