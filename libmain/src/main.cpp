@@ -11,5 +11,5 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  return pipeline->exec();
+  return (*pipeline)->exec();
 }

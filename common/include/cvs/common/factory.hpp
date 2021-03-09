@@ -43,12 +43,12 @@ class Factory {
   }
 
   template <typename T, typename KeyType, typename... Args>
-  static T create(const KeyType &key, Args... args) {
+  static std::optional<T> create(const KeyType &key, Args... args) {
     auto &creator_map = factoryFunctionsMap<KeyType, T(Args...)>();
     if (auto iter = creator_map.find(key); iter != creator_map.end())
       return iter->second(std::forward<Args>(args)...);
 
-    return {};
+    return std::nullopt;
   }
 
   template <typename FactoryFunction, typename KeyType>
