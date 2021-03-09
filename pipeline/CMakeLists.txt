@@ -13,6 +13,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/iexecutionnode.hpp
         include/cvs/pipeline/iexecutiongraph.hpp
         include/cvs/pipeline/ielement.hpp
+        include/cvs/pipeline/registrationhelper.hpp
 
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp
         include/cvs/pipeline/tbb/tbbflowgraph.hpp
@@ -22,7 +23,9 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbsplitnode.hpp
         include/cvs/pipeline/tbb/tbbsourcenode.hpp
         include/cvs/pipeline/tbb/tbbhelpers.hpp
+        include/cvs/pipeline/tbb/tbbdefinitions.hpp
 
+        src/pipeline/tbb/tbbdefinitions.cpp
         src/pipeline/tbb/tbbhelpers.cpp
         src/pipeline/tbb/tbbflowgraph.cpp
 

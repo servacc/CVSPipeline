@@ -9,4 +9,4 @@ if(NOT TARGET gtest)
     add_subdirectory(../thirdparty/googletest googletest)
 endif()
 
-add_subdirectory(tbbtest)
+add_subdirectory(tbbtest cvspipeline)

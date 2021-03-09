@@ -8,15 +8,17 @@
 
 namespace cvs::pipeline::tbb {
 
-template <typename Element, typename Policy = ::tbb::flow::queueing>
+template <typename Tuple, typename Policy = ::tbb::flow::queueing>
 class TbbJoinNode;
 
-template <typename Policy, typename Result, typename Arg0, typename Arg1, typename... Args>
-class TbbJoinNode<IElement<Result(Arg0, Arg1, Args...)>, Policy> : public IExecutionNode {
+template <typename Policy, typename Arg0, typename Arg1, typename... Args>
+class TbbJoinNode<std::tuple<Arg0, Arg1, Args...>, Policy>
+    : public IInputExecutionNode<NodeType::ServiceIn, Arg0, Arg1, Args...>,
+      public IOutputExecutionNode<NodeType::ServiceIn, std::tuple<Arg0, Arg1, Args...>> {
  public:
   using ArgumentsType = std::tuple<Arg0, Arg1, Args...>;
 
-  static auto make(common::Configuration, IExecutionGraphPtr graph, IElementPtr<Result(Arg0, Arg1, Args...)>) {
+  static auto make(common::Configuration, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbJoinNode>(g);
     return std::unique_ptr<TbbJoinNode>{};
@@ -24,6 +26,9 @@ class TbbJoinNode<IElement<Result(Arg0, Arg1, Args...)>, Policy> : public IExecu
 
   TbbJoinNode(TbbFlowGraphPtr g)
       : node(g->native()) {}
+
+  bool tryPut(const Arg0&, const Arg1&, const Args&...) override { return false; }
+  bool tryGet(ArgumentsType&) override { return false; }
 
   std::any receiver(std::size_t i) override { return getPort<0, Arg0, Arg1, Args...>(i); }
   std::any sender(std::size_t) override { return std::make_any<::tbb::flow::sender<ArgumentsType>*>(&node); }
@@ -61,7 +66,7 @@ class TbbJoinNode<IElement<Result(Arg0, Arg1, Args...)>, Policy> : public IExecu
   }
 
  private:
-  ::tbb::flow::join_node<ArgumentsType> node;
+  ::tbb::flow::join_node<ArgumentsType, Policy> node;
 };
 
 }  // namespace cvs::pipeline::tbb

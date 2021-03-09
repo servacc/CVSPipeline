@@ -12,7 +12,8 @@ template <typename Element>
 class TbbSourceNode;
 
 template <typename Output>
-class TbbSourceNode<IElement<Output(bool*)>> : public ISourceExecutionNode, public IOutputExecutionNode<Output> {
+class TbbSourceNode<IElement<Output(bool*)>> : public ISourceExecutionNode<NodeType::Functional>,
+                                               public IOutputExecutionNode<NodeType::Functional, Output> {
  public:
   static auto make(common::Configuration, IExecutionGraphPtr graph, IElementPtr<Output(bool*)> element) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))

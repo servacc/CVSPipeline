@@ -1,31 +1,24 @@
 #pragma once
 
+#include <boost/core/demangle.hpp>
 #include <cvs/common/configuration.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
+#include <cvs/pipeline/registrationhelper.hpp>
 #include <cvs/pipeline/tbb/tbbbroadcastnode.hpp>
 #include <cvs/pipeline/tbb/tbbcontinuenode.hpp>
+#include <cvs/pipeline/tbb/tbbdefinitions.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
 #include <cvs/pipeline/tbb/tbbfunctionnode.hpp>
 #include <cvs/pipeline/tbb/tbbjoinnode.hpp>
 #include <cvs/pipeline/tbb/tbbsourcenode.hpp>
 #include <cvs/pipeline/tbb/tbbsplitnode.hpp>
 
+#include <iostream>
 #include <type_traits>
 
 namespace cvs::pipeline::tbb {
-
-struct TbbDefaultName {
-  static const std::string graph_name;
-
-  static const std::string broadcast_name;
-  static const std::string continue_name;
-  static const std::string function_name;
-  static const std::string join_name;
-  static const std::string source_name;
-  static const std::string split_name;
-};
 
 // default nodes:
 // if(void()       ) continue
@@ -42,7 +35,7 @@ struct TbbDefaultName {
 // if(R(A...)      ) split A...
 // if(tuple<R>(...)) split
 
-namespace details {
+namespace detail {
 
 template <typename FactoryFunction>
 struct RegistrationHelper;
@@ -74,114 +67,76 @@ struct is_tuple : std::false_type {};
 template <typename... T>
 struct is_tuple<std::tuple<T...>> : std::true_type {};
 
-}  // namespace details
-
-template <typename R>
-void registrateBrodcastNode() {
-  using namespace cvs::pipeline;
-  using namespace cvs::pipeline::tbb;
-
-  if constexpr (std::is_same_v<R, void>) {
-    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr)>(
-        TbbDefaultName::broadcast_name, TbbBroadcastNode<::tbb::flow::continue_msg>::make);
-  } else {
-    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr)>(
-        TbbDefaultName::broadcast_name, TbbBroadcastNode<R>::make);
-  }
-}
-
-template <typename T>
-using NodeFactoryFunction = IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, IElementPtr<T>);
-
-template <typename ElementFunc, template <typename...> class Node, typename Enable = std::true_type>
-void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::true_type, Enable>>::type* = 0) {
-  auto reg = common::Factory::registrateIf<IExecutionNodeUPtr(
-      common::Configuration, IExecutionGraphPtr, IElementPtr<ElementFunc>)>(key, Node<IElement<ElementFunc>>::make);
-  //  if (reg)
-  //    std::cout << "Node \"" << key << "\" has registered for element \""
-  //              << boost::core::demangle(typeid(IElement<ElementFunc>).name()) << "\"" << std::endl;
-  //  else
-  //    std::cout << "Duplicate node \"" << key << "\" has registered for element \""
-  //              << boost::core::demangle(typeid(IElement<ElementFunc>).name()) << "\"" << std::endl;
-}
-
-template <typename ElementFunc, template <typename...> class Node, typename Enable>
-void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
-  //  std::cout << "Node " << key << " NOT registered for element \""
-  //            << boost::core::demangle(typeid(IElement<ElementFunc>).name()) << "\"" << std::endl;
-}
-
 template <typename, typename>
 struct is_not_same : public std::true_type {};
 
 template <typename _Tp>
 struct is_not_same<_Tp, _Tp> : public std::false_type {};
 
+}  // namespace detail
+
+template <typename NType>
+bool registrateNodeTypeFun(std::string key) {
+  auto type_reg = common::Factory::registrateIf<NodeType()>(key, []() -> NodeType { return NType::node_type; });
+
+  if (!type_reg) {
+    auto registred_type = common::Factory::create<NodeType>(key).value();
+    if (registred_type != NType::node_type) {
+      std::cerr << "Can't registrate different types for key." << std::endl;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template <typename BaseElement, template <typename...> class Node, typename Enable = std::true_type>
+void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::true_type, Enable>>::type* = 0) {
+  if (!registrateNodeTypeFun<Node<BaseElement>>(key))
+    return;
+
+  auto reg = common::Factory::registrateIf<IExecutionNodeUPtr(
+      common::Configuration, IExecutionGraphPtr, std::shared_ptr<BaseElement>)>(key, Node<BaseElement>::make);
+  if (reg)
+    std::cout << "Node \"" << key << "\" has registered for element \""
+              << boost::core::demangle(typeid(BaseElement).name()) << "\"" << std::endl;
+  else
+    std::cout << "Duplicate node \"" << key << "\" has registered for element \""
+              << boost::core::demangle(typeid(BaseElement).name()) << "\"" << std::endl;
+}
+
+template <typename BaseElement, template <typename...> class Node, typename Enable>
+void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
+  std::cout << "Node " << key << " NOT registered for element \"" << boost::core::demangle(typeid(BaseElement).name())
+            << "\"" << std::endl;
+}
+
 template <typename FactoryFunction, typename Impl>
-void registrateElemetHelper(std::string key) {
+void registrateElemetAndTbbHelper(std::string key) {
   using namespace cvs::pipeline::tbb;
 
-  using ElementPtr = typename std::function<FactoryFunction>::result_type;
-  using Element    = typename ElementPtr::element_type;
-  using ElementFun = typename details::RegistrationHelper<Element>::Fun;
-  using Arg        = typename details::RegistrationHelper<Element>::Arg;
-  using Res        = typename details::RegistrationHelper<Element>::Res;
+  using ElementPtr  = typename std::function<FactoryFunction>::result_type;
+  using Element     = typename ElementPtr::element_type;
+  using ElementFun  = typename detail::RegistrationHelper<Element>::Fun;
+  using Arg         = typename detail::RegistrationHelper<Element>::Arg;
+  using Res         = typename detail::RegistrationHelper<Element>::Res;
+  using BaseElement = IElement<ElementFun>;
 
-  common::Factory::registrateIf<FactoryFunction>(key, Impl::make);
+  registrateElemetHelper<FactoryFunction, Impl>(key);
 
-  registrateBrodcastNode<Arg>();
-  registrateBrodcastNode<Res>();
+  // functional nodes
+  registrateNode<BaseElement, TbbContinueNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::continue_name);
+  registrateNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source_name);
+  registrateNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(
+      TbbDefaultName::function_name);
 
-  //  common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, IElementPtr<Arg()>)>(
-  //      "ContinueDefault"s, TbbContinueNode<IElement<Arg()>>::make);  // TODO: Is it necessary???
-  //  common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, IElementPtr<Res()>)>(
-  //      "ContinueDefault"s, TbbContinueNode<IElement<Res()>>::make);
-
-  registrateNode<Arg(), TbbContinueNode>(TbbDefaultName::continue_name);
-  registrateNode<Res(), TbbContinueNode>(TbbDefaultName::continue_name);
-
-  //  if constexpr (not std::is_same_v<Res, void>) {
-  //    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr,
-  //    IElementPtr<Res()>)>(
-  //        "SourceDefault"s, TbbSourceNode<IElement<Res()>>::make);
-  //  }
-  //  if constexpr (not std::is_same_v<Arg, void>) {
-  //    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr,
-  //    IElementPtr<Arg()>)>(
-  //        "SourceDefault"s, TbbSourceNode<IElement<Arg()>>::make);
-  //  }
-
-  // TODO: only if constexpr (not std::is_same_v<Res, void>) and std::is_same_v<Arg, void>)) ????
-  //  registrateNode<Res(), TbbSourceNode, typename is_not_same<Res, void>::type>("SourceDefault"s);
-  //  registrateNode<Arg(), TbbSourceNode, typename is_not_same<Arg, void>::type>("SourceDefault"s);
-  registrateNode<ElementFun, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source_name);
-
-  //  if constexpr (not std::is_same_v<Arg, void>) {
-  //    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, ElementPtr)>(
-  //        "FunctionNodeDefault"s, TbbFunctionNode<Element>::make);
-  //  }
-
-  registrateNode<ElementFun, TbbFunctionNode, typename is_not_same<Arg, void>::type>(TbbDefaultName::function_name);
-
-  //  if constexpr (is_tuple<Arg>::value) {
-  //    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, ElementPtr)>(
-  //        "JoinDefault"s, TbbJoinNode<Element>::make);
-  //  }
-
-  //  if constexpr (is_tuple<Res>::value) {
-  //    common::Factory::registrateIf<IExecutionNodeUPtr(common::Configuration, IExecutionGraphPtr, ElementPtr)>(
-  //        "SplitDefault"s, TbbSplitNode<Element>::make);
-  //  }
-
-  common::Factory::registrateIf<IExecutionNodeUPtr(std::string, common::Configuration, IExecutionGraphPtr)>(
-      key,
-      [key](std::string node_name, common::Configuration cfg,
-            pipeline::IExecutionGraphPtr graph) -> pipeline::IExecutionNodeUPtr {
-        std::shared_ptr<Element> element;
-        if (node_name != TbbDefaultName::split_name && node_name != TbbDefaultName::join_name)
-          element = common::Factory::create<std::unique_ptr<Element>>(key, cfg);
-        return common::Factory::create<cvs::pipeline::IExecutionNodeUPtr>(node_name, cfg, graph, std::move(element));
-      });
+  // service nodes
+  registrateNode<Arg, TbbBroadcastNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::broadcast_name);
+  registrateNode<Res, TbbBroadcastNode, typename detail::is_not_same<Res, void>::type>(TbbDefaultName::broadcast_name);
+  registrateNode<Arg, TbbJoinNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::join_name);
+  registrateNode<Res, TbbJoinNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::join_name);
+  registrateNode<Arg, TbbSplitNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::split_name);
+  registrateNode<Res, TbbSplitNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::split_name);
 }
 
 void registrateBase();
