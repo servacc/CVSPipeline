@@ -137,6 +137,10 @@ enum class ConfigValueKind {
 template <typename Subtype, auto &name, ConfigValueKind value_type, typename DefaultValueType = void>
 struct ConfigStaticValue {
   static_assert(
+    std::is_arithmetic_v<Subtype> || std::is_same_v<Subtype, std::string>,
+    "Subtype must not be a arithmetic type or a std::string"
+  );
+  static_assert(
     !std::is_const_v<Subtype> && !std::is_reference_v<Subtype>,
     "Subtype must not be a constant or a reference"
   );
@@ -205,78 +209,78 @@ struct Dummy {
 #define HELPER_CONFIG_COMMA ,
 
 #define HELPER_VALUE_BASE(name, type, config_value_kind, default_declaration, default_type) 0> Dummy_##name; \
-  protected:                                                                \
-    default_declaration                                                           \
-    static constexpr char const name##_name[] = #name;                      \
-    using Config_static_type_##name = ConfigStaticValue<type, name##_name, config_value_kind default_type>; \
-  public:                     \
-    Config_static_type_##name ::ResultType _##name; \
-    typedef Dummy<                                           \
-      Dummy_##name::Parent, \
-      Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >, \
-      Utils::ConcatenateTuples<                                    \
-        Dummy_##name::Pointers,             \
-        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name> \
-      >                                                      \
+  protected:                                                                                                 \
+    default_declaration                                                                                      \
+    static constexpr char const name##_name[] = #name;                                                       \
+    using Config_static_type_##name = ConfigStaticValue<type, name##_name, config_value_kind default_type>;  \
+  public:                                                                                                    \
+    Config_static_type_##name ::ResultType _##name;                                                          \
+    typedef Dummy<                                                                                           \
+      Dummy_##name::Parent,                                                                                  \
+      Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >,              \
+      Utils::ConcatenateTuples<                                                                              \
+        Dummy_##name::Pointers,                                                                              \
+        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name>                \
+      >                                                                                                      \
     >
 
 #define VALUE(name, type) HELPER_VALUE_BASE(name, type, ConfigValueKind::BASE,,)
 #define VALUE_OPTIONAL(name, type) HELPER_VALUE_BASE(name, type, ConfigValueKind::OPTIONAL,,)
 #define VALUE_DEFAULT(name, type, default_value) HELPER_VALUE_BASE(name, type, ConfigValueKind::WITH_DEFAULT_VALUE, \
-  struct Default_value_##name_type { static constexpr auto value = default_value; }; , \
+  struct Default_value_##name_type { static constexpr auto value = default_value; }; ,                              \
   HELPER_CONFIG_COMMA Default_value_##name_type)
 
 
-#define HELPER_OBJECT_MAIN_PART(name, type_suffix, is_name_string_empty, is_optional, ...) \
-  __VA_OPT__(                                                          \
-      friend Dummy_##name ::Parent; \
-      friend ConfigBase;                                              \
-    protected:                                                         \
-        \
-      using Self = name##type_suffix;                           \
-      template <typename Value, Value name##type_suffix::* pointer> \
+#define HELPER_OBJECT_MAIN_PART(name, type_suffix, is_name_string_empty, is_optional, ...)                          \
+  __VA_OPT__(                                                                                                       \
+      friend Dummy_##name ::Parent;                                                                                 \
+      friend ConfigBase;                                                                                            \
+    protected:                                                                                                      \
+                                                                                                                    \
+      using Self = name##type_suffix;                                                                               \
+      template <typename Value, Value name##type_suffix::* pointer>                                                 \
       struct FieldPointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
-                   \
-      typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
-      static constexpr auto name##_name = Utils::getName<is_name_string_empty>(#name);                          \
-      name##type_suffix() = default;                                                       \
-                                                                                    \
-      using Parsers = ConfigStaticObject<name##_name, Dummy_tail::Parsers, is_optional>;              \
-      using Pointers = Dummy_tail::Pointers;                           \
-    public:                                                            \
-      template <typename Tuple>                                                               \
-      explicit name##type_suffix(Tuple arguments) {                                                \
-        ConfigBase::makeFromTuple<Pointers>(*this, arguments);     \
-      } \
+                                                                                                                    \
+      typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail;                      \
+      static constexpr auto name##_name = Utils::getName<is_name_string_empty>(#name);                              \
+      name##type_suffix() = default;                                                                                \
+                                                                                                                    \
+      using Parsers = ConfigStaticObject<name##_name, Dummy_tail::Parsers, is_optional>;                            \
+      using Pointers = Dummy_tail::Pointers;                                                                        \
+    public:                                                                                                         \
+      template <typename Tuple>                                                                                     \
+      explicit name##type_suffix(Tuple arguments) {                                                                 \
+        ConfigBase::makeFromTuple<Pointers>(*this, arguments);                                                      \
+      }                                                                                                             \
   )
 
-#define HELPER_OBJECT_BASE(object_name, is_optional, ...)  0> Dummy_##object_name; \
-  protected:                                          \
-    struct object_name##_type {                           \
-      HELPER_OBJECT_MAIN_PART(object_name, _type, false, is_optional, __VA_ARGS__) \
-    };                                      \
-  public:                                 \
-    Utils::OptionalWrapper<object_name##_type, is_optional> _##object_name;                    \
-    \
-  protected:                                    \
-    typedef Dummy<                                                          \
-      Self, \
-      Utils::ConcatenateTuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >, \
-      Utils::ConcatenateTuples<                                                   \
-        Dummy_##object_name::Pointers,                                      \
+#define HELPER_OBJECT_BASE(object_name, is_optional, ...)  0> Dummy_##object_name;                                    \
+  protected:                                                                                                          \
+    struct object_name##_type {                                                                                       \
+      HELPER_OBJECT_MAIN_PART(object_name, _type, false, is_optional, __VA_ARGS__)                                    \
+    };                                                                                                                \
+  public:                                                                                                             \
+    Utils::OptionalWrapper<object_name##_type, is_optional> _##object_name;                                           \
+                                                                                                                      \
+  protected:                                                                                                          \
+    typedef Dummy<                                                                                                    \
+      Self,                                                                                                           \
+      Utils::ConcatenateTuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >,               \
+      Utils::ConcatenateTuples<                                                                                       \
+        Dummy_##object_name::Pointers,                                                                                \
         std::tuple<Self::FieldPointer<Utils::OptionalWrapper<object_name##_type, is_optional>, &Self::_##object_name> \
-      >                                                                     \
+      >                                                                                                               \
     >
 
 #define OBJECT_OPTIONAL(object_name, ...) HELPER_OBJECT_BASE(object_name, true, __VA_ARGS__)
 #define OBJECT(object_name, ...) HELPER_OBJECT_BASE(object_name, false, __VA_ARGS__)
 
-#define DECLARE_CONFIG(name, ...) \
-  class name {                  \
-    using Dummy_##name = Dummy<name, void, void, 0>; \
-    HELPER_OBJECT_MAIN_PART(name,, true, false, __VA_ARGS__) \
-   public:\
+#define DECLARE_CONFIG(name, ...)                                                  \
+  class name {                                                                     \
+    using Dummy_##name = Dummy<name, void, void, 0>;                               \
+    HELPER_OBJECT_MAIN_PART(name,, true, false, __VA_ARGS__)                       \
+   public:                                                                         \
     static std::optional<name> make(const boost::property_tree::ptree &source) {   \
-      return ConfigBase::make<name> (source);       \
-    }                                                                                        \
+      return ConfigBase::make<name> (source);                                      \
+    }                                                                              \
   };
