@@ -4,8 +4,6 @@
 
 #include "gtest/gtest.h"
 
-#define STRINGIFY2(X) #X
-#define STRINGIFY(X) STRINGIFY2(X)
 
 constexpr double TEST_JSON_REQUIRED_INNER_VALUE = 12415.123123;
 constexpr auto TEST_JSON_REQUIRED_INNER_HASH = "hHHhshAHSAs0-i0 1i2=uq9f jf3";
@@ -30,8 +28,8 @@ const std::string parsing_test_json =
     "\"value\": \"" + std::to_string(TEST_JSON_VALUE) + "\"\n"
   "}";
 
-CONFIG_OBJECT(ParsingTestConfig,
-  OBJECT( required,
+DECLARE_CONFIG( ParsingTestConfig,
+       OBJECT( required,
     VALUE( distance, std::remove_cv<decltype(TEST_JSON_REQUIRED_DISTANCE)>::type),
     VALUE_OPTIONAL( call, std::string),
     OBJECT( inner,
@@ -39,13 +37,13 @@ CONFIG_OBJECT(ParsingTestConfig,
       VALUE( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
     )
   ),
-  OBJECT_OPTIONAL( optional,
+       OBJECT_OPTIONAL( optional,
     VALUE( distance, double),
     VALUE_OPTIONAL( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
   ),
-  VALUE_DEFAULT( length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),
-  VALUE( value, std::remove_cv<decltype(TEST_JSON_VALUE)>::type),
-  VALUE_OPTIONAL( global, Config)
+       VALUE_DEFAULT( length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),
+       VALUE( value, std::remove_cv<decltype(TEST_JSON_VALUE)>::type),
+       VALUE_OPTIONAL( global, Config)
 )
 
 TEST(parsing_test, main_test) {
