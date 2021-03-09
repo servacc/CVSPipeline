@@ -12,6 +12,7 @@
 #include <variant>
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include "config_utils.hpp"
 #include "config.h"
@@ -90,7 +91,7 @@ struct Config_static_object {
       helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
 
     auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
-    if ((std::get<indexes>(result) && ...)) {
+    if ((std::get<indexes>(result).has_value() && ...)) {
       return
         std::make_optional(
           std::make_tuple(
@@ -99,7 +100,7 @@ struct Config_static_object {
         );
     }
     else {
-      return Result_type<Types, indexes...>(std::nullopt);
+      return Result_intermediate_type<Types, indexes...>{};
     }
   }
 
@@ -135,6 +136,11 @@ enum class Config_value_kind {
 
 template <class Subtype, auto &name, Config_value_kind value_type, class Default_value_type = void>
 struct Config_static_value {
+  static_assert(
+    !std::is_const_v<Subtype> && !std::is_reference_v<Subtype>,
+    "Subtype must not be a constant or a reference"
+  );
+
   using Result_type = Utils::Optional_wrapper<Subtype, (value_type == Config_value_kind::OPTIONAL)>;
 
   static std::optional<Result_type> parse(const boost::property_tree::ptree &source) {
@@ -239,7 +245,7 @@ struct Dummy {
       using Pointers = Dummy_tail::Pointers;                           \
     public:                                                            \
       template <class Tuple>                                                               \
-      name##type_suffix(Tuple arguments) {                                                \
+      explicit name##type_suffix(Tuple arguments) {                                                \
         Config_base::make_from_tuple_aggregate<Pointers>(*this, arguments);     \
       } \
   )
@@ -270,7 +276,7 @@ struct Dummy {
     using Dummy_##name = Dummy<name, void, void, 0>; \
     Object_main_part(name,, true, false, __VA_ARGS__) \
    public:\
-    static const std::optional<name> parse_and_make(const boost::property_tree::ptree &source) {   \
+    static std::optional<name> parse_and_make(const boost::property_tree::ptree &source) {   \
       return Config_base::make<name> (source);       \
     }                                                                                        \
   };
