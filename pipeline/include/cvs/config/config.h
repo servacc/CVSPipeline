@@ -17,7 +17,7 @@ class Config {
   // actually should be make(const std::string& file_content)
   static std::optional<Config> make(const std::string &file_name);
 
-  template <class Config_parser>
+  template <typename Config_parser>
   auto parse() {
     return Config_parser::parseAndMake(_tree);
   }
@@ -26,7 +26,7 @@ class Config {
 
   [[nodiscard]] std::vector<Config> getChildren() const;
 
-  template <class ResultType>
+  template <typename ResultType>
   [[nodiscard]] std::optional<ResultType> getValueOptional(const std::string& name) const {
     auto result = _tree.get_value_optional<ResultType>(name);
     if (result) {
@@ -37,7 +37,7 @@ class Config {
     }
   }
 
-  template <class ResultType>
+  template <typename ResultType>
   [[nodiscard]] ResultType getValueOrDefault(const std::string& name, ResultType default_value) const {
     return _tree.get(name, default_value);
   }

@@ -19,7 +19,7 @@
 
 
 class ConfigBase {
-  template <class Pointers, size_t index, class Object_type, class Data>
+  template <typename Pointers, size_t index, typename Object_type, typename Data>
   static constexpr void helper(Object_type& object, Data&& data) {
     using TargetType = typename std::tuple_element<index, Pointers>::type::Value_type;
     auto& target = object.*std::tuple_element<index, Pointers>::type::ptr;
@@ -36,14 +36,14 @@ class ConfigBase {
     }
   }
 
-  template <class Pointers, class Object_type, class Data, std::size_t... indexes>
+  template <typename Pointers, typename Object_type, typename Data, std::size_t... indexes>
   static constexpr void makeFromTupleImpl(Object_type& object, Data&& data, std::index_sequence<indexes...>) {
     return (helper<Pointers, indexes>(object, data), ...);
   }
 
  public:
 
-  template <class Pointers, class Object_type, class Data>
+  template <typename Pointers, typename Object_type, typename Data>
   static constexpr void makeFromTuple(Object_type& object, Data&& data) {
     return makeFromTupleImpl<Pointers>(
       object,
@@ -54,13 +54,13 @@ class ConfigBase {
 
  protected:
 
-  template <class Parser>
+  template <typename Parser>
   static auto parse(const boost::property_tree::ptree &source) {
     return Parser::parse(source);
   }
 
  public:
-  template <class Result>
+  template <typename Result>
   static std::optional<Result> make(const boost::property_tree::ptree &source) {
     auto data = parse<typename Result::Parsers>(source);
     if (!data) {
@@ -74,7 +74,7 @@ class ConfigBase {
 template <auto& name, typename Types, bool is_optional = false>
 struct ConfigStaticObject {
  protected:
-  template <class Tuple, size_t... indexes>
+  template <typename Tuple, size_t... indexes>
   using ResultIntermediateType =
     Utils::OptionalWrapper<decltype(std::make_tuple(
       Utils::toOptionalKind(
@@ -82,10 +82,10 @@ struct ConfigStaticObject {
       ).value()...
     )), is_optional>;
 
-  template <class Tuple, size_t... indexes>
+  template <typename Tuple, size_t... indexes>
   using ResultType = std::optional<ResultIntermediateType<Types, indexes...> >;
 
-  template <class Tuple, size_t... indexes>
+  template <typename Tuple, size_t... indexes>
   static
     ResultType<Types, indexes...>
       helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
@@ -134,7 +134,7 @@ enum class ConfigValueKind {
   WITH_DEFAULT_VALUE,
 };
 
-template <class Subtype, auto &name, ConfigValueKind value_type, class DefaultValueType = void>
+template <typename Subtype, auto &name, ConfigValueKind value_type, typename DefaultValueType = void>
 struct ConfigStaticValue {
   static_assert(
     !std::is_const_v<Subtype> && !std::is_reference_v<Subtype>,
@@ -195,7 +195,7 @@ struct ConfigStaticValue<Config, name, value_type, void> {
   }
 };
 
-template <class ParentType, class ParsersTuple, class FieldsPointersTuple, size_t dummy_tail = 0>
+template <typename ParentType, typename ParsersTuple, typename FieldsPointersTuple, size_t dummy_tail = 0>
 struct Dummy {
   using Parent = ParentType;
   using Parsers = ParsersTuple;
@@ -234,17 +234,17 @@ struct Dummy {
     protected:                                                         \
         \
       using Self = name##type_suffix;                           \
-      template <class Value, Value name##type_suffix::* pointer> \
+      template <typename Value, Value name##type_suffix::* pointer> \
       struct FieldPointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
                    \
       typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail; \
-      static constexpr auto name##_name = Utils::get_name<is_name_string_empty>(#name);                          \
+      static constexpr auto name##_name = Utils::getName<is_name_string_empty>(#name);                          \
       name##type_suffix() = default;                                                       \
                                                                                     \
       using Parsers = ConfigStaticObject<name##_name, Dummy_tail::Parsers, is_optional>;              \
       using Pointers = Dummy_tail::Pointers;                           \
     public:                                                            \
-      template <class Tuple>                                                               \
+      template <typename Tuple>                                                               \
       explicit name##type_suffix(Tuple arguments) {                                                \
         ConfigBase::makeFromTuple<Pointers>(*this, arguments);     \
       } \
