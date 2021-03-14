@@ -56,4 +56,17 @@ auto toOptionalKind(const Wrapping_type& value) {
   }
 }
 
+template <
+  typename InnerType,
+  typename ResultType =
+    std::conditional_t<
+      std::is_reference_v<InnerType>,
+      std::reference_wrapper<std::remove_reference_t<InnerType> >,
+      InnerType
+    >
+>
+std::optional<ResultType> boostOptionalToStd(boost::optional<InnerType>&& value) {
+  return value ? std::make_optional<ResultType>(value.get()) : std::nullopt;
+}
+
 }

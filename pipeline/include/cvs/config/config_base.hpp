@@ -55,14 +55,20 @@ class ConfigBase {
  protected:
 
   template <typename Parser>
-  static auto parse(const boost::property_tree::ptree &source) {
-    return Parser::parse(source);
+  static auto parse(
+    const boost::property_tree::ptree &source,
+    std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
+  ) {
+    return Parser::parse(source, global);
   }
 
  public:
   template <typename Result>
-  static std::optional<Result> make(const boost::property_tree::ptree &source) {
-    auto data = parse<typename Result::Parsers>(source);
+  static std::optional<Result> make(
+    const boost::property_tree::ptree &source,
+    std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
+  ) {
+    auto data = parse<typename Result::Parsers>(source, global);
     if (!data) {
       return std::nullopt;
     }
@@ -88,9 +94,12 @@ struct ConfigStaticObject {
   template <typename Tuple, size_t... indexes>
   static
     ResultType<Types, indexes...>
-      helper(const boost::property_tree::ptree &object, std::index_sequence<indexes...>) {
-
-    auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object)...);
+      helper(
+        const boost::property_tree::ptree &object,
+        std::index_sequence<indexes...>,
+        const std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
+      ) {
+    auto result = std::make_tuple(std::tuple_element<indexes, Tuple>::type::parse(object, global)...);
     if ((std::get<indexes>(result).has_value() && ...)) {
       return
         std::make_optional(
@@ -111,7 +120,10 @@ struct ConfigStaticObject {
       std::make_index_sequence<std::tuple_size<Types>::value>{}
   ));
 
-  static ParseReturnType parse(const boost::property_tree::ptree &source) {
+  static ParseReturnType parse(
+    const boost::property_tree::ptree &source,
+    std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
+  ) {
     // if name is empty, then it's a root object
     if constexpr (Utils::length(name) > 0) {
       const auto &object = source.get_child_optional(name);
@@ -120,10 +132,18 @@ struct ConfigStaticObject {
         return std::nullopt;
       }
 
-      return helper<Types>(object.get(), std::make_index_sequence<std::tuple_size<Types>::value>{});
+      return helper<Types>(object.get(), std::make_index_sequence<std::tuple_size<Types>::value>{}, global);
     }
     else {
-      return helper<Types>(source, std::make_index_sequence<std::tuple_size<Types>::value>{});
+      if (!global) {
+        global = Utils::boostOptionalToStd(source.get_child_optional("global"));
+      }
+
+      return helper<Types>(
+        source,
+        std::make_index_sequence<std::tuple_size<Types>::value>{},
+        global
+      );
     }
   }
 };
@@ -134,7 +154,13 @@ enum class ConfigValueKind {
   WITH_DEFAULT_VALUE,
 };
 
-template <typename Subtype, auto &name, ConfigValueKind value_type, typename DefaultValueType = void>
+template <
+  typename Subtype,
+  auto &name,
+  ConfigValueKind value_type,
+  typename DefaultValueType = void,
+  bool is_global = false
+>
 struct ConfigStaticValue {
   static_assert(
     std::is_arithmetic_v<Subtype> || std::is_same_v<Subtype, std::string>,
@@ -147,15 +173,13 @@ struct ConfigStaticValue {
 
   using ResultType = Utils::OptionalWrapper<Subtype, (value_type == ConfigValueKind::OPTIONAL)>;
 
-  static std::optional<ResultType> parse(const boost::property_tree::ptree &source) {
-    const auto& value = source.get_optional<Subtype>(name);
-    std::optional<Subtype> result;
-    if (!value) {
-      // TODO: logs
-      result = std::nullopt;
-    }
-    else {
-      result = value.get();
+  static std::optional<ResultType> parse(
+    const boost::property_tree::ptree &source,
+    const std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global_source = std::nullopt
+  ) {
+    std::optional<Subtype> result = Utils::boostOptionalToStd(source.get_optional<Subtype>(name));
+    if (!result && global_source && is_global) {
+      result = Utils::boostOptionalToStd(global_source.value().get().get_optional<Subtype>(name));
     }
 
     if constexpr (value_type == ConfigValueKind::OPTIONAL) {
@@ -177,17 +201,20 @@ struct ConfigStaticValue {
 };
 
 template <auto &name, ConfigValueKind value_type>
-struct ConfigStaticValue<Config, name, value_type, void> {
+struct ConfigStaticValue<Config, name, value_type, void, false> {
 
   static_assert(value_type != ConfigValueKind::WITH_DEFAULT_VALUE, "ConfigStaticValue cannot be of kind DEFAULT");
   using ResultType = Utils::OptionalWrapper<Config, (value_type == ConfigValueKind::OPTIONAL)>;
 
-  static ResultType parse(const boost::property_tree::ptree &source) {
+  static ResultType parse(
+    const boost::property_tree::ptree &source,
+    const std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
+  ) {
     const auto &object = source.get_child_optional(name);
     Config result((boost::property_tree::ptree()));
     if (object) {
       // TODO: logs
-      result = std::move(Config(object.get(), name));
+      result = std::move(Config(object.get(), global, name));
     }
 
     if constexpr (value_type == ConfigValueKind::OPTIONAL) {
@@ -208,27 +235,36 @@ struct Dummy {
 
 #define HELPER_CONFIG_COMMA ,
 
-#define HELPER_VALUE_BASE(name, type, config_value_kind, default_declaration, default_type) 0> Dummy_##name; \
-  protected:                                                                                                 \
-    default_declaration                                                                                      \
-    static constexpr char const name##_name[] = #name;                                                       \
-    using Config_static_type_##name = ConfigStaticValue<type, name##_name, config_value_kind default_type>;  \
-  public:                                                                                                    \
-    Config_static_type_##name ::ResultType _##name;                                                          \
-    typedef Dummy<                                                                                           \
-      Dummy_##name::Parent,                                                                                  \
-      Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >,              \
-      Utils::ConcatenateTuples<                                                                              \
-        Dummy_##name::Pointers,                                                                              \
-        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name>                \
-      >                                                                                                      \
+#define HELPER_VALUE_BASE(name, type, config_value_kind, default_declaration, default_type, ...) 0> Dummy_##name; \
+  protected:                                                                                                      \
+    default_declaration                                                                                           \
+    static constexpr char const name##_name[] = #name;                                                            \
+    using Config_static_type_##name =                                                                             \
+      ConfigStaticValue<type, name##_name, config_value_kind, default_type __VA_OPT__(, __VA_ARGS__)>;             \
+  public:                                                                                                         \
+    Config_static_type_##name ::ResultType _##name;                                                               \
+    typedef Dummy<                                                                                                \
+      Dummy_##name::Parent,                                                                                       \
+      Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >,                   \
+      Utils::ConcatenateTuples<                                                                                   \
+        Dummy_##name::Pointers,                                                                                   \
+        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name>                     \
+      >                                                                                                           \
     >
 
-#define VALUE(name, type) HELPER_VALUE_BASE(name, type, ConfigValueKind::BASE,,)
-#define VALUE_OPTIONAL(name, type) HELPER_VALUE_BASE(name, type, ConfigValueKind::OPTIONAL,,)
-#define VALUE_DEFAULT(name, type, default_value) HELPER_VALUE_BASE(name, type, ConfigValueKind::WITH_DEFAULT_VALUE, \
-  struct Default_value_##name_type { static constexpr auto value = default_value; }; ,                              \
-  HELPER_CONFIG_COMMA Default_value_##name_type)
+#define VALUE(name, type, ...) HELPER_VALUE_BASE(name, type, ConfigValueKind::BASE,, void, __VA_OPT__(__VA_ARGS__))
+
+#define VALUE_OPTIONAL(name, type, ...) \
+          HELPER_VALUE_BASE(name, type, ConfigValueKind::OPTIONAL,, void, __VA_OPT__(__VA_ARGS__))
+
+#define VALUE_DEFAULT(name, type, default_value, ...)                                                          \
+          HELPER_VALUE_BASE(                                                                                   \
+            name,                                                                                              \
+            type,                                                                                              \
+            ConfigValueKind::WITH_DEFAULT_VALUE,                                                               \
+            struct Default_value_##name_type { static constexpr auto value = default_value; }; ,               \
+            Default_value_##name_type,                                                     \
+            __VA_OPT__(__VA_ARGS__))
 
 
 #define HELPER_OBJECT_MAIN_PART(name, type_suffix, is_name_string_empty, is_optional, ...)                          \
@@ -275,12 +311,15 @@ struct Dummy {
 #define OBJECT_OPTIONAL(object_name, ...) HELPER_OBJECT_BASE(object_name, true, __VA_ARGS__)
 #define OBJECT(object_name, ...) HELPER_OBJECT_BASE(object_name, false, __VA_ARGS__)
 
-#define DECLARE_CONFIG(name, ...)                                                  \
-  class name {                                                                     \
-    using Dummy_##name = Dummy<name, void, void, 0>;                               \
-    HELPER_OBJECT_MAIN_PART(name,, true, false, __VA_ARGS__)                       \
-   public:                                                                         \
-    static std::optional<name> make(const boost::property_tree::ptree &source) {   \
-      return ConfigBase::make<name> (source);                                      \
-    }                                                                              \
+#define DECLARE_CONFIG(name, ...)                                                                     \
+  class name {                                                                                        \
+    using Dummy_##name = Dummy<name, void, void, 0>;                                                  \
+    HELPER_OBJECT_MAIN_PART(name,, true, false, __VA_ARGS__)                                          \
+   public:                                                                                            \
+    static std::optional<name> make(                                                                  \
+      const boost::property_tree::ptree &source,                                                      \
+      std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt \
+    ) {                                                                                               \
+      return ConfigBase::make<name> (source, global);                                                 \
+    }                                                                                                 \
   };
