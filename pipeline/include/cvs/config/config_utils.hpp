@@ -20,7 +20,7 @@ constexpr size_t length(const char *str) {
 }
 
 template <typename Type, bool is_optional = false>
-using OptionalWrapper = typename std::conditional<is_optional, std::optional<Type>, Type >::type;
+using OptionalWrapper = typename std::conditional<is_optional, std::optional<Type>, Type>::type;
 
 template <typename T, typename Enable = void>
 struct Is_optional : std::false_type {};
@@ -30,24 +30,24 @@ struct Is_optional<std::optional<T> > : std::true_type {};
 
 template <typename Wrapping_type>
 class OptionalKind {
-  const Wrapping_type& _reference;
+  const Wrapping_type &_reference;
 
  public:
-  explicit OptionalKind(const Wrapping_type& reference) : _reference(reference) {};
+  explicit OptionalKind(const Wrapping_type &reference) : _reference(reference) {};
 
   // clang-format off
   [[nodiscard]] bool has_value() const {
     return _reference.has_value();
-  // clang-format on
+    // clang-format on
   }
 
-  const Wrapping_type& value() const {
+  const Wrapping_type &value() const {
     return _reference;
   }
 };
 
 template <typename Wrapping_type>
-auto toOptionalKind(const Wrapping_type& value) {
+auto toOptionalKind(const Wrapping_type &value) {
   if constexpr (Is_optional<Wrapping_type>::value) {
     return value;
   }

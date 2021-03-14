@@ -242,13 +242,13 @@ struct Dummy {
     using Config_static_type_##name =                                                                             \
       ConfigStaticValue<type, name##_name, config_value_kind, default_type __VA_OPT__(, __VA_ARGS__)>;             \
   public:                                                                                                         \
-    Config_static_type_##name ::ResultType _##name;                                                               \
+    Config_static_type_##name ::ResultType name##_;                                                               \
     typedef Dummy<                                                                                                \
       Dummy_##name::Parent,                                                                                       \
       Utils::ConcatenateTuples<Dummy_##name::Parsers, std::tuple<Config_static_type_##name > >,                   \
       Utils::ConcatenateTuples<                                                                                   \
         Dummy_##name::Pointers,                                                                                   \
-        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::_##name>                     \
+        std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::name##_>                     \
       >                                                                                                           \
     >
 
@@ -277,12 +277,12 @@ struct Dummy {
       template <typename Value, Value name##type_suffix::* pointer>                                                 \
       struct FieldPointer { using Value_type = Value; static constexpr Value name##type_suffix::* ptr = pointer; }; \
                                                                                                                     \
-      typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> Dummy_tail;                      \
+      typedef Dummy<name##type_suffix, std::tuple<>, std::tuple<>, __VA_ARGS__, 0> DummyTail;                       \
       static constexpr auto name##_name = Utils::getName<is_name_string_empty>(#name);                              \
       name##type_suffix() = default;                                                                                \
                                                                                                                     \
-      using Parsers = ConfigStaticObject<name##_name, Dummy_tail::Parsers, is_optional>;                            \
-      using Pointers = Dummy_tail::Pointers;                                                                        \
+      using Parsers = ConfigStaticObject<name##_name, DummyTail::Parsers, is_optional>;                             \
+      using Pointers = DummyTail::Pointers;                                                                         \
     public:                                                                                                         \
       template <typename Tuple>                                                                                     \
       explicit name##type_suffix(Tuple arguments) {                                                                 \
@@ -296,7 +296,7 @@ struct Dummy {
       HELPER_OBJECT_MAIN_PART(object_name, _type, false, is_optional, __VA_ARGS__)                                    \
     };                                                                                                                \
   public:                                                                                                             \
-    Utils::OptionalWrapper<object_name##_type, is_optional> _##object_name;                                           \
+    Utils::OptionalWrapper<object_name##_type, is_optional> object_name##_;                                           \
                                                                                                                       \
   protected:                                                                                                          \
     typedef Dummy<                                                                                                    \
@@ -304,7 +304,7 @@ struct Dummy {
       Utils::ConcatenateTuples<Dummy_##object_name::Parsers, std::tuple<object_name##_type::Parsers> >,               \
       Utils::ConcatenateTuples<                                                                                       \
         Dummy_##object_name::Pointers,                                                                                \
-        std::tuple<Self::FieldPointer<Utils::OptionalWrapper<object_name##_type, is_optional>, &Self::_##object_name> \
+        std::tuple<Self::FieldPointer<Utils::OptionalWrapper<object_name##_type, is_optional>, &Self::object_name##_> \
       >                                                                                                               \
     >
 

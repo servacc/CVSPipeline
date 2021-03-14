@@ -68,14 +68,14 @@ TEST(main_test, parsing_test) {
   auto test_result = ParsingTestConfig::make(root);
 
   ASSERT_TRUE(test_result.has_value()) << "Parsing failed";
-  EXPECT_EQ(test_result->_required._inner._value, TEST_JSON_REQUIRED_INNER_VALUE) << "required->inner->value parse failed";
-  EXPECT_EQ(test_result->_required._inner._hash, TEST_JSON_REQUIRED_INNER_HASH) << "required->inner->hash parse failed";
-  EXPECT_EQ(test_result->_required._distance, TEST_JSON_REQUIRED_DISTANCE) << "required->distance parse failed";
-  EXPECT_EQ(test_result->_required._call, std::nullopt) << "required->call parse failed";
-  EXPECT_EQ(test_result->_optional, std::nullopt) << "required->optional parse failed";
-  EXPECT_EQ(test_result->_length, TEST_JSON_LENGTH) << "required->length parse failed";
-  EXPECT_EQ(test_result->_value, TEST_JSON_VALUE) << "required->value parse failed";
-  EXPECT_EQ(test_result->_global, std::nullopt) << "required->global parse failed";
+  EXPECT_EQ(test_result->required_.inner_.value_, TEST_JSON_REQUIRED_INNER_VALUE) << "required->inner->value parse failed";
+  EXPECT_EQ(test_result->required_.inner_.hash_, TEST_JSON_REQUIRED_INNER_HASH) << "required->inner->hash parse failed";
+  EXPECT_EQ(test_result->required_.distance_, TEST_JSON_REQUIRED_DISTANCE) << "required->distance parse failed";
+  EXPECT_EQ(test_result->required_.call_, std::nullopt) << "required->call parse failed";
+  EXPECT_EQ(test_result->optional_, std::nullopt) << "required->optional parse failed";
+  EXPECT_EQ(test_result->length_, TEST_JSON_LENGTH) << "required->length parse failed";
+  EXPECT_EQ(test_result->value_, TEST_JSON_VALUE) << "required->value parse failed";
+  EXPECT_EQ(test_result->global_, std::nullopt) << "required->global parse failed";
 }
 
 TEST(main_test, module_config_test) {
@@ -140,6 +140,6 @@ TEST(main_test, module_config_test) {
 
   auto test_module_result = test_module.parse<ParsingTestConfig>();
   ASSERT_TRUE(test_module_result.has_value()) << "Test module parsing failed";
-  ASSERT_TRUE(test_module_result->_optional.has_value()) << "required->optional parse failed";
-  EXPECT_EQ(test_module_result->_optional.value()._distance, global_distance) << "global_distance parse failed";
+  ASSERT_TRUE(test_module_result->optional_.has_value()) << "required->optional parse failed";
+  EXPECT_EQ(test_module_result->optional_.value().distance_, global_distance) << "global_distance parse failed";
 }
