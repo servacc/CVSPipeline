@@ -39,7 +39,7 @@ DECLARE_CONFIG( ParsingTestConfig,
     )
   ),
   OBJECT_OPTIONAL( optional,
-    VALUE( distance, double, true),
+    VALUE( distance, double, SEARCH_IN_GLOBAL),
     VALUE_OPTIONAL( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
   ),
   VALUE_DEFAULT( length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),

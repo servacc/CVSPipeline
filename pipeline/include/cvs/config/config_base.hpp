@@ -233,8 +233,6 @@ struct Dummy {
   using Pointers = FieldsPointersTuple;
 };
 
-#define HELPER_CONFIG_COMMA ,
-
 #define HELPER_VALUE_BASE(name, type, config_value_kind, default_declaration, default_type, ...) 0> Dummy_##name; \
   protected:                                                                                                      \
     default_declaration                                                                                           \
@@ -251,6 +249,8 @@ struct Dummy {
         std::tuple<Self::FieldPointer<Config_static_type_##name ::ResultType, &Self::name##_>                     \
       >                                                                                                           \
     >
+
+#define SEARCH_IN_GLOBAL true
 
 #define VALUE(name, type, ...) HELPER_VALUE_BASE(name, type, ConfigValueKind::BASE,, void, __VA_OPT__(__VA_ARGS__))
 
