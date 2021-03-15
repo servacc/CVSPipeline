@@ -5,51 +5,51 @@
 #include "gtest/gtest.h"
 
 
-constexpr double TEST_JSON_REQUIRED_INNER_VALUE = 12415.123123;
-constexpr auto TEST_JSON_REQUIRED_INNER_HASH = "hHHhshAHSAs0-i0 1i2=uq9f jf3";
-constexpr double TEST_JSON_REQUIRED_DISTANCE = 7.2;
-constexpr float TEST_JSON_LENGTH = 7.2;
-constexpr float TEST_JSON_VALUE = -0.0001;
+constexpr double kTestJsonRequiredInnerValue = 12415.123123;
+constexpr auto kTestJsonRequiredInnerHash = "hHHhshAHSAs0-i0 1i2=uq9f jf3";
+constexpr double kTestJsonRequiredDistance = 7.2;
+constexpr float kTestJsonLength = 7.2;
+constexpr float kTestJsonValue = -0.0001;
 
-const std::string parsing_test_json =
+const std::string kParsingTestJson =
   "{ \n"
     "\"moduleName\": \"test_module\", \n"
     "\"required\": { \n"
       "\"inner\": { \n"
-        "\"value\": \"" + std::to_string(TEST_JSON_REQUIRED_INNER_VALUE) + "\",\n"
-        "\"hash\": \"" + std::string(TEST_JSON_REQUIRED_INNER_HASH) + "\"\n"
+        "\"value\": \"" + std::to_string(kTestJsonRequiredInnerValue) + "\",\n"
+        "\"hash\": \"" + std::string(kTestJsonRequiredInnerHash) + "\"\n"
       "},\n"
-      "\"distance\": \"" + std::to_string(TEST_JSON_REQUIRED_DISTANCE) + "\"\n"
+      "\"distance\": \"" + std::to_string(kTestJsonRequiredDistance) + "\"\n"
       //"\"call\": \"Wow\"\n"
     "}, \n"
     "\"optional\": {\n"
-      "\"hash\": \"" + std::string(TEST_JSON_REQUIRED_INNER_HASH) + "\"\n"
+      "\"hash\": \"" + std::string(kTestJsonRequiredInnerHash) + "\"\n"
     "},\n"
   //"\"length\": \"15\", "
-    "\"value\": \"" + std::to_string(TEST_JSON_VALUE) + "\"\n"
+    "\"value\": \"" + std::to_string(kTestJsonValue) + "\"\n"
   "}";
 
 DECLARE_CONFIG( ParsingTestConfig,
   OBJECT( required,
-    VALUE( distance, std::remove_cv<decltype(TEST_JSON_REQUIRED_DISTANCE)>::type),
+    VALUE( distance, std::remove_cv<decltype(kTestJsonRequiredDistance)>::type),
     VALUE_OPTIONAL( call, std::string),
     OBJECT( inner,
-      VALUE( value, std::remove_cv<decltype(TEST_JSON_REQUIRED_INNER_VALUE)>::type),
-      VALUE( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
+      VALUE( value, std::remove_cv<decltype(kTestJsonRequiredInnerValue)>::type),
+      VALUE( hash, std::remove_cv<decltype(std::string(kTestJsonRequiredInnerHash))>::type)
     )
   ),
   OBJECT_OPTIONAL( optional,
     VALUE( distance, double, SEARCH_IN_GLOBAL),
-    VALUE_OPTIONAL( hash, std::remove_cv<decltype(std::string(TEST_JSON_REQUIRED_INNER_HASH))>::type)
+    VALUE_OPTIONAL( hash, std::remove_cv<decltype(std::string(kTestJsonRequiredInnerHash))>::type)
   ),
-  VALUE_DEFAULT( length, std::remove_cv<decltype(TEST_JSON_LENGTH)>::type, TEST_JSON_LENGTH),
-  VALUE( value, std::remove_cv<decltype(TEST_JSON_VALUE)>::type),
+  VALUE_DEFAULT(length, std::remove_cv<decltype(kTestJsonLength)>::type, kTestJsonLength),
+  VALUE( value, std::remove_cv<decltype(kTestJsonValue)>::type),
   VALUE_OPTIONAL( global, Config)
 )
 
 TEST(main_test, parsing_test) {
   std::stringstream ss;
-  ss << parsing_test_json;
+  ss << kParsingTestJson;
   boost::property_tree::ptree root;
 
   try {
@@ -68,13 +68,13 @@ TEST(main_test, parsing_test) {
   auto test_result = ParsingTestConfig::make(root);
 
   ASSERT_TRUE(test_result.has_value()) << "Parsing failed";
-  EXPECT_EQ(test_result->required_.inner_.value_, TEST_JSON_REQUIRED_INNER_VALUE) << "required->inner->value parse failed";
-  EXPECT_EQ(test_result->required_.inner_.hash_, TEST_JSON_REQUIRED_INNER_HASH) << "required->inner->hash parse failed";
-  EXPECT_EQ(test_result->required_.distance_, TEST_JSON_REQUIRED_DISTANCE) << "required->distance parse failed";
+  EXPECT_EQ(test_result->required_.inner_.value_, kTestJsonRequiredInnerValue) << "required->inner->value parse failed";
+  EXPECT_EQ(test_result->required_.inner_.hash_, kTestJsonRequiredInnerHash) << "required->inner->hash parse failed";
+  EXPECT_EQ(test_result->required_.distance_, kTestJsonRequiredDistance) << "required->distance parse failed";
   EXPECT_EQ(test_result->required_.call_, std::nullopt) << "required->call parse failed";
   EXPECT_EQ(test_result->optional_, std::nullopt) << "required->optional parse failed";
-  EXPECT_EQ(test_result->length_, TEST_JSON_LENGTH) << "required->length parse failed";
-  EXPECT_EQ(test_result->value_, TEST_JSON_VALUE) << "required->value parse failed";
+  EXPECT_EQ(test_result->length_, kTestJsonLength) << "required->length parse failed";
+  EXPECT_EQ(test_result->value_, kTestJsonValue) << "required->value parse failed";
   EXPECT_EQ(test_result->global_, std::nullopt) << "required->global parse failed";
 }
 
@@ -84,10 +84,10 @@ TEST(main_test, module_config_test) {
 
   const std::string module_config_test_json =
     "{ \n"
-      "\"" + module_name + "\": " + parsing_test_json + ","
+      "\"" + module_name + "\": " + kParsingTestJson + ","
       "\"global\": {\n"
-        "\"hash\": \"" + std::string(TEST_JSON_REQUIRED_INNER_HASH) + "\",\n"
-        "\"value\": \"" + std::to_string(TEST_JSON_REQUIRED_INNER_VALUE) + "\",\n"
+        "\"hash\": \"" + std::string(kTestJsonRequiredInnerHash) + "\",\n"
+        "\"value\": \"" + std::to_string(kTestJsonRequiredInnerValue) + "\",\n"
         "\"distance\": \"" + std::to_string(global_distance) + "\",\n"
         "\"some\": \"ololo\"\n"
       "}\n"
@@ -134,8 +134,8 @@ TEST(main_test, module_config_test) {
   auto& test_module = modules_configs[0];
   EXPECT_EQ(test_module.getName(), module_name) << "Wrong module name";
   EXPECT_EQ(
-    test_module.getValueOptional<std::remove_cv<decltype(TEST_JSON_VALUE)>::type>("value"),
-    TEST_JSON_VALUE
+    test_module.getValueOptional<std::remove_cv<decltype(kTestJsonValue)>::type>("value"),
+    kTestJsonValue
   ) << "\'value\' parsing failed";
 
   auto test_module_result = test_module.parse<ParsingTestConfig>();
