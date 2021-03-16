@@ -109,7 +109,12 @@ struct ConfigStaticObject {
         );
     }
     else {
-      return ResultIntermediateType<Types, indexes...>{};
+      if constexpr (is_optional) {
+        return std::make_optional<ResultIntermediateType<Types, indexes...> >(std::nullopt);
+      }
+      else {
+        return std::nullopt;
+      }
     }
   }
 

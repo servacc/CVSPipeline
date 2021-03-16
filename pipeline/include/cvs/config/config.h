@@ -24,8 +24,8 @@ class Config {
     std::optional<std::reference_wrapper<const boost::property_tree::ptree> > global = std::nullopt
   );
 
-  // actually should be make(const std::string& file_content)
-  static std::optional<Config> make(const std::string &file_name);
+  static std::optional<Config> make(std::string&& file_content);
+  static std::optional<Config> makeFromFile(const std::string &file_name);
 
   template <typename Config_parser>
   auto parse() {
