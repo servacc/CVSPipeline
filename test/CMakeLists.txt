@@ -1,12 +1,9 @@
-option(CVSPIPELINE_TESTS "Enable tests" OFF)
+include(CTest)
 
-if(NOT CVSPIPELINE_TESTS)
+if(NOT BUILD_TESTING)
     return()
 endif()
 
-if(NOT TARGET gtest)
-    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-    add_subdirectory(../thirdparty/googletest googletest)
-endif()
+enable_testing()
 
 add_subdirectory(tbbtest cvspipeline)
