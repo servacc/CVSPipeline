@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
@@ -126,7 +126,7 @@ class TbbFunctionNode : public TbbFunctionNodeBase<Element, Policy> {
   using ResultType     = typename TbbFunctionNodeBase<Element, Policy>::ResultType;
   using ArgumentsType  = typename TbbFunctionNodeBase<Element, Policy>::ArgumentsType;
 
-  static auto make(common::Configuration cfg, IExecutionGraphPtr graph, ElementPtrType body) {
+  static auto make(common::Config cfg, IExecutionGraphPtr graph, ElementPtrType body) {
     std::size_t concurrency = 0;
 
     if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph))

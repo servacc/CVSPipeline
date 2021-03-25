@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/core/demangle.hpp>
-#include <cvs/common/configuration.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
@@ -96,7 +95,7 @@ void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std:
     return;
 
   auto reg = common::Factory::registrateIf<IExecutionNodeUPtr(
-      common::Configuration, IExecutionGraphPtr, std::shared_ptr<BaseElement>)>(key, Node<BaseElement>::make);
+      common::Config, IExecutionGraphPtr, std::shared_ptr<BaseElement>)>(key, Node<BaseElement>::make);
   if (reg)
     std::cout << "Node \"" << key << "\" has registered for element \""
               << boost::core::demangle(typeid(BaseElement).name()) << "\"" << std::endl;

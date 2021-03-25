@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
@@ -18,7 +18,7 @@ class TbbJoinNode<std::tuple<Arg0, Arg1, Args...>, Policy>
  public:
   using ArgumentsType = std::tuple<Arg0, Arg1, Args...>;
 
-  static auto make(common::Configuration, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
+  static auto make(common::Config, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbJoinNode>(g);
     return std::unique_ptr<TbbJoinNode>{};

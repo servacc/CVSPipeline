@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
@@ -62,7 +62,7 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
   using ElementResultType = typename TbbContinueNodeBase<Element>::ElementResultType;
   using NodeResultType    = typename TbbContinueNodeBase<Element>::NodeResultType;
 
-  static auto make(common::Configuration, IExecutionGraphPtr graph, IElementPtr<ElementResultType()> element) {
+  static auto make(common::Config, IExecutionGraphPtr graph, IElementPtr<ElementResultType()> element) {
     int number_of_predecessors = 0;
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbContinueNode>(g, number_of_predecessors, std::move(element));

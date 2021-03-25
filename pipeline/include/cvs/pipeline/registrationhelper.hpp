@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
@@ -61,8 +61,8 @@ void registrateElemetHelper(std::string key) {
 
   Factory::registrateIf<FactoryFunction>(key, Impl::make);
 
-  Factory::registrateIf<IExecutionNodeUPtr(std::string, Configuration, IExecutionGraphPtr)>(
-      key, [key](std::string node_name, Configuration cfg, IExecutionGraphPtr graph) -> IExecutionNodeUPtr {
+  Factory::registrateIf<IExecutionNodeUPtr(std::string, common::Config, IExecutionGraphPtr)>(
+      key, [key](std::string node_name, common::Config cfg, IExecutionGraphPtr graph) -> IExecutionNodeUPtr {
         auto node_type = Factory::create<NodeType>(node_name);
         if (!node_type.has_value()) {
           std::cerr << "Node Type?" << std::endl;

@@ -4,6 +4,7 @@ project(cvspipeline)
 
 find_package(Boost REQUIRED)
 find_package(TBB REQUIRED)
+find_package(CVSLogger REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME}
@@ -40,4 +41,4 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
         include
     )
-target_link_libraries(${PROJECT_NAME} cvscommon Boost::boost dl TBB::tbb)
+target_link_libraries(${PROJECT_NAME} cvscommon Boost::boost dl TBB::tbb cvs::CVSLogger)

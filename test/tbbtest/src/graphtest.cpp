@@ -15,7 +15,7 @@ namespace {
 
 class AElement : public IElement<int(bool*)> {
  public:
-  static auto make(common::Configuration) {
+  static auto make(common::Config) {
     auto e = std::make_unique<AElement>();
 
     EXPECT_CALL(*e, process(_))
@@ -36,7 +36,7 @@ class AElement : public IElement<int(bool*)> {
 
 class BElement : public IElement<int(int)> {
  public:
-  static auto make(common::Configuration) {
+  static auto make(common::Config) {
     auto e = std::make_unique<BElement>();
     EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> int { return a; });
     return e;
@@ -47,7 +47,7 @@ class BElement : public IElement<int(int)> {
 
 class CElement : public IElement<float(int)> {
  public:
-  static auto make(common::Configuration) {
+  static auto make(common::Config) {
     auto e = std::make_unique<CElement>();
     EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> float { return a / 100.f; });
     return e;
@@ -58,7 +58,7 @@ class CElement : public IElement<float(int)> {
 
 class DElement : public IElement<float(int, float)> {
  public:
-  static auto make(common::Configuration) {
+  static auto make(common::Config) {
     auto e = std::make_unique<DElement>();
     EXPECT_CALL(*e, process(10, 0.1f)).WillOnce([](int a, float b) -> float { return a + b; });
     return e;
@@ -69,7 +69,7 @@ class DElement : public IElement<float(int, float)> {
 
 class EElement : public IElement<void(float)> {
  public:
-  static auto make(common::Configuration) {
+  static auto make(common::Config) {
     auto e = std::make_unique<EElement>();
     EXPECT_CALL(*e, process(10.1f));
     return e;
@@ -87,11 +87,11 @@ class GraphTest : public ::testing::Test {
   static void SetUpTestCase() {
     registrateBase();
 
-    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(Configuration), AElement>("A"s);
-    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(Configuration), BElement>("B"s);
-    registrateElemetAndTbbHelper<IElementUPtr<float(int)>(Configuration), CElement>("C"s);
-    registrateElemetAndTbbHelper<IElementUPtr<float(int, float)>(Configuration), DElement>("D"s);
-    registrateElemetAndTbbHelper<IElementUPtr<void(float)>(Configuration), EElement>("E"s);
+    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config), AElement>("A"s);
+    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config), BElement>("B"s);
+    registrateElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config), CElement>("C"s);
+    registrateElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config), DElement>("D"s);
+    registrateElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config), EElement>("E"s);
   }
 };
 
@@ -109,7 +109,7 @@ TEST_F(GraphTest, branch_graph) {
   //       |
   //       E
 
-  Configuration cfg;
+  common::Config cfg;
 
   IExecutionGraphPtr graph = Factory::create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);

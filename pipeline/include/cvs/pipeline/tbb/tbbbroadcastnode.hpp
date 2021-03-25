@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
 #include <tbb/flow_graph.h>
@@ -11,7 +11,7 @@ template <typename T>
 class TbbBroadcastNode : public IInputExecutionNode<NodeType::ServiceOut, T>,
                          public IOutputExecutionNode<NodeType::ServiceOut, T> {
  public:
-  static auto make(common::Configuration, IExecutionGraphPtr graph, std::shared_ptr<T>) {
+  static auto make(common::Config, IExecutionGraphPtr graph, std::shared_ptr<T>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbBroadcastNode>(g);
     return std::unique_ptr<TbbBroadcastNode>{};

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
-
 #include <memory>
 
 namespace cvs::pipeline {
