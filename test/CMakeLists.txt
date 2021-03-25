@@ -6,4 +6,5 @@ endif()
 
 enable_testing()
 
-add_subdirectory(tbbtest cvspipeline)
+add_subdirectory(tbbtest)
+add_subdirectory(moduletest)

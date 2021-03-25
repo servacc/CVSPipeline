@@ -10,3 +10,5 @@ target_sources(${PROJECT_NAME}
     )
 
 target_link_libraries(${PROJECT_NAME} PkgConfig::gmock_main cvspipeline)
+
+add_test(TbbPipelineTest ${PROJECT_NAME})
