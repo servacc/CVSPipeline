@@ -6,6 +6,12 @@ find_package(Boost REQUIRED)
 find_package(TBB REQUIRED)
 find_package(CVSLogger REQUIRED)
 
+cvs_create_version_file(NAME ${PROJECT_NAME}
+                        MAJOR ${CVSPipelineLib_VERSION_MAJOR}
+                        MINOR ${CVSPipelineLib_VERSION_MINOR}
+                        PATCH ${CVSPipelineLib_VERSION_PATCH}
+                        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate/cvs/pipeline")
+
 add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME}
     PRIVATE
@@ -39,6 +45,8 @@ target_sources(${PROJECT_NAME}
     )
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        include
-    )
-target_link_libraries(${PROJECT_NAME} cvscommon Boost::boost dl TBB::tbb cvs::CVSLogger)
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generate>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
+
+target_link_libraries(${PROJECT_NAME} Boost::boost dl TBB::tbb cvs::CVSLogger)

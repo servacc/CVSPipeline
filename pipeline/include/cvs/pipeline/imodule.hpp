@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/dll/shared_library.hpp>
-#include <cvs/common/configuration.hpp>
 #include <cvs/common/factory.hpp>
 
 #include <memory>
@@ -14,15 +13,10 @@ class IModule {
   virtual std::string name() const          = 0;
   virtual int         version() const       = 0;
   virtual void        registerTypes() const = 0;
-  virtual bool        checkCompatibility() const {
-    return common::Factory::libVersion == common::Factory::kVersion && libVersion == kVersion;
-  }
+  virtual bool        checkCompatibility() const;
 
  protected:
-  // ABI version
-  // Must be incremented with every change in interface layout or its inline functions
-  static constexpr int kVersion = 0;
-  static const int     libVersion;
+  static const int libVersion;
 };
 
 namespace detail {

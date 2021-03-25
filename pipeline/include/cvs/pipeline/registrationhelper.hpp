@@ -2,6 +2,7 @@
 
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
+#include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
@@ -63,9 +64,12 @@ void registrateElemetHelper(std::string key) {
 
   Factory::registrateIf<IExecutionNodeUPtr(std::string, common::Config, IExecutionGraphPtr)>(
       key, [key](std::string node_name, common::Config cfg, IExecutionGraphPtr graph) -> IExecutionNodeUPtr {
+        auto logger = cvs::logger::createLogger("cvs.pipeline.NodeFactory");
+
         auto node_type = Factory::create<NodeType>(node_name);
         if (!node_type.has_value()) {
-          std::cerr << "Node Type?" << std::endl;
+          LOG_ERROR(logger, R"s(Unable to create node "{}" for key "{}")s",
+                    boost::core::demangle(typeid(NodeType).name()), node_name);
           return {};
         }
 
@@ -77,7 +81,8 @@ void registrateElemetHelper(std::string key) {
           case Functional: {
             auto element = Factory::create<std::unique_ptr<Element>>(key, cfg);
             if (!element) {
-              std::cerr << "Null element" << std::endl;
+              LOG_ERROR(logger, R"s(Unable to create element "{}" for key "{}")s",
+                        boost::core::demangle(typeid(Element).name()), key);
               return {};
             }
             return Factory::create<IExecutionNodeUPtr>(node_name, cfg, graph,
@@ -85,7 +90,7 @@ void registrateElemetHelper(std::string key) {
                 .value_or(nullptr);
           }
           default: {
-            std::cerr << "Node type" << std::endl;
+            LOG_ERROR(logger, "Unknown node type");
           } break;
         }
 

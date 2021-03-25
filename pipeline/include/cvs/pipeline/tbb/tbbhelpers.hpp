@@ -2,6 +2,7 @@
 
 #include <boost/core/demangle.hpp>
 #include <cvs/common/factory.hpp>
+#include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
 #include <cvs/pipeline/registrationhelper.hpp>
@@ -18,21 +19,6 @@
 #include <type_traits>
 
 namespace cvs::pipeline::tbb {
-
-// default nodes:
-// if(void()       ) continue
-// if(void()       ) brodcast void aka continue_msg
-//
-// element
-//
-// if(R()          ) continue R +
-// if(R(A)         ) continue A +
-// if(R(...)       ) brodcast R +
-// if(R(A)         ) brodcast A +
-// if(R(A)         ) function +
-// if(R(A...)      ) join A...
-// if(R(A...)      ) split A...
-// if(tuple<R>(...)) split
 
 namespace detail {
 
@@ -81,7 +67,9 @@ bool registrateNodeTypeFun(std::string key) {
   if (!type_reg) {
     auto registred_type = common::Factory::create<NodeType>(key).value();
     if (registred_type != NType::node_type) {
-      std::cerr << "Can't registrate different types for key." << std::endl;
+      auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
+      LOG_ERROR(logger, R"s(Can't registrate different types ({} != {}) for key ("{}"))s", key, int(registred_type),
+                int(NType::node_type));
       return false;
     }
   }
@@ -94,20 +82,23 @@ void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std:
   if (!registrateNodeTypeFun<Node<BaseElement>>(key))
     return;
 
+  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
+
   auto reg = common::Factory::registrateIf<IExecutionNodeUPtr(
       common::Config, IExecutionGraphPtr, std::shared_ptr<BaseElement>)>(key, Node<BaseElement>::make);
-  if (reg)
-    std::cout << "Node \"" << key << "\" has registered for element \""
-              << boost::core::demangle(typeid(BaseElement).name()) << "\"" << std::endl;
-  else
-    std::cout << "Duplicate node \"" << key << "\" has registered for element \""
-              << boost::core::demangle(typeid(BaseElement).name()) << "\"" << std::endl;
+  if (reg) {
+    LOG_DEBUG(logger, R"s(Register: node "{}" for element "{}")s", key,
+              boost::core::demangle(typeid(BaseElement).name()));
+  } else {
+    LOG_DEBUG(logger, R"s(Duplicate: node "{}" for element "{}")s", key,
+              boost::core::demangle(typeid(BaseElement).name()));
+  }
 }
 
 template <typename BaseElement, template <typename...> class Node, typename Enable>
 void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
-  std::cout << "Node " << key << " NOT registered for element \"" << boost::core::demangle(typeid(BaseElement).name())
-            << "\"" << std::endl;
+  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
+  LOG_DEBUG(logger, R"s(Ignore: node "{}" for element "{}")s", key, boost::core::demangle(typeid(BaseElement).name()));
 }
 
 template <typename FactoryFunction, typename Impl>
