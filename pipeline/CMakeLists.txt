@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(cvspipeline)
+project(CVSPipeline)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(TBB REQUIRED)
 find_package(CVSLogger REQUIRED)
 
@@ -13,6 +13,7 @@ cvs_create_version_file(NAME ${PROJECT_NAME}
                         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate/cvs/pipeline")
 
 add_library(${PROJECT_NAME} SHARED)
+add_library(cvs::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
     PRIVATE
         include/cvs/pipeline/ipipeline.hpp
@@ -49,4 +50,8 @@ target_include_directories(${PROJECT_NAME}
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generate>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
 
-target_link_libraries(${PROJECT_NAME} Boost::boost dl TBB::tbb cvs::CVSLogger)
+target_link_libraries(${PROJECT_NAME}
+  Boost::boost Boost::filesystem
+  dl
+  TBB::tbb
+  cvs::CVSLogger)

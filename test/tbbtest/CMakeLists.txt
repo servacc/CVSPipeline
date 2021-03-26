@@ -9,6 +9,6 @@ target_sources(${PROJECT_NAME}
         src/graphtest.cpp
     )
 
-target_link_libraries(${PROJECT_NAME} PkgConfig::gmock_main cvspipeline)
+target_link_libraries(${PROJECT_NAME} PkgConfig::gmock_main CVSPipeline)
 
 add_test(TbbPipelineTest ${PROJECT_NAME})

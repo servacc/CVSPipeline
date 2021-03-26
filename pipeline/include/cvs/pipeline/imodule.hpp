@@ -22,6 +22,7 @@ class IModule {
 namespace detail {
 using IModuleCreator = IModule *();
 using IModuleDeleter = void(IModule *);
+using IModuleVersion = unsigned int();
 }  // namespace detail
 
 using IModulePtr  = std::shared_ptr<IModule>;
@@ -32,6 +33,9 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib);
 
 }  // namespace cvs::pipeline
 
-#define REGISTER_MODULE(module)                                         \
-  extern "C" cvs::pipeline::IModule *newModule() { return new module; } \
-  extern "C" void                    deleteModule(cvs::pipeline::IModule *ptr) { delete ptr; }
+#define REGISTER_MODULE(module)                                                                \
+  extern "C" cvs::pipeline::IModule *newModule() { return new module; }                        \
+  extern "C" void                    deleteModule(cvs::pipeline::IModule *ptr) { delete ptr; } \
+  extern "C" unsigned int            moduleVersionMajor() { return CVSPipeline_VER_MAJOR; }    \
+  extern "C" unsigned int            moduleVersionMinor() { return CVSPipeline_VER_MINOR; }    \
+  extern "C" unsigned int            moduleVersionPatch() { return CVSPipeline_VER_PATCH; }

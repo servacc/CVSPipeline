@@ -4,9 +4,9 @@
 
 namespace cvs::pipeline {
 
-const int IModule::libVersion = cvspipeline_VERSION_MAJOR;
+const int IModule::libVersion = CVSPipeline_VERSION_MAJOR;
 
-bool IModule::checkCompatibility() const { return libVersion == cvspipeline_VERSION_MAJOR; }
+bool IModule::checkCompatibility() const { return libVersion == CVSPipeline_VERSION_MAJOR; }
 
 IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.module");
@@ -19,13 +19,33 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     LOG_ERROR(logger, "Module doesn't define newModule");
     return nullptr;
   }
+
   if (!lib.has("deleteModule")) {
     LOG_ERROR(logger, "Module doesn't define deleteModule");
     return nullptr;
   }
 
+  if (!lib.has("moduleVersionMajor")) {
+    LOG_ERROR(logger, "Module doesn't define moduleVersionMajor");
+    return nullptr;
+  }
+  if (!lib.has("moduleVersionMinor")) {
+    LOG_ERROR(logger, "Module doesn't define moduleVersionMinor");
+    return nullptr;
+  }
+  if (!lib.has("moduleVersionPatch")) {
+    LOG_ERROR(logger, "Module doesn't define moduleVersionPatch");
+    return nullptr;
+  }
+
   auto newModule    = &lib.get<detail::IModuleCreator>("newModule");
   auto deleteModule = &lib.get<detail::IModuleDeleter>("deleteModule");
+  auto versionMajor = &lib.get<detail::IModuleVersion>("moduleVersionMajor");
+  auto versionMinor = &lib.get<detail::IModuleVersion>("moduleVersionMinor");
+  auto versionPatch = &lib.get<detail::IModuleVersion>("moduleVersionPatch");
+
+  if (versionMajor() != CVSPipeline_VERSION_MAJOR)
+    return nullptr;
 
   IModuleUPtr result{newModule(), deleteModule};
   if (!result->checkCompatibility()) {

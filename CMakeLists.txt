@@ -22,7 +22,11 @@ set(CVS_DATA_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}")
 add_compile_definitions(
     PROJECT_VERSION="${PROJECT_VERSION}"
     PROJECT_DESCRIPTION="${PROJECT_DESCRIPTION}"
-    DEFAULT_CONFIG="${CVS_CONFIG_DIR}/cvspipeline.json")
+    DEFAULT_CONFIG="${CVS_CONFIG_DIR}/cvspipeline.json"
+    CVSPipeline_MODULE_DIR="${CVS_MODULE_DIR}"
+    CVSPipeline_VER_MAJOR=${PROJECT_VERSION_MAJOR}
+    CVSPipeline_VER_MINOR=${PROJECT_VERSION_MINOR}
+    CVSPipeline_VER_PATCH=${PROJECT_VERSION_PATCH})
 
 add_subdirectory(pipeline)
 add_subdirectory(libmain)

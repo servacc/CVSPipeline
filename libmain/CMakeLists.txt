@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(cvspipeline_main)
+project(CVSPipeline_main)
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
@@ -9,4 +9,4 @@ target_sources(${PROJECT_NAME}
     PRIVATE
         src/main.cpp
     )
-target_link_libraries(${PROJECT_NAME} cvspipeline Boost::program_options)
+target_link_libraries(${PROJECT_NAME} CVSPipeline Boost::program_options)
