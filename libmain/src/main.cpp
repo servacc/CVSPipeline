@@ -4,6 +4,8 @@
 #include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
 
+#include <iostream>
+
 using namespace std::string_literals;
 namespace po = boost::program_options;
 
@@ -32,6 +34,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  auto factory = std::make_shared<cvs::common::Factory<std::string>>();
+
   auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
 
   cvs::logger::initLoggers(config_opt);
@@ -39,7 +43,7 @@ int main(int argc, char *argv[]) {
   if (!config_opt.has_value())
     LOG_GLOB_CRITICAL("Can't load config \"{}\"", config_path_string);
 
-  auto pipeline = cvs::common::Factory::create<cvs::pipeline::IPipelineUPtr>(pipeline_key, *config_opt);
+  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr>(pipeline_key, *config_opt);
   if (!pipeline) {
     LOG_GLOB_CRITICAL("Can't create pipeline object for key \"{}\"", pipeline_key);
     return 1;

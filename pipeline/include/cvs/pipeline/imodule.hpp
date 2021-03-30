@@ -9,10 +9,10 @@ namespace cvs::pipeline {
 
 class IModule {
  public:
-  virtual ~IModule()                        = default;
-  virtual std::string name() const          = 0;
-  virtual int         version() const       = 0;
-  virtual void        registerTypes() const = 0;
+  virtual ~IModule()                                                            = default;
+  virtual std::string name() const                                              = 0;
+  virtual int         version() const                                           = 0;
+  virtual void        registerTypes(cvs::common::FactoryPtr<std::string>) const = 0;
   virtual bool        checkCompatibility() const;
 
  protected:

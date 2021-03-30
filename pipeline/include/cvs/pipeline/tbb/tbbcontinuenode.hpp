@@ -62,7 +62,7 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
   using ElementResultType = typename TbbContinueNodeBase<Element>::ElementResultType;
   using NodeResultType    = typename TbbContinueNodeBase<Element>::NodeResultType;
 
-  static auto make(common::Config, IExecutionGraphPtr graph, IElementPtr<ElementResultType()> element) {
+  static auto make(common::Config&, IExecutionGraphPtr graph, IElementPtr<ElementResultType()> element) {
     int number_of_predecessors = 0;
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbContinueNode>(g, number_of_predecessors, std::move(element));

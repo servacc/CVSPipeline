@@ -2,8 +2,8 @@
 
 namespace cvs::pipeline::tbb {
 
-void registrateBase() {
-  common::Factory::registrateDefault<IExecutionGraphUPtr(), TbbFlowGraph>(TbbDefaultName::graph);
+void registrateBase(cvs::common::FactoryPtr<std::string> factory) {
+  factory->registrateDefault<IExecutionGraphUPtr(), TbbFlowGraph>(TbbDefaultName::graph);
 }
 
 }  // namespace cvs::pipeline::tbb

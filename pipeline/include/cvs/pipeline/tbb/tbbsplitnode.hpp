@@ -18,7 +18,7 @@ class TbbSplitNode<std::tuple<R0, R1, Result...>>
  public:
   using ResultType = std::tuple<R0, R1, Result...>;
 
-  static auto make(common::Config, IExecutionGraphPtr graph, std::shared_ptr<ResultType>) {
+  static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ResultType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbSplitNode>(g);
     return std::unique_ptr<TbbSplitNode>{};

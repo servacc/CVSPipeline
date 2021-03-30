@@ -61,11 +61,11 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 }  // namespace detail
 
 template <typename NType>
-bool registrateNodeTypeFun(std::string key) {
-  auto type_reg = common::Factory::registrateIf<NodeType()>(key, []() -> NodeType { return NType::node_type; });
+bool registrateNodeTypeFun(std::string key, cvs::common::FactoryPtr<std::string> factory) {
+  auto type_reg = factory->registrateIf<NodeType()>(key, []() -> NodeType { return NType::node_type; });
 
   if (!type_reg) {
-    auto registred_type = common::Factory::create<NodeType>(key).value();
+    auto registred_type = factory->create<NodeType>(key).value();
     if (registred_type != NType::node_type) {
       auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
       LOG_ERROR(logger, R"s(Can't registrate different types ({} != {}) for key ("{}"))s", key, int(registred_type),
@@ -78,14 +78,17 @@ bool registrateNodeTypeFun(std::string key) {
 }
 
 template <typename BaseElement, template <typename...> class Node, typename Enable = std::true_type>
-void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::true_type, Enable>>::type* = 0) {
-  if (!registrateNodeTypeFun<Node<BaseElement>>(key))
+void registrateNode(std::string                          key,
+                    cvs::common::FactoryPtr<std::string> factory,
+                    typename std::enable_if<std::is_same_v<std::true_type, Enable>>::type* = 0) {
+  if (!registrateNodeTypeFun<Node<BaseElement>>(key, factory))
     return;
 
   auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
 
-  auto reg = common::Factory::registrateIf<IExecutionNodeUPtr(
-      common::Config, IExecutionGraphPtr, std::shared_ptr<BaseElement>)>(key, Node<BaseElement>::make);
+  auto reg =
+      factory->registrateIf<IExecutionNodeUPtr(common::Config&, IExecutionGraphPtr&, std::shared_ptr<BaseElement>&)>(
+          key, Node<BaseElement>::make);
   if (reg) {
     LOG_DEBUG(logger, R"s(Register: node "{}" for element "{}")s", key,
               boost::core::demangle(typeid(BaseElement).name()));
@@ -96,13 +99,15 @@ void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std:
 }
 
 template <typename BaseElement, template <typename...> class Node, typename Enable>
-void registrateNode(std::string key, typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
+void registrateNode(std::string key,
+                    cvs::common::FactoryPtr<std::string>,
+                    typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
-  LOG_DEBUG(logger, R"s(Ignore: node "{}" for element "{}")s", key, boost::core::demangle(typeid(BaseElement).name()));
+  LOG_TRACE(logger, R"s(Ignore: node "{}" for element "{}")s", key, boost::core::demangle(typeid(BaseElement).name()));
 }
 
 template <typename FactoryFunction, typename Impl>
-void registrateElemetAndTbbHelper(std::string key) {
+void registrateElemetAndTbbHelper(std::string key, cvs::common::FactoryPtr<std::string> factory) {
   using namespace cvs::pipeline::tbb;
 
   using ElementPtr  = typename std::function<FactoryFunction>::result_type;
@@ -112,19 +117,22 @@ void registrateElemetAndTbbHelper(std::string key) {
   using Res         = typename detail::RegistrationHelper<Element>::Res;
   using BaseElement = IElement<ElementFun>;
 
-  registrateElemetHelper<FactoryFunction, Impl>(key);
+  registrateElemetHelper<FactoryFunction, Impl>(key, factory);
 
   // functional nodes
-  registrateNode<BaseElement, TbbContinueNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::continue_name);
-  registrateNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source);
-  registrateNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::function);
+  registrateNode<BaseElement, TbbContinueNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::continue_name,
+                                                                                       factory);
+  registrateNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source, factory);
+  registrateNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::function,
+                                                                                              factory);
 
   // service nodes
-  registrateNode<Res, TbbBroadcastNode, typename detail::is_not_same<Res, void>::type>(TbbDefaultName::broadcast);
-  registrateNode<Arg, TbbJoinNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::join);
-  registrateNode<Res, TbbSplitNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::split_name);
+  registrateNode<Res, TbbBroadcastNode, typename detail::is_not_same<Res, void>::type>(TbbDefaultName::broadcast,
+                                                                                       factory);
+  registrateNode<Arg, TbbJoinNode, typename detail::is_tuple<Arg>::type>(TbbDefaultName::join, factory);
+  registrateNode<Res, TbbSplitNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::split_name, factory);
 }
 
-void registrateBase();
+void registrateBase(cvs::common::FactoryPtr<std::string> factory);
 
 }  // namespace cvs::pipeline::tbb

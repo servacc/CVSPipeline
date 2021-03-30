@@ -18,7 +18,7 @@ class TbbJoinNode<std::tuple<Arg0, Arg1, Args...>, Policy>
  public:
   using ArgumentsType = std::tuple<Arg0, Arg1, Args...>;
 
-  static auto make(common::Config, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
+  static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbJoinNode>(g);
     return std::unique_ptr<TbbJoinNode>{};
