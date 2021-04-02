@@ -11,12 +11,12 @@ namespace cvs::pipeline::tbb {
 template <typename Element>
 class TbbSplitNode;
 
-template <typename R0, typename R1, typename... Result>
-class TbbSplitNode<std::tuple<R0, R1, Result...>>
-    : public IInputExecutionNode<NodeType::ServiceOut, std::tuple<R0, R1, Result...>>,
-      public IOutputExecutionNode<NodeType::ServiceOut, R0, R1, Result...> {
+template <typename R0, typename R1, typename... RX>
+class TbbSplitNode<std::tuple<R0, R1, RX...>>
+    : public IInputExecutionNode<NodeType::ServiceOut, std::tuple<R0, R1, RX...>>,
+      public IOutputExecutionNode<NodeType::ServiceOut, R0, R1, RX...> {
  public:
-  using ResultType = std::tuple<R0, R1, Result...>;
+  using ResultType = std::tuple<R0, R1, RX...>;
 
   static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ResultType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
@@ -28,12 +28,12 @@ class TbbSplitNode<std::tuple<R0, R1, Result...>>
       : node(graph->native()) {}
 
   bool tryPut(const ResultType&) override { return false; }
-  bool tryGet(R0&, R1&, Result&...) override { return false; }
+  bool tryGet(R0&, R1&, RX&...) override { return false; }
 
   std::any receiver(std::size_t i) override {
     return i == 0 ? std::make_any<::tbb::flow::receiver<ResultType>*>(&node) : std::any{};
   }
-  std::any sender(std::size_t i) override { return getPort<0, R0, R1, Result...>(i); }
+  std::any sender(std::size_t i) override { return getPort<0, R0, R1, RX...>(i); }
 
   bool connect(std::any sndr, std::size_t i) override {
     if (i == 0) {

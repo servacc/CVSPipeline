@@ -62,7 +62,7 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 
 template <typename NType>
 bool registrateNodeTypeFun(std::string key, cvs::common::FactoryPtr<std::string> factory) {
-  auto type_reg = factory->registrateIf<NodeType()>(key, []() -> NodeType { return NType::node_type; });
+  auto type_reg = factory->tryRegisterType<NodeType()>(key, []() -> NodeType { return NType::node_type; });
 
   if (!type_reg) {
     auto registred_type = factory->create<NodeType>(key).value();
@@ -87,7 +87,7 @@ void registrateNode(std::string                          key,
   auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
 
   auto reg =
-      factory->registrateIf<IExecutionNodeUPtr(common::Config&, IExecutionGraphPtr&, std::shared_ptr<BaseElement>&)>(
+      factory->tryRegisterType<IExecutionNodeUPtr(common::Config&, IExecutionGraphPtr&, std::shared_ptr<BaseElement>&)>(
           key, Node<BaseElement>::make);
   if (reg) {
     LOG_DEBUG(logger, R"s(Register: node "{}" for element "{}")s", key,

@@ -3,7 +3,7 @@
 namespace cvs::pipeline::tbb {
 
 void registrateBase(cvs::common::FactoryPtr<std::string> factory) {
-  factory->registrateDefault<IExecutionGraphUPtr(), TbbFlowGraph>(TbbDefaultName::graph);
+  factory->registerTypeDefault<IExecutionGraphUPtr(), TbbFlowGraph>(TbbDefaultName::graph);
 }
 
 }  // namespace cvs::pipeline::tbb

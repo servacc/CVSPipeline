@@ -58,9 +58,9 @@ void registrateElemetHelper(const std::string key, cvs::common::FactoryPtr<std::
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
   using Res        = typename detail::RegistrationHelper<Element>::Res;
 
-  factory->registrateIf<FactoryFunction>(key, Impl::make);
+  factory->tryRegisterType<FactoryFunction>(key, Impl::make);
 
-  factory->registrateIf<IExecutionNodeUPtr(const std::string&, common::Config&, IExecutionGraphPtr&)>(
+  factory->tryRegisterType<IExecutionNodeUPtr(const std::string&, common::Config&, IExecutionGraphPtr&)>(
       key,
       [key, factory](const std::string& node_name, common::Config& cfg,
                      IExecutionGraphPtr& graph) -> IExecutionNodeUPtr {
