@@ -2,6 +2,7 @@
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
+#include <cvs/pipeline/imodulemanager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
 
 #include <iostream>
@@ -10,14 +11,16 @@ using namespace std::string_literals;
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[]) {
+  std::string             module_manager_key;
   std::string             pipeline_key;
   std::string             config_path_string;
   po::options_description desc("Allowed options:");
   desc.add_options()                                                                                           //
       ("help,h", "produce help message")                                                                       //
       ("version,v", "CVSPipeline library version")                                                             //
-      ("config,c", po::value(&config_path_string)->default_value(DEFAULT_CONFIG), "common::Config file path")  //
-      ("pipeline,p", po::value(&pipeline_key)->default_value("Default"), "key for pipeline object")            //
+      ("config,c", po::value(&config_path_string)->default_value(DEFAULT_CONFIG), "Config file path")          //
+      ("pipeline,p", po::value(&pipeline_key)->default_value("Default"), "Key for pipeline object")            //
+      ("module,m", po::value(&module_manager_key)->default_value("Default"), "Key for module manager object")  //
       ;                                                                                                        //
 
   po::variables_map vm;
@@ -34,14 +37,25 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  auto factory = std::make_shared<cvs::common::Factory<std::string>>();
-
   auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
+  if (!config_opt)
+    LOG_GLOB_CRITICAL("Can't load config \"{}\"", config_path_string);
 
   cvs::logger::initLoggers(config_opt);
 
-  if (!config_opt.has_value())
-    LOG_GLOB_CRITICAL("Can't load config \"{}\"", config_path_string);
+  auto config = *config_opt;
+
+  auto factory = cvs::common::Factory<std::string>::defaultInstance();
+
+  auto module_manager_opt = factory->create<cvs::pipeline::IModuleManagerUPtr>(module_manager_key, config);
+  if (!module_manager_opt) {
+    LOG_GLOB_CRITICAL("Can't create module manager for key \"{}\"", module_manager_key);
+    return 1;
+  }
+  auto module_manager = std::move(module_manager_opt.value());
+
+  module_manager->loadModules();
+  module_manager->registerTypes(factory);
 
   auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr>(pipeline_key, *config_opt);
   if (!pipeline) {
@@ -49,5 +63,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  return (*pipeline)->exec();
+  (*pipeline)->waitForAll();
+
+  return 0;
 }

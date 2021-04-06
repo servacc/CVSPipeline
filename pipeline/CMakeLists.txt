@@ -40,6 +40,7 @@ target_sources(${PROJECT_NAME}
         src/pipeline/pipeline.hpp
         src/pipeline/modulemanager.hpp
 
+        src/pipeline/registrationhelper.cpp
         src/pipeline/modulemanager.cpp
         src/pipeline/pipeline.cpp
         src/pipeline/imodule.cpp

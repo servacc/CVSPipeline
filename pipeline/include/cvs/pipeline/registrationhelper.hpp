@@ -52,7 +52,7 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 }  // namespace detail
 
 template <typename FactoryFunction, typename Impl>
-void registrateElemetHelper(const std::string key, cvs::common::FactoryPtr<std::string> factory) {
+void registerElemetHelper(const std::string key, cvs::common::FactoryPtr<std::string> factory) {
   using ElementPtr = typename std::function<FactoryFunction>::result_type;
   using Element    = typename ElementPtr::element_type;
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
@@ -100,5 +100,7 @@ void registrateElemetHelper(const std::string key, cvs::common::FactoryPtr<std::
         return {};
       });
 }
+
+void registerDefault(cvs::common::FactoryPtr<std::string> factory);
 
 }  // namespace cvs::pipeline

@@ -87,13 +87,13 @@ class GraphTest : public ::testing::Test {
   static void SetUpTestCase() {
     cvs::logger::initLoggers();
 
-    registrateBase(factory);
+    registerBase(factory);
 
-    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
-    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
-    registrateElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config&), CElement>("C"s, factory);
-    registrateElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config&), DElement>("D"s, factory);
-    registrateElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config&), EElement>("E"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config&), CElement>("C"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config&), DElement>("D"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config&), EElement>("E"s, factory);
   }
 
   static cvs::common::FactoryPtr<std::string> factory;

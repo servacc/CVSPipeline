@@ -9,7 +9,10 @@ find_package(PkgConfig REQUIRED)
 pkg_search_module(gmock_main REQUIRED IMPORTED_TARGET gmock_main)
 
 add_executable(${PROJECT_NAME} main.cpp)
-add_executable(moduleManagerTest modulemanagertest.cpp)
+add_executable(moduleManagerTest
+    modulemanagertest.cpp
+    pipelineTest.cpp
+  )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE TEST_MODULES_PATH="${CMAKE_CURRENT_BINARY_DIR}/dummymodules")
 target_compile_definitions(moduleManagerTest PRIVATE TEST_MODULES_PATH="${CMAKE_CURRENT_BINARY_DIR}/dummymodules")

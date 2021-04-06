@@ -4,11 +4,11 @@ namespace cvs::pipeline::tbb {
 
 const std::string TbbDefaultName::graph = "TbbGraph";
 
-const std::string TbbDefaultName::broadcast = "BroadcastDefault";
-const std::string TbbDefaultName::continue_name  = "ContinueDefault";
-const std::string TbbDefaultName::function  = "FunctionDefault";
-const std::string TbbDefaultName::join      = "JoinDefault";
-const std::string TbbDefaultName::source    = "SourceDefault";
-const std::string TbbDefaultName::split_name     = "SplitDefault";
+const std::string TbbDefaultName::broadcast     = "TbbBroadcastDefault";
+const std::string TbbDefaultName::continue_name = "TbbContinueDefault";
+const std::string TbbDefaultName::function      = "TbbFunctionDefault";
+const std::string TbbDefaultName::join          = "TbbJoinDefault";
+const std::string TbbDefaultName::source        = "TbbSourceDefault";
+const std::string TbbDefaultName::split_name    = "TbbSplitDefault";
 
 }  // namespace cvs::pipeline::tbb

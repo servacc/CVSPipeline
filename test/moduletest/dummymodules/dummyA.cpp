@@ -1,4 +1,5 @@
 #include <cvs/common/config.hpp>
+#include <cvs/logger/loggable.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/imodule.hpp>
 #include <cvs/pipeline/registrationhelper.hpp>
@@ -10,7 +11,7 @@ using namespace cvs;
 using namespace cvs::pipeline;
 using namespace cvs::common;
 
-class AElement : public IElement<int(bool*)> {
+class AElement : public IElement<int(bool*)>, cvs::logger::Loggable<AElement> {
  public:
   static auto make(common::Config&) {
     auto e = std::make_unique<AElement>();
@@ -19,7 +20,8 @@ class AElement : public IElement<int(bool*)> {
 
   int process(bool* stop) override {
     static int cnt = 0;
-    *stop          = cnt++ != 0;
+    LOG_INFO(logger(), "{}", cnt);
+    *stop = cnt++ != 0;
     return 10;
   }
 };
@@ -39,10 +41,10 @@ class DummyA : public cvs::pipeline::IModule {
   std::string name() const override { return "DummyA"; }
   int         version() const override { return 0; }
   void        registerTypes(cvs::common::FactoryPtr<std::string> factory) const override {
-    registrateBase(factory);
+    registerBase(factory);
 
-    registrateElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
-    registrateElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
   }
 };
 

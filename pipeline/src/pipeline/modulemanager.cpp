@@ -1,5 +1,6 @@
 #include "modulemanager.hpp"
 
+#include <boost/dll.hpp>
 #include <cvs/common/configbase.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/imodule.hpp>
@@ -7,6 +8,8 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
+
+using LibraryUPtr = std::unique_ptr<boost::dll::shared_library>;
 
 namespace {
 
@@ -25,20 +28,32 @@ struct ModuleManager::ModuleInfo {
 
 namespace cvs::pipeline::impl {
 
+std::unique_ptr<ModuleManager> ModuleManager::make(cvs::common::Config& config) {
+  auto manager_cfg = config.getChildren("ModuleManager");
+  if (manager_cfg.empty())
+    return {};
+
+  auto params = manager_cfg.front().parse<ModuleManagerConfig>();
+  if (!params)
+    return {};
+
+  std::filesystem::path path{params->module_path.value_or(CVSPipeline_MODULE_DIR)};
+  if (!std::filesystem::exists(path))
+    return {};
+
+  auto ptr         = std::make_unique<ModuleManager>();
+  ptr->module_path = std::move(path);
+
+  return ptr;
+}
+
 ModuleManager::ModuleManager()
     : cvs::logger::Loggable<ModuleManager>("cvs.pipeline.ModuleManager") {}
 
 ModuleManager::~ModuleManager() { clear(); }
 
-void ModuleManager::loadModules(cvs::common::Config& cfg) {
-  auto                  config_opt = cfg.parse<ModuleManagerConfig>();
-  std::filesystem::path modules_dir;
-  if (config_opt)
-    modules_dir = config_opt->module_path.value_or(CVSPipeline_MODULE_DIR);
-  else
-    modules_dir = CVSPipeline_MODULE_DIR;
-
-  for (auto& file : fs::directory_iterator(modules_dir)) {
+void ModuleManager::loadModules() {
+  for (auto& file : fs::directory_iterator(module_path)) {
     const bool is_library =
         file.is_regular_file() && (file.path().extension() == ".so" || file.path().extension() == ".dll");
     if (!is_library) {
