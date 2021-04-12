@@ -2,6 +2,7 @@
 
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
+#include <cvs/logger/loggable.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
@@ -10,7 +11,7 @@
 
 namespace cvs::pipeline::impl {
 
-class Pipeline : public IPipeline {
+class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
  public:
   static IPipelineUPtr make(cvs::common::Config&, const cvs::common::FactoryPtr<std::string>&);
 
@@ -18,10 +19,14 @@ class Pipeline : public IPipeline {
 
   IExecutionNodePtr getNode(std::string_view) const override;
 
+  void start() override;
+  void stop() override;
+
   void waitForAll() override;
 
  private:
   IExecutionGraphPtr graph;
+  bool               autostart = false;
 
   std::map<std::string, IExecutionNodePtr> nodes;
 };

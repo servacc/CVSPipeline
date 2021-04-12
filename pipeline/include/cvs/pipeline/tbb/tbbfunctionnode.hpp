@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cvs/common/config.hpp>
+#include <cvs/common/configbase.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
@@ -34,6 +35,7 @@ struct Output<void> {
   using type = ::tbb::flow::continue_msg;
 };
 
+CVSCFG_DECLARE_CONFIG(FunctionNodeConfig, CVSCFG_VALUE_DEFAULT(concurrency, std::size_t, 0))
 }  // namespace detail
 
 template <typename Element, typename Policy = ::tbb::flow::queueing>
@@ -127,10 +129,10 @@ class TbbFunctionNode : public TbbFunctionNodeBase<Element, Policy> {
   using ArgumentsType  = typename TbbFunctionNodeBase<Element, Policy>::ArgumentsType;
 
   static auto make(common::Config& cfg, IExecutionGraphPtr graph, ElementPtrType body) {
-    std::size_t concurrency = 0;
+    auto params = cfg.parse<detail::FunctionNodeConfig>().value();
 
     if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph))
-      return std::make_unique<TbbFunctionNode>(g, concurrency, std::move(body));
+      return std::make_unique<TbbFunctionNode>(g, params.concurrency, std::move(body));
     return std::unique_ptr<TbbFunctionNode>{};
   }
 

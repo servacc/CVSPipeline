@@ -7,7 +7,7 @@
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(PipelineConfig, CVSCFG_OBJECT(graph, CVSCFG_VALUE_OPTIONAL(type, std::string)))
+CVSCFG_DECLARE_CONFIG(PipelineConfig, CVSCFG_VALUE_DEFAULT(autostart, bool, false))
 
 CVSCFG_DECLARE_CONFIG(GraphConfig, CVSCFG_VALUE(type, std::string))
 CVSCFG_DECLARE_CONFIG(NodeConfig,
@@ -30,10 +30,12 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
 
   auto pipeline_cfg = root.getFirstChild("Pipeline").value();
 
-  auto               graph_cfg = pipeline_cfg.getFirstChild("Graph")->parse<GraphConfig>().value();
+  auto params = pipeline_cfg.parse<PipelineConfig>();
+
+  auto               graph_cfg = pipeline_cfg.getFirstChild("graph")->parse<GraphConfig>().value();
   IExecutionGraphPtr graph     = factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
 
-  auto nodes_list = pipeline_cfg.getFirstChild("Nodes").value();
+  auto nodes_list = pipeline_cfg.getFirstChild("nodes").value();
 
   std::map<std::string, IExecutionNodePtr> nodes;
   for (auto &node_cfg : nodes_list.getChildren()) {
@@ -73,13 +75,37 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
 
   auto pipeline = std::make_unique<Pipeline>();
 
-  pipeline->graph = std::move(graph);
-  pipeline->nodes = std::move(nodes);
+  pipeline->autostart = params->autostart;
+  pipeline->graph     = std::move(graph);
+  pipeline->nodes     = std::move(nodes);
 
   return pipeline;
 }
 
-Pipeline::Pipeline() {}
+Pipeline::Pipeline()
+    : cvs::logger::Loggable<Pipeline>("cvs.pipeline.Pipeline") {}
+
+void Pipeline::start() {
+  if (!autostart) {
+    LOG_TRACE(logger(), "Autostart disabled");
+    return;
+  }
+
+  for (auto &n : nodes) {
+    LOG_TRACE(logger(), R"s(Try activate node "{}...")s", n.first);
+    if (n.second->type() != NodeType::Functional)
+      continue;
+
+    auto src = std::dynamic_pointer_cast<cvs::pipeline::ISourceExecutionNode<NodeType::Functional>>(n.second);
+    if (!src)
+      continue;
+
+    src->activate();
+    LOG_TRACE(logger(), R"s(Node "{}" activated)s", n.first);
+  }
+}
+
+void Pipeline::stop() {}
 
 IExecutionNodePtr Pipeline::getNode(std::string_view name) const {
   auto iter = nodes.find(std::string{name});
