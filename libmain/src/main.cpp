@@ -4,6 +4,8 @@
 #include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/imodulemanager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
+#include <cvs/pipeline/registrationhelper.hpp>
+#include <cvs/pipeline/tbb/tbbhelpers.hpp>
 
 #include <iostream>
 
@@ -39,17 +41,20 @@ int main(int argc, char *argv[]) {
 
   auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
   if (!config_opt)
-    LOG_GLOB_CRITICAL("Can't load config \"{}\"", config_path_string);
+    LOG_GLOB_CRITICAL(R"s(Can't load config "{}")s", config_path_string);
 
   cvs::logger::initLoggers(config_opt);
 
-  auto config = *config_opt;
-
   auto factory = cvs::common::Factory<std::string>::defaultInstance();
+
+  cvs::pipeline::registerDefault(factory);
+  cvs::pipeline::tbb::registerBase(factory);
+
+  auto config = *config_opt;
 
   auto module_manager_opt = factory->create<cvs::pipeline::IModuleManagerUPtr>(module_manager_key, config);
   if (!module_manager_opt) {
-    LOG_GLOB_CRITICAL("Can't create module manager for key \"{}\"", module_manager_key);
+    LOG_GLOB_CRITICAL(R"s(Can't create module manager for key "{}")s", module_manager_key);
     return 1;
   }
   auto module_manager = std::move(module_manager_opt.value());
@@ -57,9 +62,10 @@ int main(int argc, char *argv[]) {
   module_manager->loadModules();
   module_manager->registerTypes(factory);
 
-  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr>(pipeline_key, *config_opt);
+  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr, cvs::common::Config &,
+                                  const cvs::common::FactoryPtr<std::string> &>(pipeline_key, *config_opt, factory);
   if (!pipeline) {
-    LOG_GLOB_CRITICAL("Can't create pipeline object for key \"{}\"", pipeline_key);
+    LOG_GLOB_CRITICAL(R"s(Can't create pipeline object for key "{}")s", pipeline_key);
     return 1;
   }
 

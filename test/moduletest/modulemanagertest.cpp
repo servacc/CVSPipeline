@@ -19,7 +19,9 @@ TEST(ModuleManagerTest, testPipeline) {
   std::string config_str = R"json(
 {
   "ModuleManager" : {
-    "module_path": ")json" TEST_MODULES_PATH R"json("
+    "module_path": [")json" TEST_MODULES_PATH R"json(",
+      ")json" TEST_MODULES_PATH R"json("
+    ]
   },
   "loggers" : [
     { "name": "", "level": "0", "sink": "1" },

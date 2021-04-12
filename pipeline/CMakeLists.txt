@@ -6,14 +6,18 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(TBB REQUIRED)
 find_package(CVSLogger REQUIRED)
 
+add_library(${PROJECT_NAME} SHARED)
+
 cvs_create_version_file(NAME ${PROJECT_NAME}
                         MAJOR ${CVSPipelineLib_VERSION_MAJOR}
                         MINOR ${CVSPipelineLib_VERSION_MINOR}
                         PATCH ${CVSPipelineLib_VERSION_PATCH}
                         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate/cvs/pipeline")
+cvs_add_to_alias(${PROJECT_NAME})
+cvs_library_version(TARGET ${PROJECT_NAME}
+                    VERSION_MAJOR ${CVSPipelineLib_VERSION_MAJOR}
+                    VERSION_MINOR ${CVSPipelineLib_VERSION_MINOR})
 
-add_library(${PROJECT_NAME} SHARED)
-add_library(cvs::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
     PRIVATE
         include/cvs/pipeline/ipipeline.hpp
@@ -21,6 +25,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/iexecutionnode.hpp
         include/cvs/pipeline/iexecutiongraph.hpp
         include/cvs/pipeline/ielement.hpp
+        include/cvs/pipeline/imodule.hpp
         include/cvs/pipeline/registrationhelper.hpp
 
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp

@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <map>
+#include <set>
 
 namespace cvs::pipeline::impl {
 
@@ -26,7 +27,7 @@ class ModuleManager : public IModuleManager, public cvs::logger::Loggable<Module
   struct ModuleInfo;
   std::map<std::string, ModuleInfo> modules;
 
-  std::filesystem::path module_path;
+  std::set<std::filesystem::path> module_path;
 };
 
 }  // namespace cvs::pipeline::impl

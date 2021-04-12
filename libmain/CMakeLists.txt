@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(CVSPipeline_main)
+project(CVSPipelineMain)
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(CVSPipelinetool)
+project(CVSPipelineTool)
 
-add_executable(CVSPipelinetool)
+add_executable(CVSPipelineTool)
 target_sources(${PROJECT_NAME}
     PRIVATE
         src/cvspipelinetool.cpp
     )
-target_link_libraries(${PROJECT_NAME} CVSPipeline_main)
+target_link_libraries(${PROJECT_NAME} CVSPipelineMain)

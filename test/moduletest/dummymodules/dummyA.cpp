@@ -26,14 +26,17 @@ class AElement : public IElement<int(bool*)>, cvs::logger::Loggable<AElement> {
   }
 };
 
-class BElement : public IElement<int(int)> {
+class BElement : public IElement<int(int)>, cvs::logger::Loggable<BElement> {
  public:
   static auto make(common::Config&) {
     auto e = std::make_unique<BElement>();
     return e;
   }
 
-  int process(int a) override { return a; }
+  int process(int a) override {
+    LOG_INFO(logger(), "{}", a);
+    return a;
+  }
 };
 
 class DummyA : public cvs::pipeline::IModule {

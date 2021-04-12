@@ -4,13 +4,16 @@
 #include <cvs/pipeline/imodulemanager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
 #include <cvs/pipeline/registrationhelper.hpp>
+#include <cvs/pipeline/tbb/tbbhelpers.hpp>
 #include <gtest/gtest.h>
 
 TEST(Pipeline, createGraph) {
   std::string config_json = R"json(
 {
   "ModuleManager" : {
-    "module_path": ")json" TEST_MODULES_PATH R"json("
+    "module_path": [
+        ")json" TEST_MODULES_PATH R"json("
+      ]
   },
   "loggers" : [
     { "name": "", "level": "0", "sink": "1" },
@@ -45,12 +48,13 @@ TEST(Pipeline, createGraph) {
 }
 )json";
 
+  auto factory = cvs::common::Factory<std::string>::defaultInstance();
+  cvs::pipeline::registerDefault(factory);
+  cvs::pipeline::tbb::registerBase(factory);
+
   auto cfg_root = cvs::common::Config::make(std::move(config_json)).value();
 
   cvs::logger::initLoggers(cfg_root);
-
-  auto factory = cvs::common::Factory<std::string>::defaultInstance();
-  cvs::pipeline::registerDefault(factory);
 
   auto module_manager = factory->create<cvs::pipeline::IModuleManagerUPtr>("Default", cfg_root).value();
   ASSERT_NE(nullptr, module_manager);
