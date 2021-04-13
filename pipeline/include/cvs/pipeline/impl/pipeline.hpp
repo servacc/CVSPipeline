@@ -19,8 +19,10 @@ class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
 
   IExecutionNodePtr getNode(std::string_view) const override;
 
-  void start() override;
-  void stop() override;
+  int exec() override;
+
+  virtual void onStarted();
+  virtual void onStopped();
 
   void waitForAll() override;
 

@@ -1,4 +1,4 @@
-#include "pipeline.hpp"
+#include "../../include/cvs/pipeline/impl/pipeline.hpp"
 
 #include <cvs/common/configbase.hpp>
 #include <cvs/logger/logging.hpp>
@@ -85,7 +85,32 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
 Pipeline::Pipeline()
     : cvs::logger::Loggable<Pipeline>("cvs.pipeline.Pipeline") {}
 
-void Pipeline::start() {
+IExecutionNodePtr Pipeline::getNode(std::string_view name) const {
+  auto iter = nodes.find(std::string{name});
+  if (iter != nodes.end())
+    return iter->second;
+  return {};
+}
+
+void Pipeline::waitForAll() { graph->waitForAll(); }
+
+int Pipeline::exec() {
+  LOG_DEBUG(logger(), "Starting...");
+  onStarted();
+
+  LOG_INFO(logger(), "Started");
+
+  waitForAll();
+
+  LOG_DEBUG(logger(), "Stopping...");
+  onStopped();
+
+  LOG_INFO(logger(), "Stopped");
+
+  return 0;
+}
+
+void Pipeline::onStarted() {
   if (!autostart) {
     LOG_TRACE(logger(), "Autostart disabled");
     return;
@@ -105,15 +130,6 @@ void Pipeline::start() {
   }
 }
 
-void Pipeline::stop() {}
-
-IExecutionNodePtr Pipeline::getNode(std::string_view name) const {
-  auto iter = nodes.find(std::string{name});
-  if (iter != nodes.end())
-    return iter->second;
-  return {};
-}
-
-void Pipeline::waitForAll() { graph->waitForAll(); }
+void Pipeline::onStopped() {}
 
 }  // namespace cvs::pipeline::impl

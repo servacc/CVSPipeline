@@ -28,6 +28,9 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/imodule.hpp
         include/cvs/pipeline/registrationhelper.hpp
 
+        include/cvs/pipeline/impl/pipeline.hpp
+        include/cvs/pipeline/impl/modulemanager.hpp
+
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp
         include/cvs/pipeline/tbb/tbbflowgraph.hpp
         include/cvs/pipeline/tbb/tbbbroadcastnode.hpp
@@ -41,9 +44,6 @@ target_sources(${PROJECT_NAME}
         src/pipeline/tbb/tbbdefinitions.cpp
         src/pipeline/tbb/tbbhelpers.cpp
         src/pipeline/tbb/tbbflowgraph.cpp
-
-        src/pipeline/pipeline.hpp
-        src/pipeline/modulemanager.hpp
 
         src/pipeline/registrationhelper.cpp
         src/pipeline/modulemanager.cpp

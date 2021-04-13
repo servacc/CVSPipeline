@@ -58,6 +58,10 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/registrationhelper.hpp
           ${CMAKE_CURRENT_BINARY_DIR}/pipeline/generate/cvs/pipeline/version.hpp
 
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/impl
+    FILES pipeline/include/cvs/pipeline/impl/pipeline.hpp
+          pipeline/include/cvs/pipeline/impl/modulemanager.hpp
+
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/tbb
     FILES pipeline/include/cvs/pipeline/tbb/tbbfunctionnode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbflowgraph.hpp

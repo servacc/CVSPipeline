@@ -15,6 +15,8 @@ using namespace std::string_literals;
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[]) {
+  int result = 1;
+
   try {
     std::string             module_manager_key;
     std::string             pipeline_key;
@@ -72,18 +74,16 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    pipeline.value()->start();
-
-    pipeline.value()->waitForAll();
-
-    LOG_GLOB_DEBUG("Stopped");
+    result = pipeline.value()->exec();
   }
   catch (std::exception &e) {
     LOG_GLOB_ERROR(R"(Exception: "{}")", e.what());
+    result = 1;
   }
   catch (...) {
     LOG_GLOB_ERROR(R"(Unknown exception)");
+    result = 1;
   }
 
-  return 0;
+  return result;
 }

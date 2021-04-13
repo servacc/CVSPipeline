@@ -1,4 +1,4 @@
-#include "../../pipeline/src/pipeline/modulemanager.hpp"
+#include "../../pipeline/include/cvs/pipeline/impl/modulemanager.hpp"
 
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
