@@ -13,10 +13,7 @@ using namespace cvs::common;
 
 class EElement : public IElement<void(float)>, public cvs::logger::Loggable<EElement> {
  public:
-  static auto make(common::Config&) {
-    auto e = std::make_unique<EElement>();
-    return e;
-  }
+  static auto make(common::Config&) { return std::make_unique<EElement>(); }
 
   void process(float val) override { LOG_INFO(logger(), "{}", val); }
 };

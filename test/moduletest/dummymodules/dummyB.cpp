@@ -13,10 +13,7 @@ using namespace cvs::common;
 
 class CElement : public IElement<float(int)>, public cvs::logger::Loggable<CElement> {
  public:
-  static auto make(common::Config&) {
-    auto e = std::make_unique<CElement>();
-    return e;
-  }
+  static auto make(common::Config&) { return std::make_unique<CElement>(); }
 
   float process(int a) override {
     LOG_INFO(logger(), "{}", a);
@@ -26,10 +23,7 @@ class CElement : public IElement<float(int)>, public cvs::logger::Loggable<CElem
 
 class DElement : public IElement<float(int, float)>, public cvs::logger::Loggable<DElement> {
  public:
-  static auto make(common::Config&) {
-    auto e = std::make_unique<DElement>();
-    return e;
-  }
+  static auto make(common::Config&) { return std::make_unique<DElement>(); }
 
   float process(int a, float b) override {
     LOG_INFO(logger(), "{} {}", a, b);

@@ -13,10 +13,7 @@ using namespace cvs::common;
 
 class AElement : public IElement<int(bool*)>, cvs::logger::Loggable<AElement> {
  public:
-  static auto make(common::Config&) {
-    auto e = std::make_unique<AElement>();
-    return e;
-  }
+  static auto make(common::Config&) { return std::make_unique<AElement>(); }
 
   int process(bool* stop) override {
     static int cnt = 0;
@@ -28,10 +25,7 @@ class AElement : public IElement<int(bool*)>, cvs::logger::Loggable<AElement> {
 
 class BElement : public IElement<int(int)>, cvs::logger::Loggable<BElement> {
  public:
-  static auto make(common::Config&) {
-    auto e = std::make_unique<BElement>();
-    return e;
-  }
+  static auto make(common::Config&) { return std::make_unique<BElement>(); }
 
   int process(int a) override {
     LOG_INFO(logger(), "{}", a);
