@@ -11,12 +11,13 @@ namespace cvs::pipeline::tbb {
 template <typename Tuple, typename Policy = ::tbb::flow::queueing>
 class TbbJoinNode;
 
-template <typename Policy, typename Arg0, typename Arg1, typename... Args>
-class TbbJoinNode<std::tuple<Arg0, Arg1, Args...>, Policy>
-    : public IInputExecutionNode<NodeType::ServiceIn, Arg0, Arg1, Args...>,
-      public IOutputExecutionNode<NodeType::ServiceIn, std::tuple<Arg0, Arg1, Args...>> {
+template <typename Policy, typename... Args>
+class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<NodeType::ServiceIn, Args...>,
+                                                 public IOutputExecutionNode<NodeType::ServiceIn, std::tuple<Args...>> {
  public:
-  using ArgumentsType = std::tuple<Arg0, Arg1, Args...>;
+  using ArgumentsType = std::tuple<Args...>;
+
+  static_assert(sizeof...(Args) > 1, "The number of arguments must be equal to or more than two.");
 
   static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
@@ -27,13 +28,13 @@ class TbbJoinNode<std::tuple<Arg0, Arg1, Args...>, Policy>
   TbbJoinNode(TbbFlowGraphPtr g)
       : node(g->native()) {}
 
-  bool tryPut(const Arg0&, const Arg1&, const Args&...) override { return false; }
+  bool tryPut(const Args&...) override { return false; }
   bool tryGet(ArgumentsType&) override { return false; }
 
-  std::any receiver(std::size_t i) override { return getPort<0, Arg0, Arg1, Args...>(i); }
+  std::any receiver(std::size_t i) override { return getPort<0, Args...>(i); }
   std::any sender(std::size_t) override { return std::make_any<::tbb::flow::sender<ArgumentsType>*>(&node); }
 
-  bool connect(std::any sndr, std::size_t i) override { return connectToPort<0, Arg0, Arg1, Args...>(sndr, i); }
+  bool connect(std::any sndr, std::size_t i) override { return connectToPort<0, Args...>(sndr, i); }
 
  private:
   template <std::size_t I>

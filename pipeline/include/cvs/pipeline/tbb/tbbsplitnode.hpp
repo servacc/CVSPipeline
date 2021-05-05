@@ -11,12 +11,13 @@ namespace cvs::pipeline::tbb {
 template <typename Element>
 class TbbSplitNode;
 
-template <typename R0, typename R1, typename... RX>
-class TbbSplitNode<std::tuple<R0, R1, RX...>>
-    : public IInputExecutionNode<NodeType::ServiceOut, std::tuple<R0, R1, RX...>>,
-      public IOutputExecutionNode<NodeType::ServiceOut, R0, R1, RX...> {
+template <typename... RX>
+class TbbSplitNode<std::tuple<RX...>> : public IInputExecutionNode<NodeType::ServiceOut, std::tuple<RX...>>,
+                                        public IOutputExecutionNode<NodeType::ServiceOut, RX...> {
  public:
-  using ResultType = std::tuple<R0, R1, RX...>;
+  using ResultType = std::tuple<RX...>;
+
+  static_assert(sizeof...(RX) > 1, "The number of arguments must be equal to or more than two.");
 
   static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ResultType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
@@ -28,12 +29,12 @@ class TbbSplitNode<std::tuple<R0, R1, RX...>>
       : node(graph->native()) {}
 
   bool tryPut(const ResultType&) override { return false; }
-  bool tryGet(R0&, R1&, RX&...) override { return false; }
+  bool tryGet(RX&...) override { return false; }
 
   std::any receiver(std::size_t i) override {
     return i == 0 ? std::make_any<::tbb::flow::receiver<ResultType>*>(&node) : std::any{};
   }
-  std::any sender(std::size_t i) override { return getPort<0, R0, R1, RX...>(i); }
+  std::any sender(std::size_t i) override { return getPort<0, RX...>(i); }
 
   bool connect(std::any sndr, std::size_t i) override {
     if (i == 0) {
