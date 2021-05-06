@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_vars.contains("version")) {
       std::cout << PROJECT_VERSION << std::endl << PROJECT_DESCRIPTION << std::endl;
-      return 1;
+      return 0;
     }
 
     auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
