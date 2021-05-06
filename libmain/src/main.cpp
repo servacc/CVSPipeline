@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_vars.contains("help")) {
       std::cout << desc << std::endl;
-      return 1;
+      return 0;
     }
 
     if (cmd_line_vars.contains("version")) {
