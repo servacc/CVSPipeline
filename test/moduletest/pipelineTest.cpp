@@ -23,10 +23,10 @@ TEST(Pipeline, createGraph) {
     { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" }
   ],
   "Pipeline" : {
-    "Graph" : {
+    "graph" : {
       "type": "TbbGraph"
     },
-    "Nodes" : [
+    "nodes" : [
       { "name": "a",  "element" : "A", "node" : "TbbSourceDefault"    },
       { "name": "b",  "element" : "B", "node" : "TbbFunctionDefault"  },
       { "name": "c",  "element" : "C", "node" : "TbbFunctionDefault"  },
@@ -35,7 +35,7 @@ TEST(Pipeline, createGraph) {
       { "name": "j",  "element" : "D", "node" : "TbbJoinDefault"      },
       { "name": "bc", "element" : "A", "node" : "TbbBroadcastDefault" }
     ],
-    "Connections" : [
+    "connections" : [
       { "from" : "a" , "output" : "0", "to" : "bc", "input" : "0" },
       { "from" : "bc", "output" : "0", "to" : "b" , "input" : "0" },
       { "from" : "bc", "output" : "0", "to" : "c" , "input" : "0" },
@@ -48,13 +48,12 @@ TEST(Pipeline, createGraph) {
 }
 )json";
 
+  auto cfg_root = cvs::common::Config::make(std::move(config_json)).value();
+  cvs::logger::initLoggers(cfg_root);
+
   auto factory = cvs::common::Factory<std::string>::defaultInstance();
   cvs::pipeline::registerDefault(factory);
   cvs::pipeline::tbb::registerBase(factory);
-
-  auto cfg_root = cvs::common::Config::make(std::move(config_json)).value();
-
-  cvs::logger::initLoggers(cfg_root);
 
   auto module_manager = factory->create<cvs::pipeline::IModuleManagerUPtr>("Default", cfg_root).value();
   ASSERT_NE(nullptr, module_manager);

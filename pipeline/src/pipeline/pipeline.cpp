@@ -50,7 +50,7 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
     LOG_DEBUG(logger, R"s(Node "{}" with element "{}" created.)s", node_params.node, node_params.element);
   }
 
-  auto connection_list = pipeline_cfg.getFirstChild("Connections").value();
+  auto connection_list = pipeline_cfg.getFirstChild("connections").value();
   for (auto &connection_cfg : connection_list.getChildren()) {
     auto connection_params = connection_cfg.parse<ConnectionConfig>().value();
 

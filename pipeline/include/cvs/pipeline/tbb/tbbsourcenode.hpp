@@ -12,20 +12,19 @@ template <typename Element>
 class TbbSourceNode;
 
 template <typename Output>
-class TbbSourceNode<IElement<Output(bool*)>> : public ISourceExecutionNode<NodeType::Functional>,
-                                               public IOutputExecutionNode<NodeType::Functional, Output> {
+class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::Functional>,
+                                          public IOutputExecutionNode<NodeType::Functional, Output> {
  public:
-  static auto make(common::Config&, IExecutionGraphPtr graph, IElementPtr<Output(bool*)> element) {
+  static auto make(common::Config&, IExecutionGraphPtr graph, IElementPtr<Output()> element) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbSourceNode>(std::move(g), std::move(element));
     return std::unique_ptr<TbbSourceNode>{};
   }
 
-  TbbSourceNode(TbbFlowGraphPtr graph, IElementPtr<Output(bool*)> element)
+  TbbSourceNode(TbbFlowGraphPtr graph, IElementPtr<Output()> element)
       : node(graph->native(), std::function([element](::tbb::flow_control& fc) -> Output {
-               bool stop = false;
-               auto res  = element->process(&stop);
-               if (stop)
+               auto res = element->process();
+               if (element->isStopped())
                  fc.stop();
                return std::move(res);
              })) {}

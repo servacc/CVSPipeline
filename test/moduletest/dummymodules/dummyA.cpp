@@ -11,16 +11,19 @@ using namespace cvs;
 using namespace cvs::pipeline;
 using namespace cvs::common;
 
-class AElement : public IElement<int(bool*)>, cvs::logger::Loggable<AElement> {
+class AElement : public IElement<int()>, cvs::logger::Loggable<AElement> {
  public:
   static auto make(common::Config&) { return std::make_unique<AElement>(); }
 
-  int process(bool* stop) override {
-    static int cnt = 0;
+  int process() override {
     LOG_INFO(logger(), "{}", cnt);
-    *stop = cnt++ != 0;
+    ++cnt;
     return 10;
   }
+
+  bool isStopped() const override { return cnt != 0; }
+
+  int cnt = 0;
 };
 
 class BElement : public IElement<int(int)>, cvs::logger::Loggable<BElement> {
@@ -40,7 +43,7 @@ class DummyA : public cvs::pipeline::IModule {
   void        registerTypes(cvs::common::FactoryPtr<std::string> factory) const override {
     registerBase(factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int()>(common::Config&), AElement>("A"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
   }
 };

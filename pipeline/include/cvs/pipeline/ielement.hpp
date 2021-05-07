@@ -16,6 +16,8 @@ class IElement<Res(Args...)> {
   virtual ~IElement() = default;
 
   virtual Result process(Args...) = 0;
+
+  virtual bool isStopped() const { return true; }
 };
 
 template <typename T>

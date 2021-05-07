@@ -122,7 +122,7 @@ void registerElemetAndTbbHelper(std::string key, cvs::common::FactoryPtr<std::st
   // functional nodes
   registerNode<BaseElement, TbbContinueNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::continue_name,
                                                                                      factory);
-  registerNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, bool*>::type>(TbbDefaultName::source, factory);
+  registerNode<BaseElement, TbbSourceNode, typename std::is_same<Arg, void>::type>(TbbDefaultName::source, factory);
   registerNode<BaseElement, TbbFunctionNode, typename detail::is_not_same<Arg, void>::type>(TbbDefaultName::function,
                                                                                             factory);
 

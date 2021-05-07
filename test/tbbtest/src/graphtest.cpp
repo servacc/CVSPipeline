@@ -13,25 +13,20 @@ using ::testing::_;
 
 namespace {
 
-class AElement : public IElement<int(bool*)> {
+class AElement : public IElement<int()> {
  public:
   static auto make(common::Config&) {
     auto e = std::make_unique<AElement>();
 
-    EXPECT_CALL(*e, process(_))
-        .WillOnce([](bool* stop) {
-          *stop = false;
-          return 10;
-        })
-        .WillOnce([](bool* stop) {
-          *stop = true;
-          return 10;
-        });
+    EXPECT_CALL(*e, process()).Times(2).WillRepeatedly([]() { return 10; });
+
+    EXPECT_CALL(*e, isStopped()).WillOnce([]() { return false; }).WillOnce([]() { return true; });
 
     return e;
   }
 
-  MOCK_METHOD(int, process, (bool*), (override));
+  MOCK_METHOD(int, process, (), (override));
+  MOCK_METHOD(bool, isStopped, (), (const override));
 };
 
 class BElement : public IElement<int(int)> {
@@ -89,7 +84,7 @@ class GraphTest : public ::testing::Test {
 
     registerBase(factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<int(bool*)>(common::Config&), AElement>("A"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int()>(common::Config&), AElement>("A"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config&), CElement>("C"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config&), DElement>("D"s, factory);
