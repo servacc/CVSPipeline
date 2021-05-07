@@ -2,7 +2,7 @@
 
 namespace cvs::pipeline::tbb {
 
-void registerBase(cvs::common::FactoryPtr<std::string> factory) {
+void registerBase(const cvs::common::FactoryPtr<std::string> &factory) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
 
   if (factory->tryRegisterTypeDefault<IExecutionGraphUPtr(), TbbFlowGraph>(TbbDefaultName::graph)) {

@@ -5,8 +5,8 @@
 
 namespace cvs::pipeline {
 
-void registerDefault(cvs::common::FactoryPtr<std::string> factory) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
+void registerDefault(const cvs::common::FactoryPtr<std::string>& factory) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
 
   std::string module_manager_key = "Default";
   std::string pipeline_key       = "Default";

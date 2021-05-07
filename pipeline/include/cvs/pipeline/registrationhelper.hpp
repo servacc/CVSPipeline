@@ -52,7 +52,7 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 }  // namespace detail
 
 template <typename FactoryFunction, typename Impl>
-void registerElemetHelper(const std::string key, cvs::common::FactoryPtr<std::string> factory) {
+void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<std::string>& factory) {
   using ElementPtr = typename std::function<FactoryFunction>::result_type;
   using Element    = typename ElementPtr::element_type;
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
@@ -64,7 +64,7 @@ void registerElemetHelper(const std::string key, cvs::common::FactoryPtr<std::st
       key,
       [key, factory](const std::string& node_name, common::Config& cfg,
                      IExecutionGraphPtr& graph) -> IExecutionNodeUPtr {
-        auto logger = cvs::logger::createLogger("cvs.pipeline.NodeFactory");
+        auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
 
         auto node_type = factory->create<NodeType>(node_name);
         if (!node_type.has_value()) {
@@ -101,6 +101,6 @@ void registerElemetHelper(const std::string key, cvs::common::FactoryPtr<std::st
       });
 }
 
-void registerDefault(cvs::common::FactoryPtr<std::string> factory);
+void registerDefault(const cvs::common::FactoryPtr<std::string>& factory);
 
 }  // namespace cvs::pipeline

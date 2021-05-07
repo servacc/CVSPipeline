@@ -61,7 +61,7 @@ struct is_not_same<_Tp, _Tp> : public std::false_type {};
 }  // namespace detail
 
 template <typename NType>
-bool registerNodeTypeFun(std::string key, cvs::common::FactoryPtr<std::string> factory) {
+bool registerNodeTypeFun(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
   auto type_reg = factory->tryRegisterType<NodeType()>(key, []() -> NodeType { return NType::node_type; });
 
   if (!type_reg) {
@@ -78,8 +78,8 @@ bool registerNodeTypeFun(std::string key, cvs::common::FactoryPtr<std::string> f
 }
 
 template <typename BaseElement, template <typename...> class Node, typename Enable = std::true_type>
-void registerNode(std::string                          key,
-                  cvs::common::FactoryPtr<std::string> factory,
+void registerNode(const std::string&                          key,
+                  const cvs::common::FactoryPtr<std::string>& factory,
                   typename std::enable_if<std::is_same_v<std::true_type, Enable>>::type* = 0) {
   if (!registerNodeTypeFun<Node<BaseElement>>(key, factory))
     return;
@@ -99,15 +99,15 @@ void registerNode(std::string                          key,
 }
 
 template <typename BaseElement, template <typename...> class Node, typename Enable>
-void registerNode(std::string key,
-                  cvs::common::FactoryPtr<std::string>,
+void registerNode(const std::string& key,
+                  const cvs::common::FactoryPtr<std::string>&,
                   typename std::enable_if<std::is_same_v<std::false_type, Enable>>::type* = 0) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
   LOG_TRACE(logger, R"s(Ignore: node "{}" for element "{}")s", key, boost::core::demangle(typeid(BaseElement).name()));
 }
 
 template <typename FactoryFunction, typename Impl>
-void registerElemetAndTbbHelper(std::string key, cvs::common::FactoryPtr<std::string> factory) {
+void registerElemetAndTbbHelper(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
   using namespace cvs::pipeline::tbb;
 
   using ElementPtr  = typename std::function<FactoryFunction>::result_type;
@@ -133,6 +133,6 @@ void registerElemetAndTbbHelper(std::string key, cvs::common::FactoryPtr<std::st
   registerNode<Res, TbbSplitNode, typename detail::is_tuple<Res>::type>(TbbDefaultName::split_name, factory);
 }
 
-void registerBase(cvs::common::FactoryPtr<std::string> factory);
+void registerBase(const cvs::common::FactoryPtr<std::string>& factory);
 
 }  // namespace cvs::pipeline::tbb

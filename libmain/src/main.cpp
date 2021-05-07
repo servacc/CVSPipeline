@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     std::string             config_path_string;
     po::options_description desc("Allowed options:");
     desc.add_options()                                                                                           //
-        ("help,h", "produce help message")                                                                       //
+        ("help,h", "Produce help message")                                                                       //
         ("version,v", "CVSPipeline library version")                                                             //
         ("config,c", po::value(&config_path_string)->default_value(DEFAULT_CONFIG), "Config file path")          //
         ("pipeline,p", po::value(&pipeline_key)->default_value("Default"), "Key for pipeline object")            //

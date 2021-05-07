@@ -26,7 +26,7 @@ class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::
                auto res = element->process();
                if (element->isStopped())
                  fc.stop();
-               return std::move(res);
+               return res;
              })) {}
 
   void activate() override { node.activate(); }
