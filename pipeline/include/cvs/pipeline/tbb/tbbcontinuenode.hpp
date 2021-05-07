@@ -75,13 +75,10 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
   bool tryPut() override { return TbbContinueNodeBase<Element>::node.try_put(::tbb::flow::continue_msg{}); }
 
   std::any receiver(std::size_t i) override {
-    return i == 0
-               ? std::make_any<::tbb::flow::receiver<::tbb::flow::continue_msg>*>(&TbbContinueNodeBase<Element>::node)
-               : std::any{};
+    return i == 0 ? std::make_any<::tbb::flow::receiver<::tbb::flow::continue_msg>*>(&this->node) : std::any{};
   }
   std::any sender(std::size_t i) override {
-    return i == 0 ? std::make_any<::tbb::flow::sender<NodeResultType>*>(&TbbContinueNodeBase<Element>::node)
-                  : std::any{};
+    return i == 0 ? std::make_any<::tbb::flow::sender<NodeResultType>*>(&this->node) : std::any{};
   }
 
   bool connect(std::any sndr, std::size_t i) override {
