@@ -13,7 +13,7 @@ using namespace cvs::common;
 
 class EElement : public IElement<void(float)>, public cvs::logger::Loggable<EElement> {
  public:
-  static auto make(common::Config&) { return std::make_unique<EElement>(); }
+  static auto make(common::Config &) { return std::make_unique<EElement>(); }
 
   void process(float val) override { LOG_INFO(logger(), "{}", val); }
 };
@@ -22,10 +22,10 @@ class DummyC : public cvs::pipeline::IModule {
  public:
   std::string name() const override { return "DummyC"; }
   int         version() const override { return 0; }
-  void        registerTypes(cvs::common::FactoryPtr<std::string> factory) const override {
+  void        registerTypes(const cvs::common::FactoryPtr<std::string> &factory) const override {
     registerBase(factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config&), EElement>("E"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config &), EElement>("E"s, factory);
   }
 };
 
