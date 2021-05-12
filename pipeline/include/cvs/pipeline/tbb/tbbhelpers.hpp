@@ -22,30 +22,6 @@ namespace cvs::pipeline::tbb {
 
 namespace detail {
 
-template <typename FactoryFunction>
-struct RegistrationHelper;
-
-template <typename R, typename... A>
-struct RegistrationHelper<IElement<R(A...)>> {
-  using Arg = std::tuple<A...>;
-  using Res = R;
-  using Fun = R(A...);
-};
-
-template <typename R, typename A>
-struct RegistrationHelper<IElement<R(A)>> {
-  using Arg = A;
-  using Res = R;
-  using Fun = R(A);
-};
-
-template <typename R>
-struct RegistrationHelper<IElement<R()>> {
-  using Arg = void;
-  using Res = R;
-  using Fun = R();
-};
-
 template <typename>
 struct is_tuple : std::false_type {};
 
@@ -106,9 +82,9 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
 
   using ElementPtr  = typename std::function<FactoryFunction>::result_type;
   using Element     = typename ElementPtr::element_type;
-  using ElementFun  = typename detail::RegistrationHelper<Element>::Fun;
-  using Arg         = typename detail::RegistrationHelper<Element>::Arg;
-  using Res         = typename detail::RegistrationHelper<Element>::Res;
+  using ElementFun  = typename cvs::pipeline::detail::RegistrationHelper<Element>::Fun;
+  using Arg         = typename cvs::pipeline::detail::RegistrationHelper<Element>::Arg;
+  using Res         = typename cvs::pipeline::detail::RegistrationHelper<Element>::Res;
   using BaseElement = IElement<ElementFun>;
 
   registerElemetHelper<FactoryFunction, Impl>(key, factory);

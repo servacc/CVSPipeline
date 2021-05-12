@@ -37,18 +37,6 @@ struct RegistrationHelper<IElement<R()>> {
   using Fun = R();
 };
 
-template <typename>
-struct is_tuple : std::false_type {};
-
-template <typename... T>
-struct is_tuple<std::tuple<T...>> : std::true_type {};
-
-template <typename, typename>
-struct is_not_same : public std::true_type {};
-
-template <typename _Tp>
-struct is_not_same<_Tp, _Tp> : public std::false_type {};
-
 }  // namespace detail
 
 template <typename FactoryFunction, typename Impl>
