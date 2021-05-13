@@ -49,8 +49,6 @@ int execPipeline(const std::string &module_manager_key,
 }
 
 int main(int argc, char *argv[]) {
-  int result = 1;
-
   try {
     std::string             module_manager_key;
     std::string             pipeline_key;
@@ -71,22 +69,22 @@ int main(int argc, char *argv[]) {
 
     if (cmd_line_vars.contains("help")) {
       std::cout << desc << std::endl;
-      result = 0;
-    } else if (cmd_line_vars.contains("version")) {
-      std::cout << PROJECT_VERSION << std::endl << PROJECT_DESCRIPTION << std::endl;
-      result = 0;
-    } else {
-      result = execPipeline(module_manager_key, pipeline_key, config_path_string);
+      return 0;
     }
+
+    if (cmd_line_vars.contains("version")) {
+      std::cout << PROJECT_VERSION << std::endl << PROJECT_DESCRIPTION << std::endl;
+      return 0;
+    }
+
+    return execPipeline(module_manager_key, pipeline_key, config_path_string);
   }
   catch (std::exception &e) {
     LOG_GLOB_ERROR(R"(Exception: "{}")", e.what());
-    result = 1;
   }
   catch (...) {
     LOG_GLOB_ERROR(R"(Unknown exception)");
-    result = 1;
   }
 
-  return result;
+  return 1;
 }
