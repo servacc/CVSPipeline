@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cvs/common/configuration.hpp>
+#include <cvs/common/config.hpp>
+#include <cvs/common/factory.hpp>
 
 #include <memory>
 
@@ -10,8 +11,8 @@ class IModuleManager {
  public:
   virtual ~IModuleManager() = default;
 
-  virtual void init(common::ConfigurationPtr) = 0;
-  virtual void free()                         = 0;
+  virtual void loadModules()                                       = 0;
+  virtual void registerTypes(cvs::common::FactoryPtr<std::string>) = 0;
 };
 
 using IModuleManagerPtr  = std::shared_ptr<IModuleManager>;

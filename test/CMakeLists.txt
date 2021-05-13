@@ -1,15 +1,10 @@
-cmake_minimum_required(VERSION 3.19)
+include(CTest)
 
-project(cvspipeline_test)
+if(NOT BUILD_TESTING)
+    return()
+endif()
 
-find_package(Boost REQUIRED COMPONENTS filesystem)
+enable_testing()
 
-add_library(dummymodule SHARED)
-target_sources(dummymodule
-    PRIVATE
-        module.cpp
-    )
-target_link_libraries(dummymodule cvspipeline)
-
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} cvspipeline Boost::boost Boost::filesystem dl)
+add_subdirectory(tbbtest)
+add_subdirectory(moduletest)

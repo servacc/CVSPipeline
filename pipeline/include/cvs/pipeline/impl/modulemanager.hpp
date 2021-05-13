@@ -1,0 +1,33 @@
+#pragma once
+
+#include <cvs/common/factory.hpp>
+#include <cvs/logger/loggable.hpp>
+#include <cvs/pipeline/imodule.hpp>
+#include <cvs/pipeline/imodulemanager.hpp>
+
+#include <filesystem>
+#include <map>
+#include <set>
+
+namespace cvs::pipeline::impl {
+
+class ModuleManager : public IModuleManager, public cvs::logger::Loggable<ModuleManager> {
+ public:
+  static std::unique_ptr<ModuleManager> make(cvs::common::Config&);
+
+  ModuleManager();
+  ~ModuleManager();
+
+  void loadModules() override;
+  void registerTypes(cvs::common::FactoryPtr<std::string>) override;
+
+  void clear();
+
+ private:
+  struct ModuleInfo;
+  std::map<std::string, ModuleInfo> modules;
+
+  std::set<std::filesystem::path> module_path;
+};
+
+}  // namespace cvs::pipeline::impl
