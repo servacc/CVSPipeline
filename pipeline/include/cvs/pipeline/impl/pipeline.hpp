@@ -13,9 +13,9 @@ namespace cvs::pipeline::impl {
 
 class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
  public:
-  static IPipelineUPtr make(cvs::common::Config&, const cvs::common::FactoryPtr<std::string>&);
+  using NodesMap = std::map<std::string, IExecutionNodePtr>;
 
-  Pipeline();
+  static IPipelineUPtr make(cvs::common::Config &, const cvs::common::FactoryPtr<std::string> &);
 
   IExecutionNodePtr getNode(std::string_view) const override;
 
@@ -26,11 +26,19 @@ class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
 
   void waitForAll() override;
 
- private:
+ protected:
+  static IExecutionGraphPtr parseGraph(common::Config &, const cvs::common::FactoryPtr<std::string> &);
+  static NodesMap parseNodes(common::Config &, const cvs::common::FactoryPtr<std::string> &, IExecutionGraphPtr &);
+  static void     parseConnections(common::Config &, const NodesMap &);
+  static void     initPipeline(Pipeline &, common::Config &, const cvs::common::FactoryPtr<std::string> &);
+
+  Pipeline();
+
+ protected:
   IExecutionGraphPtr graph;
   bool               autostart = false;
 
-  std::map<std::string, IExecutionNodePtr> nodes;
+  NodesMap nodes;
 };
 
 }  // namespace cvs::pipeline::impl

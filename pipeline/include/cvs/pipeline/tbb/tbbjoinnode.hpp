@@ -34,7 +34,7 @@ class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<Node
   std::any receiver(std::size_t i) override { return getPort<0, Args...>(i); }
   std::any sender(std::size_t) override { return std::make_any<::tbb::flow::sender<ArgumentsType>*>(&node); }
 
-  bool connect(std::any sndr, std::size_t i) override { return connectToPort<0, Args...>(sndr, i); }
+  bool connect(std::any sndr, std::size_t i) override { return connectToPort<0, Args...>(std::move(sndr), i); }
 
  private:
   template <std::size_t I>
@@ -63,7 +63,7 @@ class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<Node
       return true;
     }
 
-    return connectToPort<I + 1, AN...>(sndr, i);
+    return connectToPort<I + 1, AN...>(std::move(sndr), i);
   }
 
  private:

@@ -25,17 +25,43 @@ CVSCFG_DECLARE_CONFIG(ConnectionConfig,
 
 namespace cvs::pipeline::impl {
 
-IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr<std::string> &factory) {
+IPipelineUPtr Pipeline::make(common::Config &pipeline_cfg, const cvs::common::FactoryPtr<std::string> &factory) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
-  auto pipeline_cfg = root.getFirstChild("Pipeline").value();
+  std::unique_ptr<Pipeline> pipeline{new Pipeline};
+  initPipeline(*pipeline, pipeline_cfg, factory);
 
-  auto params = pipeline_cfg.parse<PipelineConfig>();
+  return pipeline;
+}
 
-  auto               graph_cfg = pipeline_cfg.getFirstChild("graph")->parse<GraphConfig>().value();
-  IExecutionGraphPtr graph     = factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
+void Pipeline::initPipeline(Pipeline &                                  pipeline,
+                            common::Config &                            cfg,
+                            const cvs::common::FactoryPtr<std::string> &factory) {
+  auto graph_cfg = cfg.getFirstChild("graph").value();
+  auto graph     = parseGraph(graph_cfg, factory);
 
-  auto nodes_list = pipeline_cfg.getFirstChild("nodes").value();
+  auto nodes_list = cfg.getFirstChild("nodes").value();
+  auto nodes      = parseNodes(nodes_list, factory, graph);
+
+  auto connection_list = cfg.getFirstChild("connections").value();
+  parseConnections(connection_list, nodes);
+
+  auto params = cfg.parse<PipelineConfig>();
+
+  pipeline.autostart = params->autostart;
+  pipeline.graph     = std::move(graph);
+  pipeline.nodes     = std::move(nodes);
+}
+
+IExecutionGraphPtr Pipeline::parseGraph(common::Config &cfg, const cvs::common::FactoryPtr<std::string> &factory) {
+  auto graph_cfg = cfg.parse<GraphConfig>().value();
+  return factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
+}
+
+Pipeline::NodesMap Pipeline::parseNodes(common::Config &                            nodes_list,
+                                        const cvs::common::FactoryPtr<std::string> &factory,
+                                        IExecutionGraphPtr &                        graph) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
   for (auto &node_cfg : nodes_list.getChildren()) {
@@ -50,15 +76,20 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
     LOG_DEBUG(logger, R"s(Node "{}" with element "{}" created.)s", node_params.node, node_params.element);
   }
 
-  auto connection_list = pipeline_cfg.getFirstChild("connections").value();
+  return nodes;
+}
+
+void Pipeline::parseConnections(common::Config &connection_list, const NodesMap &nodes) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
+
   for (auto &connection_cfg : connection_list.getChildren()) {
     auto connection_params = connection_cfg.parse<ConnectionConfig>().value();
 
-    auto from = nodes[connection_params.from].get();
+    auto from = nodes.at(connection_params.from).get();
     if (!from)
       throw std::runtime_error("Can't find node " + connection_params.from);
 
-    auto to = nodes[connection_params.to].get();
+    auto to = nodes.at(connection_params.to).get();
     if (!to)
       throw std::runtime_error("Can't find node " + connection_params.to);
 
@@ -72,14 +103,6 @@ IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr
     LOG_DEBUG(logger, R"s(Nodes "{}" and "{}" connected ({}-{}).)s", connection_params.from, connection_params.to,
               connection_params.output, connection_params.input);
   }
-
-  auto pipeline = std::make_unique<Pipeline>();
-
-  pipeline->autostart = params->autostart;
-  pipeline->graph     = std::move(graph);
-  pipeline->nodes     = std::move(nodes);
-
-  return pipeline;
 }
 
 Pipeline::Pipeline()

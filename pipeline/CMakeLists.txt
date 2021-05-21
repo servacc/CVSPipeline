@@ -26,9 +26,11 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/iexecutiongraph.hpp
         include/cvs/pipeline/ielement.hpp
         include/cvs/pipeline/imodule.hpp
+        include/cvs/pipeline/iview.hpp
         include/cvs/pipeline/registrationhelper.hpp
 
         include/cvs/pipeline/impl/pipeline.hpp
+        include/cvs/pipeline/impl/guiPipeline.hpp
         include/cvs/pipeline/impl/modulemanager.hpp
 
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp
@@ -40,6 +42,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbsourcenode.hpp
         include/cvs/pipeline/tbb/tbbhelpers.hpp
         include/cvs/pipeline/tbb/tbbdefinitions.hpp
+        include/cvs/pipeline/tbb/tbbview.hpp
 
         src/pipeline/tbb/tbbdefinitions.cpp
         src/pipeline/tbb/tbbhelpers.cpp
@@ -48,6 +51,7 @@ target_sources(${PROJECT_NAME}
         src/pipeline/registrationhelper.cpp
         src/pipeline/modulemanager.cpp
         src/pipeline/pipeline.cpp
+        src/pipeline/guiPipeline.cpp
         src/pipeline/imodule.cpp
     )
 target_include_directories(${PROJECT_NAME}
