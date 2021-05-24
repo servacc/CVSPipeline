@@ -7,6 +7,7 @@ namespace cvs::pipeline::tbb {
 struct TbbDefaultName {
   static const std::string graph;
 
+  static const std::string buffer;
   static const std::string broadcast;
   static const std::string continue_name;
   static const std::string function;

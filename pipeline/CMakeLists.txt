@@ -43,6 +43,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbhelpers.hpp
         include/cvs/pipeline/tbb/tbbdefinitions.hpp
         include/cvs/pipeline/tbb/tbbview.hpp
+        include/cvs/pipeline/tbb/tbbBufferNode.hpp
 
         src/pipeline/tbb/tbbdefinitions.cpp
         src/pipeline/tbb/tbbhelpers.cpp

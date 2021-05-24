@@ -6,6 +6,7 @@
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutiongraph.hpp>
 #include <cvs/pipeline/registrationhelper.hpp>
+#include <cvs/pipeline/tbb/tbbBufferNode.hpp>
 #include <cvs/pipeline/tbb/tbbbroadcastnode.hpp>
 #include <cvs/pipeline/tbb/tbbcontinuenode.hpp>
 #include <cvs/pipeline/tbb/tbbdefinitions.hpp>
@@ -96,6 +97,7 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
 
   // service nodes
   registerNode<Res, TbbBroadcastNode, !std::is_same<Res, void>::value>(TbbDefaultName::broadcast, factory);
+  registerNode<Res, TbbBufferNode, !std::is_same<Res, void>::value>(TbbDefaultName::buffer, factory);
   registerNode<Arg, TbbJoinNode, detail::is_tuple<Arg>::value>(TbbDefaultName::join, factory);
   registerNode<Res, TbbSplitNode, detail::is_tuple<Res>::value>(TbbDefaultName::split_name, factory);
 }
