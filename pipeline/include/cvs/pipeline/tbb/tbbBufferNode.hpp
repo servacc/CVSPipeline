@@ -7,9 +7,8 @@
 
 namespace cvs::pipeline::tbb {
 
-template <typename T>
-class TbbBufferNode : public IInputExecutionNode<NodeType::ServiceOut, T>,
-                      public IOutputExecutionNode<NodeType::ServiceOut, T> {
+template <NodeType Type, typename T>
+class TbbBufferNode : public IInputExecutionNode<Type, T>, public IOutputExecutionNode<Type, T> {
  public:
   static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<T>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
@@ -42,5 +41,10 @@ class TbbBufferNode : public IInputExecutionNode<NodeType::ServiceOut, T>,
  private:
   ::tbb::flow::buffer_node<T> node;
 };
+
+template <typename T>
+using TbbBufferNodeIn = TbbBufferNode<NodeType::ServiceIn, T>;
+template <typename T>
+using TbbBufferNodeOut = TbbBufferNode<NodeType::ServiceOut, T>;
 
 }  // namespace cvs::pipeline::tbb

@@ -23,6 +23,11 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public IView {
     return connectToPort<0>(std::move(rcvr), i, receivers);
   }
 
+  template <std::size_t I>
+  static bool connectToPort(std::any sndr, std::size_t i, std::tuple<>& list) {
+    return false;
+  }
+
   template <std::size_t I, template <typename> typename Port, typename... T>
   static bool connectToPort(std::any sndr, std::size_t i, std::tuple<Port<T>*...>& list) {
     if constexpr (std::tuple_size_v<std::tuple<Port<T>*...>> == 0)

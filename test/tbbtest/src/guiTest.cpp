@@ -117,8 +117,10 @@ TEST_F(GuiTest, in_out) {
       factory->create<IExecutionNodeUPtr>("Process"s, TbbDefaultName::broadcast, cfg, graph).value_or(nullptr);
   auto j_node = factory->create<IExecutionNodeUPtr>("Process"s, TbbDefaultName::join, cfg, graph).value_or(nullptr);
 
-  auto d_buf_node = factory->create<IExecutionNodeUPtr>("InOut"s, TbbDefaultName::buffer, cfg, graph).value_or(nullptr);
-  auto e_buf_node = factory->create<IExecutionNodeUPtr>("InOut"s, TbbDefaultName::buffer, cfg, graph).value_or(nullptr);
+  auto d_buf_node =
+      factory->create<IExecutionNodeUPtr>("InOut"s, TbbDefaultName::buffer_out, cfg, graph).value_or(nullptr);
+  auto e_buf_node =
+      factory->create<IExecutionNodeUPtr>("InOut"s, TbbDefaultName::buffer_out, cfg, graph).value_or(nullptr);
 
   ASSERT_NE(nullptr, a_node);
   ASSERT_NE(nullptr, b_node);

@@ -7,7 +7,7 @@
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(ViewConfig, CVSCFG_VALUE_DEFAULT(autostart, bool, false))
+CVSCFG_DECLARE_CONFIG(ViewConfig, CVSCFG_VALUE(type, std::string))
 
 }  // namespace
 
@@ -18,7 +18,13 @@ IPipelineUPtr GuiPipeline::make(common::Config &cfg, const cvs::common::FactoryP
 
   initPipeline(*pipeline, cfg, factory);
 
-  auto view = cfg.getFirstChild("view").value();
+  auto view_cfg    = cfg.getFirstChild("view").value();
+  auto view_params = view_cfg.parse<ViewConfig>().value();
+
+  pipeline->view = factory
+                       ->create<IViewUPtr, common::Config &, const std::map<std::string, IExecutionNodePtr> &>(
+                           view_params.type, view_cfg, pipeline->nodes)
+                       .value();
 
   return pipeline;
 }

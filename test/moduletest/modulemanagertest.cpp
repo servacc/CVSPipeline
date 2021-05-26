@@ -27,7 +27,8 @@ TEST(ModuleManagerTest, testPipeline) {
     { "name": "", "level": "0", "sink": "1" },
     { "name": "cvs.pipeline.ModuleManager", "level": "1", "sink": "1" },
     { "name": "cvs.pipeline.NodeFactory", "level": "0", "sink": "1" },
-    { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" }
+    { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" },
+    { "name": "cvs.pipeline.helper", "level": "0", "sink": "1" }
   ]
 }
 )json";

@@ -54,6 +54,7 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/iexecutionnode.hpp
           pipeline/include/cvs/pipeline/iexecutiongraph.hpp
           pipeline/include/cvs/pipeline/ielement.hpp
+          pipeline/include/cvs/pipeline/iview.hpp
           pipeline/include/cvs/pipeline/imodule.hpp
           pipeline/include/cvs/pipeline/registrationhelper.hpp
           ${CMAKE_CURRENT_BINARY_DIR}/pipeline/generate/cvs/pipeline/version.hpp
@@ -71,4 +72,6 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/tbb/tbbsplitnode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbsourcenode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbhelpers.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp )
+          pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbview.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbBufferNode.hpp  )

@@ -46,6 +46,10 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
   using Res        = typename detail::RegistrationHelper<Element>::Res;
 
+  auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
+  LOG_TRACE(logger, R"(Try register element with type "{}" for key "{}")",
+            boost::core::demangle(typeid(Element).name()), key);
+
   factory->tryRegisterType<FactoryFunction>(key, Impl::make);
 
   factory->tryRegisterType<IExecutionNodeUPtr(const std::string&, common::Config&, IExecutionGraphPtr&)>(

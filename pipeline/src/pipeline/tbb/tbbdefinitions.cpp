@@ -4,7 +4,8 @@ namespace cvs::pipeline::tbb {
 
 const std::string TbbDefaultName::graph = "TbbGraph";
 
-const std::string TbbDefaultName::buffer        = "TbbBufferDefault";
+const std::string TbbDefaultName::buffer_in     = "TbbBufferInDefault";
+const std::string TbbDefaultName::buffer_out    = "TbbBufferOutDefault";
 const std::string TbbDefaultName::broadcast     = "TbbBroadcastDefault";
 const std::string TbbDefaultName::continue_name = "TbbContinueDefault";
 const std::string TbbDefaultName::function      = "TbbFunctionDefault";

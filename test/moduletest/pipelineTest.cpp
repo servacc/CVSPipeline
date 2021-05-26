@@ -61,10 +61,12 @@ TEST(Pipeline, createGraph) {
   module_manager->loadModules();
   module_manager->registerTypes(factory);
 
+  auto pipeline_cfg = cfg_root.getFirstChild("Pipeline").value();
+
   auto pipeline =
       factory
           ->create<cvs::pipeline::IPipelineUPtr, cvs::common::Config&, const cvs::common::FactoryPtr<std::string>&>(
-              "Default", cfg_root, factory)
+              "Default", pipeline_cfg, factory)
           .value();
   ASSERT_NE(nullptr, pipeline);
 

@@ -29,6 +29,14 @@ struct is_tuple : std::false_type {};
 template <typename... T>
 struct is_tuple<std::tuple<T...>> : std::true_type {};
 
+template <typename T>
+class HelperElement : public cvs::pipeline::IElement<void(T)> {
+ public:
+  static std::unique_ptr<HelperElement> make(cvs::common::Config&) { return nullptr; }
+
+  void process(T) override {}
+};
+
 }  // namespace detail
 
 template <typename NType>
@@ -77,6 +85,27 @@ void registerNode(const std::string& key, const cvs::common::FactoryPtr<std::str
   }
 }
 
+template <std::size_t I = 0, typename T>
+void registerServiceNodesForTupleElements(const std::string&, const cvs::common::FactoryPtr<std::string>&, T*) {}
+
+template <std::size_t I = 0, typename T, typename... Args>
+void registerServiceNodesForTupleElements(const std::string&                          root_key,
+                                          const cvs::common::FactoryPtr<std::string>& factory,
+                                          std::tuple<T, Args...>*) {
+  std::string key = fmt::format("{}_{}", root_key, I);
+  registerElemetHelper<IElementUPtr<void(T)>(common::Config&), detail::HelperElement<T>>(key, factory);
+
+  registerNode<T, TbbBroadcastNode, !std::is_same<T, void>::value>(TbbDefaultName::broadcast, factory);
+  registerNode<T, TbbBufferNodeOut, !std::is_same<T, void>::value>(TbbDefaultName::buffer_out, factory);
+  registerNode<T, TbbBufferNodeIn, !std::is_same<T, void>::value>(TbbDefaultName::buffer_in, factory);
+  registerNode<T, TbbJoinNode, detail::is_tuple<T>::value>(TbbDefaultName::join, factory);
+  registerNode<T, TbbSplitNode, detail::is_tuple<T>::value>(TbbDefaultName::split_name, factory);
+
+  registerServiceNodesForTupleElements(key, factory, (T*)nullptr);
+
+  registerServiceNodesForTupleElements<I + 1>(root_key, factory, (std::tuple<Args...>*)nullptr);
+}
+
 template <typename FactoryFunction, typename Impl>
 void registerElemetAndTbbHelper(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
   using namespace cvs::pipeline::tbb;
@@ -97,9 +126,13 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
 
   // service nodes
   registerNode<Res, TbbBroadcastNode, !std::is_same<Res, void>::value>(TbbDefaultName::broadcast, factory);
-  registerNode<Res, TbbBufferNode, !std::is_same<Res, void>::value>(TbbDefaultName::buffer, factory);
+  registerNode<Res, TbbBufferNodeOut, !std::is_same<Res, void>::value>(TbbDefaultName::buffer_out, factory);
+  registerNode<Arg, TbbBufferNodeIn, !std::is_same<Arg, void>::value>(TbbDefaultName::buffer_in, factory);
   registerNode<Arg, TbbJoinNode, detail::is_tuple<Arg>::value>(TbbDefaultName::join, factory);
   registerNode<Res, TbbSplitNode, detail::is_tuple<Res>::value>(TbbDefaultName::split_name, factory);
+
+  registerServiceNodesForTupleElements(key + "_in", factory, (Arg*)nullptr);
+  registerServiceNodesForTupleElements(key + "_out", factory, (Res*)nullptr);
 }
 
 void registerBase(const cvs::common::FactoryPtr<std::string>& factory);
