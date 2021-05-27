@@ -7,7 +7,7 @@
 
 namespace cvs::pipeline::tbb {
 
-template <typename T>
+template <NodeType Type, typename T>
 class TbbBroadcastNode : public IInputExecutionNode<NodeType::ServiceOut, T>,
                          public IOutputExecutionNode<NodeType::ServiceOut, T> {
  public:
@@ -42,5 +42,10 @@ class TbbBroadcastNode : public IInputExecutionNode<NodeType::ServiceOut, T>,
  private:
   ::tbb::flow::broadcast_node<T> node;
 };
+
+template <typename T>
+using TbbBroadcastNodeIn = TbbBroadcastNode<NodeType::ServiceIn, T>;
+template <typename T>
+using TbbBroadcastNodeOut = TbbBroadcastNode<NodeType::ServiceOut, T>;
 
 }  // namespace cvs::pipeline::tbb

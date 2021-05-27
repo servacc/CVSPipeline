@@ -9,7 +9,8 @@ struct TbbDefaultName {
 
   static const std::string buffer_in;
   static const std::string buffer_out;
-  static const std::string broadcast;
+  static const std::string broadcast_in;
+  static const std::string broadcast_out;
   static const std::string continue_name;
   static const std::string function;
   static const std::string join;

@@ -27,13 +27,13 @@ TEST(Pipeline, createGraph) {
       "type": "TbbGraph"
     },
     "nodes" : [
-      { "name": "a",  "element" : "A", "node" : "TbbSourceDefault"    },
-      { "name": "b",  "element" : "B", "node" : "TbbFunctionDefault"  },
-      { "name": "c",  "element" : "C", "node" : "TbbFunctionDefault"  },
-      { "name": "d",  "element" : "D", "node" : "TbbFunctionDefault"  },
-      { "name": "e",  "element" : "E", "node" : "TbbFunctionDefault"  },
-      { "name": "j",  "element" : "D", "node" : "TbbJoinDefault"      },
-      { "name": "bc", "element" : "A", "node" : "TbbBroadcastDefault" }
+      { "name": "a",  "element" : "A", "node" : "TbbSourceDefault"       },
+      { "name": "b",  "element" : "B", "node" : "TbbFunctionDefault"     },
+      { "name": "c",  "element" : "C", "node" : "TbbFunctionDefault"     },
+      { "name": "d",  "element" : "D", "node" : "TbbFunctionDefault"     },
+      { "name": "e",  "element" : "E", "node" : "TbbFunctionDefault"     },
+      { "name": "j",  "element" : "D", "node" : "TbbJoinDefault"         },
+      { "name": "bc", "element" : "A", "node" : "TbbBroadcastOutDefault" }
     ],
     "connections" : [
       { "from" : "a" , "output" : "0", "to" : "bc", "input" : "0" },

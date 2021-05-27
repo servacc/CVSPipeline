@@ -13,15 +13,9 @@ class TbbView;
 template <typename... In, typename... Out>
 class TbbView<std::tuple<In...>, std::tuple<Out...>> : public IView {
  public:
-  bool addSender(std::size_t i, std::any sndr) override {
-    //    return false;
-    return connectToPort<0>(std::move(sndr), i, senders);
-  }
+  bool addSender(std::size_t i, std::any sndr) override { return connectToPort<0>(std::move(sndr), i, senders); }
 
-  bool addReceiver(std::size_t i, std::any rcvr) override {
-    //    return false;
-    return connectToPort<0>(std::move(rcvr), i, receivers);
-  }
+  bool addReceiver(std::size_t i, std::any rcvr) override { return connectToPort<0>(std::move(rcvr), i, receivers); }
 
   template <std::size_t I>
   static bool connectToPort(std::any sndr, std::size_t i, std::tuple<>& list) {

@@ -16,13 +16,19 @@ namespace detail {
 template <typename... Args>
 struct Input {
   using type = std::tuple<Args...>;
-  type& forward(Args&... args) { return std::tie(args...); }
+  static type forward(const Args&... args) { return std::tie(args...); }
 };
 
 template <typename Arg>
 struct Input<Arg> {
   using type = Arg;
-  type& forward(type& arg) { return arg; }
+  static const type& forward(const type& arg) { return arg; }
+};
+
+template <>
+struct Input<void> {
+  using type = ::tbb::flow::continue_msg;
+  static type forward() { return {}; }
 };
 
 template <typename Res>
@@ -58,14 +64,11 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy>
     ::tbb::flow::continue_msg msg;
     return node.try_get(msg);
   }
-  bool tryPut(const Args&... args) override {
-    return false;
-    //    return node.try_put(detail::Input<Args...>::forward(args...));
-  }
+  bool tryPut(const Args&... args) override { return node.try_put(detail::Input<Args>::forward(args)...); }
 
  protected:
   auto createExecuteFunction1(IElementPtr<void(Args...)> element) {
-    if constexpr (std::tuple_size_v<std::tuple<Args...>> > 1) {
+    if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [e = std::move(element)](std::tuple<Args...> a) -> ::tbb::flow::continue_msg {
         std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
         return ::tbb::flow::continue_msg{};
@@ -99,13 +102,11 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
 
   bool tryGet(Result& val) override { return node.try_get(val); }
 
-  bool tryPut(const Args&... args) override {
-    return false;
-  }  // node.try_put(detail::Input<Args...>::forward(args...)); }
+  bool tryPut(const Args&... args) override { return node.try_put(detail::Input<Args...>::forward(args...)); }
 
  protected:
   auto createExecuteFunction1(ElementPtrType element) {
-    if constexpr (std::tuple_size_v<std::tuple<Args...>> > 1) {
+    if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [e = std::move(element)](std::tuple<Args...> a) -> Result {
         return std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
       };

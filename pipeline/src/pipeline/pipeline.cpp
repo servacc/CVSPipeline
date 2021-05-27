@@ -67,13 +67,22 @@ Pipeline::NodesMap Pipeline::parseNodes(common::Config &                        
   for (auto &node_cfg : nodes_list.getChildren()) {
     auto node_params = node_cfg.parse<NodeConfig>().value();
 
+    LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
+              node_params.element);
+
     auto node = factory
                     ->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
                         node_params.element, node_params.node, node_cfg, graph)
                     .value();
+
+    if (!node)
+      throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
+                                           node_params.name, node_params.node, node_params.element));
+
     nodes.emplace(node_params.name, std::move(node));
 
-    LOG_DEBUG(logger, R"s(Node "{}" with element "{}" created.)s", node_params.node, node_params.element);
+    LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
+              node_params.element);
   }
 
   return nodes;
@@ -84,6 +93,9 @@ void Pipeline::parseConnections(common::Config &connection_list, const NodesMap 
 
   for (auto &connection_cfg : connection_list.getChildren()) {
     auto connection_params = connection_cfg.parse<ConnectionConfig>().value();
+
+    LOG_TRACE(logger, R"(Try connect node "{}:{}"-"{}:{}")", connection_params.from, connection_params.output,
+              connection_params.to, connection_params.input);
 
     auto from = nodes.at(connection_params.from).get();
     if (!from)
