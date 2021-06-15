@@ -46,13 +46,13 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
 
   if (versionMajor() != CVSPipeline_VERSION_MAJOR) {
     LOG_ERROR(logger, "Incompatible version of the CVSPipeline (current {}.{}.{} required {}.{}.{}).",
-              CVSPipeline_VERSION_MAJOR, CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor,
-              versionMinor, versionPatch);
+              CVSPipeline_VERSION_MAJOR, CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor(),
+              versionMinor(), versionPatch());
     return nullptr;
   }
 
   LOG_DEBUG(logger, "Current version of the CVSPipeline: {}.{}.{}. Required: {}.{}.{}.", CVSPipeline_VERSION_MAJOR,
-            CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor, versionMinor, versionPatch);
+            CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor(), versionMinor(), versionPatch());
 
   IModuleUPtr result{newModule(), deleteModule};
   if (!result->checkCompatibility()) {
