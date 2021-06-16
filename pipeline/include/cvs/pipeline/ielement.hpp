@@ -6,7 +6,7 @@ namespace cvs::pipeline {
 
 template <typename Signature>
 class IElement {
-  static_assert(std::is_invocable<Signature>::value, "IElement template argument must be function type");
+  static_assert(sizeof(Signature) < 0, "IElement template argument must be function type");
 };
 
 template <typename Res, typename... Args>
@@ -24,8 +24,7 @@ class IElement<Res(Args...)> {
 
 template <typename Signature>
 struct IElementPointerProxy {
-  static_assert(std::is_invocable<Signature>::value,
-                "IElementPtr (IElementUPtr) template argument must be function type");
+  static_assert(sizeof(Signature) < 0, "IElementPtr (IElementUPtr) template argument must be function type");
 };
 
 template <typename Res, typename... Args>
