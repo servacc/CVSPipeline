@@ -39,7 +39,7 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
   }
 
   const auto new_module         = lib.get<detail::IModuleCreator>("newModule")();
-  auto       delete_module      = &lib.get<detail::IModuleDeleter>("deleteModule");
+  const auto delete_module      = &lib.get<detail::IModuleDeleter>("deleteModule");
   const auto version_major      = lib.get<detail::IModuleVersion>("moduleVersionMajor")();
   const auto version_minor      = lib.get<detail::IModuleVersion>("moduleVersionMinor")();
   const auto version_patch      = lib.get<detail::IModuleVersion>("moduleVersionPatch")();
