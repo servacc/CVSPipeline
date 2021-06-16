@@ -38,8 +38,6 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     return nullptr;
   }
 
-  const auto new_module    = lib.get<detail::IModuleCreator>("newModule")();
-  const auto delete_module = &lib.get<detail::IModuleDeleter>("deleteModule");
   const auto version_major = lib.get<detail::IModuleVersion>("moduleVersionMajor")();
   const auto version_minor = lib.get<detail::IModuleVersion>("moduleVersionMinor")();
   const auto version_patch = lib.get<detail::IModuleVersion>("moduleVersionPatch")();
@@ -54,7 +52,7 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
   LOG_DEBUG(logger, "Current version of the CVSPipeline: {}.{}.{}. Required: {}.{}.{}.", CVSPipeline_VERSION_MAJOR,
             CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, version_major, version_minor, version_patch);
 
-  IModuleUPtr result{new_module, delete_module};
+  IModuleUPtr result{lib.get<detail::IModuleCreator>("newModule")(), &lib.get<detail::IModuleDeleter>("deleteModule")};
   if (!result->checkCompatibility()) {
     LOG_ERROR(logger, "Module is incompatible with loaded version of pipeline");
     return nullptr;
