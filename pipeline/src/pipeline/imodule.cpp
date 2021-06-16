@@ -38,23 +38,23 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
     return nullptr;
   }
 
-  auto newModule    = &lib.get<detail::IModuleCreator>("newModule");
-  auto deleteModule = &lib.get<detail::IModuleDeleter>("deleteModule");
-  auto versionMajor = &lib.get<detail::IModuleVersion>("moduleVersionMajor");
-  auto versionMinor = &lib.get<detail::IModuleVersion>("moduleVersionMinor");
-  auto versionPatch = &lib.get<detail::IModuleVersion>("moduleVersionPatch");
+  const auto new_module         = lib.get<detail::IModuleCreator>("newModule")();
+  auto       delete_module      = &lib.get<detail::IModuleDeleter>("deleteModule");
+  const auto version_major      = lib.get<detail::IModuleVersion>("moduleVersionMajor")();
+  const auto version_minor      = lib.get<detail::IModuleVersion>("moduleVersionMinor")();
+  const auto version_patch      = lib.get<detail::IModuleVersion>("moduleVersionPatch")();
 
-  if (versionMajor() != CVSPipeline_VERSION_MAJOR) {
+  if (version_major != CVSPipeline_VERSION_MAJOR) {
     LOG_ERROR(logger, "Incompatible version of the CVSPipeline (current {}.{}.{} required {}.{}.{}).",
-              CVSPipeline_VERSION_MAJOR, CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor(),
-              versionMinor(), versionPatch());
+              CVSPipeline_VERSION_MAJOR, CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, version_major,
+              version_minor, version_patch);
     return nullptr;
   }
 
   LOG_DEBUG(logger, "Current version of the CVSPipeline: {}.{}.{}. Required: {}.{}.{}.", CVSPipeline_VERSION_MAJOR,
-            CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, versionMajor(), versionMinor(), versionPatch());
+            CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, version_major, version_minor, version_patch);
 
-  IModuleUPtr result{newModule(), deleteModule};
+  IModuleUPtr result{new_module, delete_module};
   if (!result->checkCompatibility()) {
     LOG_ERROR(logger, "Module is incompatible with loaded version of pipeline");
     return nullptr;

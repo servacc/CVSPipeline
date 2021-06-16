@@ -36,8 +36,8 @@ struct IElementPointerProxy<Res(Args...)> {
 };
 
 template <typename T>
-using IElementPtr = IElementPointerProxy<T>::SharedPointer;
+using IElementPtr = typename IElementPointerProxy<T>::SharedPointer;
 template <typename T>
-using IElementUPtr = IElementPointerProxy<T>::UniquePointer;
+using IElementUPtr = typename IElementPointerProxy<T>::UniquePointer;
 
 }  // namespace cvs::pipeline
