@@ -70,16 +70,14 @@ Pipeline::NodesMap Pipeline::parseNodes(common::Config &                        
     LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
               node_params.element);
 
-    auto node = factory
-                    ->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
-                        node_params.element, node_params.node, node_cfg, graph)
-                    .value();
+    auto node = factory->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
+        node_params.element, node_params.node, node_cfg, graph);
 
-    if (!node)
+    if (!node.has_value() || !node.value())
       throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
                                            node_params.name, node_params.node, node_params.element));
 
-    nodes.emplace(node_params.name, std::move(node));
+    nodes.emplace(node_params.name, std::move(node.value()));
 
     LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
               node_params.element);
@@ -97,13 +95,15 @@ void Pipeline::parseConnections(common::Config &connection_list, const NodesMap 
     LOG_TRACE(logger, R"(Try connect node "{}:{}"-"{}:{}")", connection_params.from, connection_params.output,
               connection_params.to, connection_params.input);
 
-    auto from = nodes.at(connection_params.from).get();
-    if (!from)
+    auto from_iter = nodes.find(connection_params.from);
+    if (from_iter == nodes.end())
       throw std::runtime_error("Can't find node " + connection_params.from);
+    auto from = from_iter->second;
 
-    auto to = nodes.at(connection_params.to).get();
-    if (!to)
+    auto to_iter = nodes.find(connection_params.to);
+    if (to_iter == nodes.end())
       throw std::runtime_error("Can't find node " + connection_params.to);
+    auto to = to_iter->second;
 
     auto sender = from->sender(connection_params.output);
     if (!sender.has_value())

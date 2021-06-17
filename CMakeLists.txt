@@ -66,7 +66,6 @@ cvs_install(NAME CVSPipeline
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/tbb
     FILES pipeline/include/cvs/pipeline/tbb/tbbfunctionnode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbflowgraph.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbbroadcastnode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbjoinnode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbcontinuenode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbsplitnode.hpp
@@ -74,4 +73,7 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/tbb/tbbhelpers.hpp
           pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp
           pipeline/include/cvs/pipeline/tbb/tbbview.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbBufferNode.hpp  )
+          pipeline/include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbOverwriteNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbBufferNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbBufferTemplateNode.hpp )
