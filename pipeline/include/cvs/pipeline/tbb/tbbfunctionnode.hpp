@@ -48,9 +48,8 @@ template <typename Element, typename Policy = ::tbb::flow::queueing>
 class TbbFunctionNodeBase;
 
 template <typename... Args, typename Policy>
-class TbbFunctionNodeBase<IElement<void(Args...)>, Policy>
-    : public IInputExecutionNode<NodeType::Functional, typename detail::Input<Args...>::type>,
-      public IOutputExecutionNode<NodeType::Functional> {
+class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecutionNode<NodeType::Functional, Args...>,
+                                                             public IOutputExecutionNode<NodeType::Functional> {
  public:
   using ElementPtrType = IElementPtr<void(Args...)>;
   using ElementType    = IElement<void(Args...)>;
@@ -64,7 +63,7 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy>
     ::tbb::flow::continue_msg msg;
     return node.try_get(msg);
   }
-  bool tryPut(const Args&... args) override { return node.try_put(detail::Input<Args>::forward(args)...); }
+  bool tryPut(const Args&... args) override { return node.try_put(detail::Input<Args...>::forward(args...)); }
 
  protected:
   auto createExecuteFunction1(IElementPtr<void(Args...)> element) {
