@@ -147,9 +147,12 @@ class TbbFunctionNode : public TbbFunctionNodeBase<Element, Policy> {
   }
 
   bool connect(std::any sndr, std::size_t) override {
-    ::tbb::flow::sender<ArgumentsType>* s = std::any_cast<::tbb::flow::sender<ArgumentsType>*>(sndr);
-    ::tbb::flow::make_edge(*s, TbbFunctionNodeBase<Element, Policy>::node);
-    return true;
+    if (typeid(::tbb::flow::sender<ArgumentsType>*) == sndr.type()) {
+      ::tbb::flow::sender<ArgumentsType>* s = std::any_cast<::tbb::flow::sender<ArgumentsType>*>(sndr);
+      ::tbb::flow::make_edge(*s, TbbFunctionNodeBase<Element, Policy>::node);
+      return true;
+    }
+    return false;
   }
 };
 

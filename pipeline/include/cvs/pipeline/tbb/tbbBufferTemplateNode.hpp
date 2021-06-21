@@ -23,9 +23,11 @@ class TbbBufferTemplateNode : public IInputExecutionNode<Type, T>, public IOutpu
 
   bool connect(std::any sndr, std::size_t i) override {
     if (i == 0) {
-      ::tbb::flow::sender<T>* s = std::any_cast<::tbb::flow::sender<T>*>(sndr);
-      ::tbb::flow::make_edge(*s, node);
-      return true;
+      if (typeid(::tbb::flow::sender<T>*) == sndr.type()) {
+        ::tbb::flow::sender<T>* s = std::any_cast<::tbb::flow::sender<T>*>(sndr);
+        ::tbb::flow::make_edge(*s, node);
+        return true;
+      }
     }
     return false;
   }

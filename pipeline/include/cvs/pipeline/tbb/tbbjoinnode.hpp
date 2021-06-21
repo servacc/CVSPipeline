@@ -57,10 +57,13 @@ class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<Node
   template <std::size_t I, typename A0, typename... AN>
   bool connectToPort(std::any sndr, std::size_t i) {
     if (I == i) {
-      ::tbb::flow::sender<A0>* s = std::any_cast<::tbb::flow::sender<A0>*>(sndr);
-      ::tbb::flow::make_edge(*s, ::tbb::flow::input_port<I>(node));
+      if (typeid(::tbb::flow::sender<A0>*) == sndr.type()) {
+        ::tbb::flow::sender<A0>* s = std::any_cast<::tbb::flow::sender<A0>*>(sndr);
+        ::tbb::flow::make_edge(*s, ::tbb::flow::input_port<I>(node));
 
-      return true;
+        return true;
+      }
+      return false;
     }
 
     return connectToPort<I + 1, AN...>(std::move(sndr), i);

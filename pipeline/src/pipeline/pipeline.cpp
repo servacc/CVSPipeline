@@ -2,6 +2,7 @@
 
 #include <cvs/common/configbase.hpp>
 #include <cvs/logger/logging.hpp>
+#include <fmt/format.h>
 
 #include <exception>
 
@@ -18,8 +19,8 @@ CVSCFG_DECLARE_CONFIG(NodeConfig,
 CVSCFG_DECLARE_CONFIG(ConnectionConfig,
                       CVSCFG_VALUE(from, std::string),
                       CVSCFG_VALUE(to, std::string),
-                      CVSCFG_VALUE(output, std::size_t),
-                      CVSCFG_VALUE(input, std::size_t))
+                      CVSCFG_VALUE_DEFAULT(output, std::size_t, 0),
+                      CVSCFG_VALUE_DEFAULT(input, std::size_t, 0))
 
 }  // namespace
 
@@ -109,10 +110,10 @@ void Pipeline::parseConnections(common::Config &connection_list, const NodesMap 
     if (!sender.has_value())
       throw std::runtime_error("No sender with index " + std::to_string(connection_params.output));
     if (!to->connect(sender, connection_params.input))
-      throw std::runtime_error("Can't connect output " + std::to_string(connection_params.output) + " with input " +
-                               std::to_string(connection_params.input));
+      throw std::runtime_error(fmt::format(R"(Can't connect "{}" output {} with "{}" input {})", connection_params.from,
+                                           connection_params.output, connection_params.to, connection_params.input));
 
-    LOG_DEBUG(logger, R"s(Nodes "{}" and "{}" connected ({}-{}).)s", connection_params.from, connection_params.to,
+    LOG_DEBUG(logger, R"(Nodes "{}" and "{}" connected ({}-{}).)", connection_params.from, connection_params.to,
               connection_params.output, connection_params.input);
   }
 }

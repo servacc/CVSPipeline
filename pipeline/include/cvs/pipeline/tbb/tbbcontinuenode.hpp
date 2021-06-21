@@ -83,10 +83,12 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
 
   bool connect(std::any sndr, std::size_t i) override {
     if (i == 0) {
-      ::tbb::flow::sender<::tbb::flow::continue_msg>* s =
-          std::any_cast<::tbb::flow::sender<::tbb::flow::continue_msg>*>(sndr);
-      ::tbb::flow::make_edge(*s, TbbContinueNodeBase<Element>::node);
-      return true;
+      if (typeid(::tbb::flow::sender<::tbb::flow::continue_msg>*) == sndr.type()) {
+        ::tbb::flow::sender<::tbb::flow::continue_msg>* s =
+            std::any_cast<::tbb::flow::sender<::tbb::flow::continue_msg>*>(sndr);
+        ::tbb::flow::make_edge(*s, TbbContinueNodeBase<Element>::node);
+        return true;
+      }
     }
     return false;
   }
