@@ -6,6 +6,9 @@
 .idea/
 cmake-build-*/
 
+# VS Code
+.vscode/
+
 # Generic build directory
 build/
 
