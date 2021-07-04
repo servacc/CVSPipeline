@@ -1,8 +1,8 @@
 #include <cvs/common/configbase.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
+#include <cvs/pipeline/tbb/tbbView.hpp>
 #include <cvs/pipeline/tbb/tbbhelpers.hpp>
-#include <cvs/pipeline/tbb/tbbview.hpp>
 #include <gmock/gmock.h>
 
 using namespace std::literals::string_literals;
@@ -42,6 +42,9 @@ class Process : public IElement<int(int, int)> {
 
 class TestView : public TbbView<std::tuple<int, int>, std::tuple<int, int>> {
  public:
+  TestView(cvs::common::Config& cfg, cvs::pipeline::IExecutionGraphPtr g)
+      : TbbView<std::tuple<int, int>, std::tuple<int, int>>(cfg, g) {}
+
   int exec() override {
     tryPut<0>(a_input);
     tryPut<1>(b_input);
@@ -134,7 +137,7 @@ TEST_F(GuiTest, in_out) {
   ASSERT_NE(nullptr, d_buf_node);
   ASSERT_NE(nullptr, e_buf_node);
 
-  TestView view;
+  TestView view(cfg, graph);
 
   view.addReceiver(0, a_node->receiver(0));
   view.addReceiver(1, b_node->receiver(0));

@@ -21,10 +21,11 @@ IPipelineUPtr GuiPipeline::make(common::Config &cfg, const cvs::common::FactoryP
   auto view_cfg    = cfg.getFirstChild("view").value();
   auto view_params = view_cfg.parse<ViewConfig>().value();
 
-  pipeline->view = factory
-                       ->create<IViewUPtr, common::Config &, const std::map<std::string, IExecutionNodePtr> &>(
-                           view_params.type, view_cfg, pipeline->nodes)
-                       .value();
+  pipeline->view =
+      factory
+          ->create<IViewUPtr, common::Config &, IExecutionGraphPtr &, const std::map<std::string, IExecutionNodePtr> &>(
+              view_params.type, view_cfg, pipeline->graph, pipeline->nodes)
+          .value();
 
   return pipeline;
 }

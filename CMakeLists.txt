@@ -72,7 +72,7 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/tbb/tbbsourcenode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbhelpers.hpp
           pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbview.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbView.hpp
           pipeline/include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbOverwriteNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbBufferNode.hpp

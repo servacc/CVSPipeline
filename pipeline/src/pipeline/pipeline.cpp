@@ -76,7 +76,7 @@ Pipeline::NodesMap Pipeline::parseNodes(common::Config &                        
 
     if (!node.has_value() || !node.value())
       throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
-                                           node_params.name, node_params.node, node_params.element));
+                                           node_params.name, node_params.element, node_params.node));
 
     nodes.emplace(node_params.name, std::move(node.value()));
 
