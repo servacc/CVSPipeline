@@ -42,6 +42,9 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
   template <std::size_t I>
   using OutType = std::remove_cvref_t<std::tuple_element_t<I, std::tuple<Out...>>>;
 
+  using InputTuple  = std::tuple<In...>;
+  using OutputTuple = std::tuple<Out...>;
+
   TbbView(cvs::common::Config& cfg, cvs::pipeline::IExecutionGraphPtr g)
       : graph(g)
       , config(cfg) {}
