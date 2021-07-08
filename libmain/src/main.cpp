@@ -24,7 +24,7 @@ int execPipeline(const std::string &module_manager_key,
 
   LOG_GLOB_INFO(R"(Config "{}" loaded)", config_path_string);
 
-  cvs::logger::initLoggers(config_opt);
+  cvs::logger::initLoggersAndOpenCVHelper(config_opt);
 
   auto factory = pipelineFactory();
 
