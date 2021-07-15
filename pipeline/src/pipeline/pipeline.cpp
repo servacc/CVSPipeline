@@ -2,6 +2,7 @@
 
 #include <cvs/common/configbase.hpp>
 #include <cvs/logger/logging.hpp>
+#include <fmt/format.h>
 
 #include <exception>
 
@@ -18,68 +19,103 @@ CVSCFG_DECLARE_CONFIG(NodeConfig,
 CVSCFG_DECLARE_CONFIG(ConnectionConfig,
                       CVSCFG_VALUE(from, std::string),
                       CVSCFG_VALUE(to, std::string),
-                      CVSCFG_VALUE(output, std::size_t),
-                      CVSCFG_VALUE(input, std::size_t))
+                      CVSCFG_VALUE_DEFAULT(output, std::size_t, 0),
+                      CVSCFG_VALUE_DEFAULT(input, std::size_t, 0))
 
 }  // namespace
 
 namespace cvs::pipeline::impl {
 
-IPipelineUPtr Pipeline::make(common::Config &root, const cvs::common::FactoryPtr<std::string> &factory) {
+IPipelineUPtr Pipeline::make(common::Config &pipeline_cfg, const cvs::common::FactoryPtr<std::string> &factory) {
   auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
-  auto pipeline_cfg = root.getFirstChild("Pipeline").value();
+  std::unique_ptr<Pipeline> pipeline{new Pipeline};
+  initPipeline(*pipeline, pipeline_cfg, factory);
 
-  auto params = pipeline_cfg.parse<PipelineConfig>();
+  return pipeline;
+}
 
-  auto               graph_cfg = pipeline_cfg.getFirstChild("graph")->parse<GraphConfig>().value();
-  IExecutionGraphPtr graph     = factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
+void Pipeline::initPipeline(Pipeline &                                  pipeline,
+                            common::Config &                            cfg,
+                            const cvs::common::FactoryPtr<std::string> &factory) {
+  auto graph_cfg = cfg.getFirstChild("graph").value();
+  auto graph     = parseGraph(graph_cfg, factory);
 
-  auto nodes_list = pipeline_cfg.getFirstChild("nodes").value();
+  auto nodes_list = cfg.getFirstChild("nodes").value();
+  auto nodes      = parseNodes(nodes_list, factory, graph);
+
+  auto connection_list = cfg.getFirstChild("connections").value();
+  parseConnections(connection_list, nodes);
+
+  auto params = cfg.parse<PipelineConfig>();
+
+  pipeline.autostart = params->autostart;
+  pipeline.graph     = std::move(graph);
+  pipeline.nodes     = std::move(nodes);
+}
+
+IExecutionGraphPtr Pipeline::parseGraph(common::Config &cfg, const cvs::common::FactoryPtr<std::string> &factory) {
+  auto graph_cfg = cfg.parse<GraphConfig>().value();
+  return factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
+}
+
+Pipeline::NodesMap Pipeline::parseNodes(common::Config &                            nodes_list,
+                                        const cvs::common::FactoryPtr<std::string> &factory,
+                                        IExecutionGraphPtr &                        graph) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
   for (auto &node_cfg : nodes_list.getChildren()) {
     auto node_params = node_cfg.parse<NodeConfig>().value();
 
-    auto node = factory
-                    ->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
-                        node_params.element, node_params.node, node_cfg, graph)
-                    .value();
-    nodes.emplace(node_params.name, std::move(node));
+    LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
+              node_params.element);
 
-    LOG_DEBUG(logger, R"s(Node "{}" with element "{}" created.)s", node_params.node, node_params.element);
+    auto node = factory->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
+        node_params.element, node_params.node, node_cfg, graph);
+
+    if (!node.has_value() || !node.value())
+      throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
+                                           node_params.name, node_params.element, node_params.node));
+
+    nodes.emplace(node_params.name, std::move(node.value()));
+
+    LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
+              node_params.element);
   }
 
-  auto connection_list = pipeline_cfg.getFirstChild("connections").value();
+  return nodes;
+}
+
+void Pipeline::parseConnections(common::Config &connection_list, const NodesMap &nodes) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
+
   for (auto &connection_cfg : connection_list.getChildren()) {
     auto connection_params = connection_cfg.parse<ConnectionConfig>().value();
 
-    auto from = nodes[connection_params.from].get();
-    if (!from)
-      throw std::runtime_error("Can't find node " + connection_params.from);
+    LOG_TRACE(logger, R"(Try connect node "{}:{}"-"{}:{}")", connection_params.from, connection_params.output,
+              connection_params.to, connection_params.input);
 
-    auto to = nodes[connection_params.to].get();
-    if (!to)
+    auto from_iter = nodes.find(connection_params.from);
+    if (from_iter == nodes.end())
+      throw std::runtime_error("Can't find node " + connection_params.from);
+    auto from = from_iter->second;
+
+    auto to_iter = nodes.find(connection_params.to);
+    if (to_iter == nodes.end())
       throw std::runtime_error("Can't find node " + connection_params.to);
+    auto to = to_iter->second;
 
     auto sender = from->sender(connection_params.output);
     if (!sender.has_value())
       throw std::runtime_error("No sender with index " + std::to_string(connection_params.output));
     if (!to->connect(sender, connection_params.input))
-      throw std::runtime_error("Can't connect output " + std::to_string(connection_params.output) + " with input " +
-                               std::to_string(connection_params.input));
+      throw std::runtime_error(fmt::format(R"(Can't connect "{}" output {} with "{}" input {})", connection_params.from,
+                                           connection_params.output, connection_params.to, connection_params.input));
 
-    LOG_DEBUG(logger, R"s(Nodes "{}" and "{}" connected ({}-{}).)s", connection_params.from, connection_params.to,
+    LOG_DEBUG(logger, R"(Nodes "{}" and "{}" connected ({}-{}).)", connection_params.from, connection_params.to,
               connection_params.output, connection_params.input);
   }
-
-  auto pipeline = std::make_unique<Pipeline>();
-
-  pipeline->autostart = params->autostart;
-  pipeline->graph     = std::move(graph);
-  pipeline->nodes     = std::move(nodes);
-
-  return pipeline;
 }
 
 Pipeline::Pipeline()

@@ -27,7 +27,8 @@ TEST(ModuleManagerTest, testPipeline) {
     { "name": "", "level": "0", "sink": "1" },
     { "name": "cvs.pipeline.ModuleManager", "level": "1", "sink": "1" },
     { "name": "cvs.pipeline.NodeFactory", "level": "0", "sink": "1" },
-    { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" }
+    { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" },
+    { "name": "cvs.pipeline.helper", "level": "0", "sink": "1" }
   ]
 }
 )json";
@@ -58,7 +59,7 @@ TEST(ModuleManagerTest, testPipeline) {
       factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, *cfg_root_opt, graph).value_or(nullptr);
 
   auto bc_node =
-      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast, *cfg_root_opt, graph).value_or(nullptr);
+      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, *cfg_root_opt, graph).value_or(nullptr);
   auto j_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, *cfg_root_opt, graph).value_or(nullptr);
 
   ASSERT_NE(nullptr, a_node);
