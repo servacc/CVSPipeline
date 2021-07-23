@@ -61,7 +61,9 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
         if (sender_iter == nodes.end())
           throw std::runtime_error("Can't find node " + params.from);
         auto sender = sender_iter->second->sender(params.output);
-        view.addSender(params.input, std::move(sender));
+        if (!view.addSender(params.input, std::move(sender)))
+          throw std::runtime_error(
+              fmt::format("Can't connect node {}:{} with input {}", params.from, params.output, params.input));
       }
     }
 
@@ -74,7 +76,9 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
         if (receiver_iter == nodes.end())
           throw std::runtime_error("Can't find node " + params.to);
         auto receiver = receiver_iter->second->receiver(params.input);
-        view.addReceiver(params.output, std::move(receiver));
+        if (!view.addReceiver(params.output, std::move(receiver)))
+          throw std::runtime_error(
+              fmt::format("Can't connect node {}:{} with output {}", params.to, params.input, params.output));
       }
     }
   }
