@@ -83,8 +83,10 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
     }
   }
 
-  bool addSender(std::size_t i, std::any sndr) override { return connectToPort<0>(std::move(sndr), i, inputs); }
-  bool addReceiver(std::size_t i, std::any rcvr) override { return connectToPort<0>(std::move(rcvr), i, outputs); }
+  bool addSender(std::size_t i, std::any sender) override { return connectToPort<0>(std::move(sender), i, inputs); }
+  bool addReceiver(std::size_t i, std::any receiver) override {
+    return connectToPort<0>(std::move(receiver), i, outputs);
+  }
 
  protected:
   template <std::size_t I>
@@ -123,17 +125,17 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
   }
 
   template <typename T>
-  bool connectToInternalNode(std::any sndr, Buffer<T>& buf) {
-    return buf->connect(sndr, 0);
+  bool connectToInternalNode(std::any sender, Buffer<T>& buf) {
+    return buf->connect(sender, 0);
   }
 
   template <typename T>
-  bool connectToInternalNode(std::any rcvr, Brodcast<T>& bc) {
-    if (rcvr.type() != typeid(::tbb::flow::receiver<T>*))
+  bool connectToInternalNode(std::any receiver, Brodcast<T>& bc) {
+    if (receiver.type() != typeid(::tbb::flow::receiver<T>*))
       return false;
 
     ::tbb::flow::make_edge(*std::any_cast<::tbb::flow::sender<T>*>(bc->sender(0)),
-                           *std::any_cast<::tbb::flow::receiver<T>*>(rcvr));
+                           *std::any_cast<::tbb::flow::receiver<T>*>(receiver));
     return true;
   }
 

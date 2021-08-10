@@ -68,14 +68,26 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
  protected:
   auto createExecuteFunction1(IElementPtr<void(Args...)> element) {
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
-      return [e = std::move(element)](std::tuple<Args...> a) -> ::tbb::flow::continue_msg {
-        std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
-        return ::tbb::flow::continue_msg{};
+      return [this, e = std::move(element)](std::tuple<Args...> a) -> ::tbb::flow::continue_msg {
+        try {
+          std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
+          return ::tbb::flow::continue_msg{};
+        }
+        catch (std::exception& e) {
+          LOG_ERROR(logger(), R"(Node "{}". Exception: {})", info.name, e.what());
+          throw;
+        }
       };
     } else {
-      return [e = std::move(element)](Args... a) -> ::tbb::flow::continue_msg {
-        e->process(a...);
-        return ::tbb::flow::continue_msg{};
+      return [this, e = std::move(element)](Args... a) -> ::tbb::flow::continue_msg {
+        try {
+          e->process(a...);
+          return ::tbb::flow::continue_msg{};
+        }
+        catch (std::exception& e) {
+          LOG_ERROR(logger(), R"(Node "{}". Exception: {})", info.name, e.what());
+          throw;
+        }
       };
     }
   }
@@ -106,11 +118,25 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
  protected:
   auto createExecuteFunction1(ElementPtrType element) {
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
-      return [e = std::move(element)](std::tuple<Args...> a) -> Result {
-        return std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
+      return [this, e = std::move(element)](std::tuple<Args...> a) -> Result {
+        try {
+          return std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
+        }
+        catch (std::exception& e) {
+          LOG_ERROR(IExecutionNode::logger(), R"(Node "{}". Exception: {})", IExecutionNode::info.name, e.what());
+          throw;
+        }
       };
     } else {
-      return [e = std::move(element)](Args... a) -> Result { return e->process(a...); };
+      return [this, e = std::move(element)](Args... a) -> Result {
+        try {
+          return e->process(a...);
+        }
+        catch (std::exception& e) {
+          LOG_ERROR(IExecutionNode::logger(), R"(Node "{}". Exception: {})", IExecutionNode::info.name, e.what());
+          throw;
+        }
+      };
     }
   }
 
@@ -129,10 +155,14 @@ class TbbFunctionNode : public TbbFunctionNodeBase<Element, Policy> {
   using ArgumentsType  = typename TbbFunctionNodeBase<Element, Policy>::ArgumentsType;
 
   static auto make(common::Config& cfg, IExecutionGraphPtr graph, ElementPtrType body) {
-    auto params = cfg.parse<detail::FunctionNodeConfig>().value();
+    auto params      = cfg.parse<detail::FunctionNodeConfig>().value();
+    auto node_params = cfg.parse<IExecutionNode::NodeInfo>().value();
 
-    if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph))
-      return std::make_unique<TbbFunctionNode>(g, params.concurrency, std::move(body));
+    if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph)) {
+      auto node  = std::make_unique<TbbFunctionNode>(g, params.concurrency, std::move(body));
+      node->info = std::move(node_params);
+      return node;
+    }
     return std::unique_ptr<TbbFunctionNode>{};
   }
 
@@ -146,11 +176,13 @@ class TbbFunctionNode : public TbbFunctionNodeBase<Element, Policy> {
     return std::make_any<::tbb::flow::sender<ResultType>*>(TbbFunctionNodeBase<Element, Policy>::nodePtr());
   }
 
-  bool connect(std::any sndr, std::size_t) override {
-    if (typeid(::tbb::flow::sender<ArgumentsType>*) == sndr.type()) {
-      ::tbb::flow::sender<ArgumentsType>* s = std::any_cast<::tbb::flow::sender<ArgumentsType>*>(sndr);
-      ::tbb::flow::make_edge(*s, TbbFunctionNodeBase<Element, Policy>::node);
-      return true;
+  bool connect(std::any sender, std::size_t i) override {
+    if (i == 0) {
+      if (typeid(::tbb::flow::sender<ArgumentsType>*) == sender.type()) {
+        ::tbb::flow::sender<ArgumentsType>* s = std::any_cast<::tbb::flow::sender<ArgumentsType>*>(sender);
+        ::tbb::flow::make_edge(*s, TbbFunctionNodeBase<Element, Policy>::node);
+        return true;
+      }
     }
     return false;
   }

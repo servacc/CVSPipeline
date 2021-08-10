@@ -21,10 +21,10 @@ class TbbBufferTemplateNode : public IInputExecutionNode<Type, T>, public IOutpu
     return i == 0 ? std::make_any<::tbb::flow::sender<T>*>(&node) : std::any{};
   }
 
-  bool connect(std::any sndr, std::size_t i) override {
+  bool connect(std::any sender, std::size_t i) override {
     if (i == 0) {
-      if (typeid(::tbb::flow::sender<T>*) == sndr.type()) {
-        ::tbb::flow::sender<T>* s = std::any_cast<::tbb::flow::sender<T>*>(sndr);
+      if (typeid(::tbb::flow::sender<T>*) == sender.type()) {
+        ::tbb::flow::sender<T>* s = std::any_cast<::tbb::flow::sender<T>*>(sender);
         ::tbb::flow::make_edge(*s, node);
         return true;
       }
