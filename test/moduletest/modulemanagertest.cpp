@@ -38,7 +38,7 @@ TEST(ModuleManagerTest, testPipeline) {
   auto cfg_root_opt = cvs::common::Config::make(std::move(config_str));
   ASSERT_TRUE(cfg_root_opt.has_value());
 
-  cvs::logger::initLoggers(cfg_root_opt);
+  cvs::logger::initLoggers(*cfg_root_opt);
 
   auto manager = cvs::pipeline::impl::ModuleManager::make(*cfg_root_opt);
   manager->loadModules();

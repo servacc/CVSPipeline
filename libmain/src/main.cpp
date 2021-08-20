@@ -22,19 +22,17 @@ CVSCFG_DECLARE_CONFIG(PipelineConfig, CVSCFG_VALUE_DEFAULT(type, std::string, "D
 
 int execPipeline(const std::string &module_manager_key, const std::string &config_path_string) {
   auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
-  if (!config_opt)
-    throw std::runtime_error(fmt::format(R"s(Can't load config "{}")s", config_path_string));
+
+  auto config = *config_opt;
 
   LOG_GLOB_INFO(R"(Config "{}" loaded)", config_path_string);
 
-  cvs::logger::initLoggers(config_opt);
+  cvs::logger::initLoggers(config);
 
   auto factory = pipelineFactory();
 
   cvs::pipeline::registerDefault(factory);
   cvs::pipeline::tbb::registerBase(factory);
-
-  auto config = *config_opt;
 
   auto module_manager = factory->create<cvs::pipeline::IModuleManagerUPtr>(module_manager_key, config);
   if (!module_manager)
@@ -86,7 +84,7 @@ int main(int argc, char *argv[]) {
     return execPipeline(module_manager_key, config_path_string);
   }
   catch (std::exception &e) {
-    LOG_GLOB_ERROR(R"(Exception: "{}")", e.what());
+    LOG_GLOB_ERROR(R"(Exception: "{}")", cvs::common::exceptionStr(e));
   }
   catch (...) {
     LOG_GLOB_ERROR(R"(Unknown exception)");
