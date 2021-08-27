@@ -77,6 +77,50 @@ class EElement : public IElement<void(float)> {
 
 namespace {
 
+class MultiElementA : public IElement<std::optional<int>(std::size_t, std::size_t)> {
+ public:
+  static auto make(common::Config&) {
+    auto e = std::make_unique<MultiElementA>();
+    EXPECT_CALL(*e, process(_, _))
+        .WillOnce([](std::size_t, std::size_t) -> std::optional<int> { return std::nullopt; })
+        .WillOnce([](std::size_t, std::size_t) -> std::optional<int> { return 0; });
+    return e;
+  }
+
+  MOCK_METHOD(std::optional<int>, process, (std::size_t, std::size_t), (override));
+};
+
+class MultiElementB : public IElement<std::tuple<std::optional<int>, std::optional<int>>(std::size_t)> {
+ public:
+  static auto make(common::Config&) {
+    auto e = std::make_unique<MultiElementB>();
+    EXPECT_CALL(*e, process(1)).WillOnce([](std::size_t) -> std::tuple<std::optional<int>, std::optional<int>> {
+      return {std::nullopt, 0};
+    });
+    EXPECT_CALL(*e, process(3)).WillOnce([](std::size_t) -> std::tuple<std::optional<int>, std::optional<int>> {
+      return {0, std::nullopt};
+    });
+    return e;
+  }
+
+  MOCK_METHOD((std::tuple<std::optional<int>, std::optional<int>>), process, (std::size_t), (override));
+};
+
+class MultiElementResult : public IElement<void(int)> {
+ public:
+  static auto make(common::Config&) {
+    auto e = std::make_unique<MultiElementResult>();
+    EXPECT_CALL(*e, process(_));
+    return e;
+  }
+
+  MOCK_METHOD(void, process, (int), (override));
+};
+
+}  // namespace
+
+namespace {
+
 class GraphTest : public ::testing::Test {
  public:
   static void SetUpTestCase() {
@@ -89,6 +133,13 @@ class GraphTest : public ::testing::Test {
     registerElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config&), CElement>("C"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config&), DElement>("D"s, factory);
     registerElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config&), EElement>("E"s, factory);
+
+    registerElemetAndTbbHelper<IElementUPtr<std::optional<int>(std::size_t, std::size_t)>(common::Config&),
+                               MultiElementA>("MA"s, factory);
+    registerElemetAndTbbHelper<
+        IElementUPtr<std::tuple<std::optional<int>, std::optional<int>>(std::size_t)>(common::Config&), MultiElementB>(
+        "MB"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<void(int)>(common::Config&), MultiElementResult>("MR"s, factory);
   }
 
   static cvs::common::FactoryPtr<std::string> factory;
@@ -147,6 +198,39 @@ TEST_F(GraphTest, branch_graph) {
   auto src_node =
       std::dynamic_pointer_cast<ISourceExecutionNode<NodeType::Functional>>(IExecutionNodePtr(std::move(a_node)));
   src_node->activate();
+
+  graph->waitForAll();
+}
+
+TEST_F(GraphTest, multifunctional) {
+  common::Config cfg;
+
+  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
+  ASSERT_NE(nullptr, graph);
+
+  auto ma_node = factory->create<IExecutionNodeUPtr>("MA"s, TbbDefaultName::multifunction, cfg, graph).value();
+  auto mb_node = factory->create<IExecutionNodeUPtr>("MB"s, TbbDefaultName::multifunction, cfg, graph).value();
+
+  auto mr0_node = factory->create<IExecutionNodeUPtr>("MR"s, TbbDefaultName::function, cfg, graph).value();
+  auto mr1_node = factory->create<IExecutionNodeUPtr>("MR"s, TbbDefaultName::function, cfg, graph).value();
+  auto mr2_node = factory->create<IExecutionNodeUPtr>("MR"s, TbbDefaultName::function, cfg, graph).value();
+
+  ASSERT_TRUE(mr0_node->connect(ma_node->sender(0), 0));
+  ASSERT_TRUE(mr1_node->connect(mb_node->sender(0), 0));
+  ASSERT_TRUE(mr2_node->connect(mb_node->sender(1), 0));
+
+  auto ma_in_node = std::dynamic_pointer_cast<IInputExecutionNode<NodeType::Functional, std::size_t, std::size_t>>(
+      IExecutionNodePtr(std::move(ma_node)));
+  auto mb_in_node = std::dynamic_pointer_cast<IInputExecutionNode<NodeType::Functional, std::size_t>>(
+      IExecutionNodePtr(std::move(mb_node)));
+
+  ASSERT_NE(nullptr, ma_in_node);
+  ASSERT_NE(nullptr, mb_in_node);
+
+  ASSERT_TRUE(ma_in_node->tryPut(0, 0));
+  ASSERT_TRUE(mb_in_node->tryPut(1));
+  ASSERT_TRUE(ma_in_node->tryPut(2, 2));
+  ASSERT_TRUE(mb_in_node->tryPut(3));
 
   graph->waitForAll();
 }

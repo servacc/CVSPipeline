@@ -38,6 +38,7 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbOverwriteNode.hpp
         include/cvs/pipeline/tbb/tbbBufferNode.hpp
 
+        include/cvs/pipeline/tbb/tbbMultifunctionNode.hpp
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp
         include/cvs/pipeline/tbb/tbbflowgraph.hpp
         include/cvs/pipeline/tbb/tbbjoinnode.hpp

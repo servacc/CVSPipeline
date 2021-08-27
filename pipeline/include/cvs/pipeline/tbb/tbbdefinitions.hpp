@@ -15,6 +15,7 @@ struct TbbDefaultName {
   static const std::string broadcast_out;
   static const std::string continue_name;
   static const std::string function;
+  static const std::string multifunction;
   static const std::string join;
   static const std::string source;
   static const std::string split;

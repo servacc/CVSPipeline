@@ -76,4 +76,5 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbOverwriteNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbBufferNode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbBufferTemplateNode.hpp )
+          pipeline/include/cvs/pipeline/tbb/tbbBufferTemplateNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbMultifunctionNode.hpp )

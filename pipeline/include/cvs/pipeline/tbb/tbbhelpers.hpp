@@ -8,6 +8,7 @@
 #include <cvs/pipeline/registrationhelper.hpp>
 #include <cvs/pipeline/tbb/tbbBroadcastNode.hpp>
 #include <cvs/pipeline/tbb/tbbBufferNode.hpp>
+#include <cvs/pipeline/tbb/tbbMultifunctionNode.hpp>
 #include <cvs/pipeline/tbb/tbbOverwriteNode.hpp>
 #include <cvs/pipeline/tbb/tbbcontinuenode.hpp>
 #include <cvs/pipeline/tbb/tbbdefinitions.hpp>
@@ -23,6 +24,18 @@
 namespace cvs::pipeline::tbb {
 
 namespace detail {
+
+template <typename>
+struct is_optional : std::false_type {};
+
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
+
+template <typename>
+struct is_tuple_of_optional : std::false_type {};
+
+template <typename... T>
+struct is_tuple_of_optional<std::tuple<std::optional<T>...>> : std::true_type {};
 
 template <typename>
 struct is_tuple : std::false_type {};
@@ -129,6 +142,10 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
   registerNode<BaseElement, TbbContinueNode, std::is_same<Arg, void>::value>(TbbDefaultName::continue_name, factory);
   registerNode<BaseElement, TbbSourceNode, std::is_same<Arg, void>::value>(TbbDefaultName::source, factory);
   registerNode<BaseElement, TbbFunctionNode, !std::is_same<Arg, void>::value>(TbbDefaultName::function, factory);
+  registerNode<BaseElement, TbbMultifunctionNode,
+               !std::is_same<Arg, void>::value &&
+                   (detail::is_optional<Res>::value || detail::is_tuple_of_optional<Res>::value)>(
+      TbbDefaultName::multifunction, factory);
 
   // service nodes
   registerNode<Res, TbbOverwriteNodeOut, !std::is_same<Res, void>::value>(TbbDefaultName::overwrite_out, factory);
