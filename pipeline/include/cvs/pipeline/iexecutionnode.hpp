@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cvs/common/configbase.hpp>
+#include <cvs/logger/loggable.hpp>
+
 #include <any>
 #include <memory>
 
@@ -15,8 +18,10 @@ enum NodeType {
   Count
 };
 
-class IExecutionNode {
+class IExecutionNode : public cvs::logger::Loggable<IExecutionNode> {
  public:
+  IExecutionNode()
+      : cvs::logger::Loggable<IExecutionNode>("cvs.pipeline.ExecutionNode") {}
   virtual ~IExecutionNode() = default;
 
   virtual NodeType type() const = 0;
@@ -25,6 +30,11 @@ class IExecutionNode {
   virtual std::any sender(std::size_t index)   = 0;
 
   virtual bool connect(std::any, std::size_t index) = 0;
+
+ protected:
+  CVSCFG_DECLARE_CONFIG(NodeInfo, CVSCFG_VALUE(name, std::string), CVSCFG_VALUE(element, std::string))
+
+  NodeInfo info;
 };
 
 using IExecutionNodePtr  = std::shared_ptr<IExecutionNode>;

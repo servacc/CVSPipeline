@@ -26,20 +26,28 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/iexecutiongraph.hpp
         include/cvs/pipeline/ielement.hpp
         include/cvs/pipeline/imodule.hpp
+        include/cvs/pipeline/iview.hpp
         include/cvs/pipeline/registrationhelper.hpp
 
         include/cvs/pipeline/impl/pipeline.hpp
+        include/cvs/pipeline/impl/guiPipeline.hpp
         include/cvs/pipeline/impl/modulemanager.hpp
 
+        include/cvs/pipeline/tbb/tbbBufferTemplateNode.hpp
+        include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
+        include/cvs/pipeline/tbb/tbbOverwriteNode.hpp
+        include/cvs/pipeline/tbb/tbbBufferNode.hpp
+
+        include/cvs/pipeline/tbb/tbbMultifunctionNode.hpp
         include/cvs/pipeline/tbb/tbbfunctionnode.hpp
         include/cvs/pipeline/tbb/tbbflowgraph.hpp
-        include/cvs/pipeline/tbb/tbbbroadcastnode.hpp
         include/cvs/pipeline/tbb/tbbjoinnode.hpp
         include/cvs/pipeline/tbb/tbbcontinuenode.hpp
         include/cvs/pipeline/tbb/tbbsplitnode.hpp
         include/cvs/pipeline/tbb/tbbsourcenode.hpp
         include/cvs/pipeline/tbb/tbbhelpers.hpp
         include/cvs/pipeline/tbb/tbbdefinitions.hpp
+        include/cvs/pipeline/tbb/tbbView.hpp
 
         src/pipeline/tbb/tbbdefinitions.cpp
         src/pipeline/tbb/tbbhelpers.cpp
@@ -48,6 +56,7 @@ target_sources(${PROJECT_NAME}
         src/pipeline/registrationhelper.cpp
         src/pipeline/modulemanager.cpp
         src/pipeline/pipeline.cpp
+        src/pipeline/guiPipeline.cpp
         src/pipeline/imodule.cpp
     )
 target_include_directories(${PROJECT_NAME}

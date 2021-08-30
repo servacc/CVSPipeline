@@ -36,11 +36,13 @@ class TbbSplitNode<std::tuple<RX...>> : public IInputExecutionNode<NodeType::Ser
   }
   std::any sender(std::size_t i) override { return getPort<0, RX...>(i); }
 
-  bool connect(std::any sndr, std::size_t i) override {
+  bool connect(std::any sender, std::size_t i) override {
     if (i == 0) {
-      ::tbb::flow::sender<ResultType>* s = std::any_cast<::tbb::flow::sender<ResultType>*>(sndr);
-      ::tbb::flow::make_edge(*s, node);
-      return true;
+      if (typeid(::tbb::flow::sender<ResultType>*) == sender.type()) {
+        ::tbb::flow::sender<ResultType>* s = std::any_cast<::tbb::flow::sender<ResultType>*>(sender);
+        ::tbb::flow::make_edge(*s, node);
+        return true;
+      }
     }
     return false;
   }

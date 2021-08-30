@@ -46,6 +46,10 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
   using Res        = typename detail::RegistrationHelper<Element>::Res;
 
+  auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
+  LOG_TRACE(logger, R"(Try register element with type "{}" for key "{}")",
+            boost::core::demangle(typeid(Element).name()), key);
+
   factory->tryRegisterType<FactoryFunction>(key, Impl::make);
 
   factory->tryRegisterType<IExecutionNodeUPtr(const std::string&, common::Config&, IExecutionGraphPtr&)>(
@@ -78,7 +82,13 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
               return {};
             }
             std::shared_ptr<Element> element_ptr{std::move(*element)};
-            return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, element_ptr).value_or(nullptr);
+
+            auto node = factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, element_ptr);
+            if (!node) {
+              LOG_ERROR(logger, R"(Can't create node "{}" with element "{}".)");
+              return nullptr;
+            }
+            return std::move(node.value());
           }
           default: {
             LOG_ERROR(logger, "Unknown node type");

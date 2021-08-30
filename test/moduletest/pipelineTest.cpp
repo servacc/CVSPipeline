@@ -27,13 +27,13 @@ TEST(Pipeline, createGraph) {
       "type": "TbbGraph"
     },
     "nodes" : [
-      { "name": "a",  "element" : "A", "node" : "TbbSourceDefault"    },
-      { "name": "b",  "element" : "B", "node" : "TbbFunctionDefault"  },
-      { "name": "c",  "element" : "C", "node" : "TbbFunctionDefault"  },
-      { "name": "d",  "element" : "D", "node" : "TbbFunctionDefault"  },
-      { "name": "e",  "element" : "E", "node" : "TbbFunctionDefault"  },
-      { "name": "j",  "element" : "D", "node" : "TbbJoinDefault"      },
-      { "name": "bc", "element" : "A", "node" : "TbbBroadcastDefault" }
+      { "name": "a",  "element" : "A", "node" : "TbbSourceDefault"       },
+      { "name": "b",  "element" : "B", "node" : "TbbFunctionDefault"     },
+      { "name": "c",  "element" : "C", "node" : "TbbFunctionDefault"     },
+      { "name": "d",  "element" : "D", "node" : "TbbFunctionDefault"     },
+      { "name": "e",  "element" : "E", "node" : "TbbFunctionDefault"     },
+      { "name": "j",  "element" : "D", "node" : "TbbJoinDefault"         },
+      { "name": "bc", "element" : "A", "node" : "TbbBroadcastOutDefault" }
     ],
     "connections" : [
       { "from" : "a" , "output" : "0", "to" : "bc", "input" : "0" },
@@ -61,10 +61,12 @@ TEST(Pipeline, createGraph) {
   module_manager->loadModules();
   module_manager->registerTypes(factory);
 
+  auto pipeline_cfg = cfg_root.getFirstChild("Pipeline").value();
+
   auto pipeline =
       factory
           ->create<cvs::pipeline::IPipelineUPtr, cvs::common::Config&, const cvs::common::FactoryPtr<std::string>&>(
-              "Default", cfg_root, factory)
+              "Default", pipeline_cfg, factory)
           .value();
   ASSERT_NE(nullptr, pipeline);
 
