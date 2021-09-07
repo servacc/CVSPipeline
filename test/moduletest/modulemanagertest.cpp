@@ -38,6 +38,14 @@ TEST(ModuleManagerTest, testPipeline) {
   auto cfg_root_opt = cvs::common::Config::make(std::move(config_str));
   ASSERT_TRUE(cfg_root_opt.has_value());
 
+  std::string node_cfg_str = R"({
+  "name" : "TestName",
+  "element" : "TestElement"
+})";
+
+  auto node_cfg = common::Config::make(std::move(node_cfg_str));
+  ASSERT_TRUE(node_cfg.has_value());
+
   cvs::logger::initLoggers(*cfg_root_opt);
 
   auto manager = cvs::pipeline::impl::ModuleManager::make(*cfg_root_opt);
@@ -47,20 +55,15 @@ TEST(ModuleManagerTest, testPipeline) {
   IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);
 
-  auto a_node =
-      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, *cfg_root_opt, graph).value_or(nullptr);
-  auto b_node =
-      factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, *cfg_root_opt, graph).value_or(nullptr);
-  auto c_node =
-      factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, *cfg_root_opt, graph).value_or(nullptr);
-  auto d_node =
-      factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, *cfg_root_opt, graph).value_or(nullptr);
-  auto e_node =
-      factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, *cfg_root_opt, graph).value_or(nullptr);
+  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, *node_cfg, graph).value_or(nullptr);
+  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
+  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
+  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
+  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
 
   auto bc_node =
-      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, *cfg_root_opt, graph).value_or(nullptr);
-  auto j_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, *cfg_root_opt, graph).value_or(nullptr);
+      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, *node_cfg, graph).value_or(nullptr);
+  auto j_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, *node_cfg, graph).value_or(nullptr);
 
   ASSERT_NE(nullptr, a_node);
   ASSERT_NE(nullptr, b_node);

@@ -18,7 +18,10 @@ class AElement : public IElement<int()> {
   static auto make(common::Config&) {
     auto e = std::make_unique<AElement>();
 
-    EXPECT_CALL(*e, process()).Times(2).WillRepeatedly([]() { return 10; });
+    EXPECT_CALL(*e, process()).Times(2).WillRepeatedly([]() {
+      //
+      return 10;
+    });
 
     EXPECT_CALL(*e, isStopped()).WillOnce([]() { return false; }).WillOnce([]() { return true; });
 
@@ -161,7 +164,12 @@ TEST_F(GraphTest, branch_graph) {
   //       |
   //       E
 
-  common::Config cfg;
+  std::string cfg_str = R"({
+  "name" : "TestName",
+  "element" : "TestElement"
+})";
+
+  common::Config cfg = common::Config::make(std::move(cfg_str)).value();
 
   IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);
@@ -203,7 +211,12 @@ TEST_F(GraphTest, branch_graph) {
 }
 
 TEST_F(GraphTest, multifunctional) {
-  common::Config cfg;
+  std::string cfg_str = R"({
+  "name" : "TestName",
+  "element" : "TestElement"
+})";
+
+  common::Config cfg = common::Config::make(std::move(cfg_str)).value();
 
   IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);
