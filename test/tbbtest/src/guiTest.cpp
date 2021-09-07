@@ -100,12 +100,12 @@ TEST_F(GuiTest, in_out) {
   //     |   |
   //    Buf Buf
 
-  std::string config_1_json = R"json({ "value": 1 })json";
-  std::string config_3_json = R"json({ "value": 3 })json";
+  std::string config_1_json = R"json({ "value": 1, "name" : "TestName", "element" : "TestElement" })json";
+  std::string config_3_json = R"json({ "value": 3, "name" : "TestName", "element" : "TestElement" })json";
 
   auto           cfg_1 = cvs::common::Config::make(std::move(config_1_json)).value();
   auto           cfg_3 = cvs::common::Config::make(std::move(config_3_json)).value();
-  common::Config cfg;
+  common::Config cfg   = cvs::common::Config::make(R"({"name" : "TestName", "element" : "TestElement"})").value();
 
   IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
   ASSERT_NE(nullptr, graph);

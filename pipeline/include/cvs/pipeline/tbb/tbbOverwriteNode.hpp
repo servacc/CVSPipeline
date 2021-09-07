@@ -6,7 +6,7 @@
 
 namespace cvs::pipeline::tbb {
 template <NodeType Type, typename T>
-class TbbOverwriteNode : public TbbBufferTemplateNode<Type, ::tbb::flow::buffer_node, T> {
+class TbbOverwriteNode : public TbbBufferTemplateNode<Type, ::tbb::flow::overwrite_node, T> {
  public:
   static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<T>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
@@ -15,7 +15,7 @@ class TbbOverwriteNode : public TbbBufferTemplateNode<Type, ::tbb::flow::buffer_
   }
 
   TbbOverwriteNode(TbbFlowGraphPtr graph)
-      : TbbBufferTemplateNode<Type, ::tbb::flow::buffer_node, T>(graph) {}
+      : TbbBufferTemplateNode<Type, ::tbb::flow::overwrite_node, T>(graph) {}
 };
 
 template <typename T>
