@@ -9,7 +9,7 @@ namespace cvs::pipeline::impl {
 
 class GuiPipeline : public Pipeline {
  public:
-  static IPipelineUPtr make(cvs::common::Config &, const cvs::common::FactoryPtr<std::string> &);
+  static IPipelineUPtr make(const common::Properties &, const cvs::common::FactoryPtr<std::string> &);
 
   int exec() override;
 

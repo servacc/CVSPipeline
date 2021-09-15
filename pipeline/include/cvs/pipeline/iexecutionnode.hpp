@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configbase.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/logger/loggable.hpp>
 
 #include <any>
@@ -18,6 +18,16 @@ enum NodeType {
   Count
 };
 
+CVS_CONFIG(NodeInfo, "") {
+  CVS_FIELD(name, std::string, "");
+  CVS_FIELD(element, std::string, "");
+};
+
+CVS_CONFIG(FunctionNodeConfig, "") {
+  CVS_FIELD_DEF(concurrency, std::size_t, 0, "");
+  CVS_FIELD_DEF(priority, unsigned int, 0, "");
+};
+
 class IExecutionNode : public cvs::logger::Loggable<IExecutionNode> {
  public:
   IExecutionNode()
@@ -32,8 +42,6 @@ class IExecutionNode : public cvs::logger::Loggable<IExecutionNode> {
   virtual bool connect(std::any, std::size_t index) = 0;
 
  protected:
-  CVSCFG_DECLARE_CONFIG(NodeInfo, CVSCFG_VALUE(name, std::string), CVSCFG_VALUE(element, std::string))
-
   NodeInfo info;
 };
 

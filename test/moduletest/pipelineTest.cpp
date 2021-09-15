@@ -1,5 +1,4 @@
 #include <cvs/common/config.hpp>
-#include <cvs/common/configbase.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/imodulemanager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
@@ -48,7 +47,7 @@ TEST(Pipeline, createGraph) {
 }
 )json";
 
-  auto cfg_root = cvs::common::Config::make(std::move(config_json)).value();
+  const auto cfg_root = cvs::common::CVSConfigBase::load(config_json);
   cvs::logger::initLoggers(cfg_root);
 
   auto factory = cvs::common::Factory<std::string>::defaultInstance();
@@ -61,13 +60,12 @@ TEST(Pipeline, createGraph) {
   module_manager->loadModules();
   module_manager->registerTypes(factory);
 
-  auto pipeline_cfg = cfg_root.getFirstChild("Pipeline").value();
+  const auto pipeline_cfg = cfg_root.get_child("Pipeline");
 
-  auto pipeline =
-      factory
-          ->create<cvs::pipeline::IPipelineUPtr, cvs::common::Config&, const cvs::common::FactoryPtr<std::string>&>(
-              "Default", pipeline_cfg, factory)
-          .value();
+  auto pipeline = factory
+                      ->create<cvs::pipeline::IPipelineUPtr, const cvs::common::Properties&,
+                               const cvs::common::FactoryPtr<std::string>&>("Default", pipeline_cfg, factory)
+                      .value();
   ASSERT_NE(nullptr, pipeline);
 
   auto a_node = pipeline->getNode("a");

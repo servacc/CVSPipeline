@@ -1,6 +1,5 @@
 #include "../../include/cvs/pipeline/impl/pipeline.hpp"
 
-#include <cvs/common/configbase.hpp>
 #include <cvs/logger/logging.hpp>
 #include <fmt/format.h>
 
@@ -8,71 +7,75 @@
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(PipelineConfig, CVSCFG_VALUE_DEFAULT(autostart, bool, false))
+CVS_CONFIG(PipelineConfig, "") { CVS_FIELD_DEF(autostart, bool, false, ""); };
 
-CVSCFG_DECLARE_CONFIG(GraphConfig, CVSCFG_VALUE(type, std::string))
-CVSCFG_DECLARE_CONFIG(NodeConfig,
-                      CVSCFG_VALUE(node, std::string),
-                      CVSCFG_VALUE(element, std::string),
-                      CVSCFG_VALUE(name, std::string))
+CVS_CONFIG(GraphConfig, "") { CVS_FIELD(type, std::string, ""); };
 
-CVSCFG_DECLARE_CONFIG(ConnectionConfig,
-                      CVSCFG_VALUE(from, std::string),
-                      CVSCFG_VALUE(to, std::string),
-                      CVSCFG_VALUE_DEFAULT(output, std::size_t, 0),
-                      CVSCFG_VALUE_DEFAULT(input, std::size_t, 0))
+CVS_CONFIG(NodeConfig, "") {
+  CVS_FIELD(node, std::string, "");
+  CVS_FIELD(element, std::string, "");
+  CVS_FIELD(name, std::string, "");
+};
+
+CVS_CONFIG(ConnectionConfig, "") {
+  CVS_FIELD(from, std::string, "");
+  CVS_FIELD(to, std::string, "");
+  CVS_FIELD_DEF(output, std::size_t, 0, "");
+  CVS_FIELD_DEF(input, std::size_t, 0, "");
+};
 
 }  // namespace
 
 namespace cvs::pipeline::impl {
 
-IPipelineUPtr Pipeline::make(common::Config &pipeline_cfg, const cvs::common::FactoryPtr<std::string> &factory) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
+IPipelineUPtr Pipeline::make(const common::Properties &                  pipeline_cfg,
+                             const cvs::common::FactoryPtr<std::string> &factory) {
+  try {
+    std::unique_ptr<Pipeline> pipeline{new Pipeline};
+    initPipeline(*pipeline, pipeline_cfg, factory);
 
-  std::unique_ptr<Pipeline> pipeline{new Pipeline};
-  initPipeline(*pipeline, pipeline_cfg, factory);
-
-  return pipeline;
+    return pipeline;
+  }
+  catch (...) {
+    cvs::common::throwWithNested<std::runtime_error>("Can't init Pipeline.");
+  }
 }
 
 void Pipeline::initPipeline(Pipeline &                                  pipeline,
-                            common::Config &                            cfg,
+                            const common::Properties &                  cfg,
                             const cvs::common::FactoryPtr<std::string> &factory) {
-  auto graph_cfg = cfg.getFirstChild("graph").value();
-  auto graph     = parseGraph(graph_cfg, factory);
+  auto graph = parseGraph(cfg.get_child("graph"), factory);
+  auto nodes = parseNodes(cfg.get_child("nodes"), factory, graph);
 
-  auto nodes_list = cfg.getFirstChild("nodes").value();
-  auto nodes      = parseNodes(nodes_list, factory, graph);
+  parseConnections(cfg.get_child("connections"), nodes);
 
-  auto connection_list = cfg.getFirstChild("connections").value();
-  parseConnections(connection_list, nodes);
-
-  auto params = cfg.parse<PipelineConfig>();
+  auto params = PipelineConfig::make(cfg);
 
   pipeline.autostart = params->autostart;
   pipeline.graph     = std::move(graph);
   pipeline.nodes     = std::move(nodes);
 }
 
-IExecutionGraphPtr Pipeline::parseGraph(common::Config &cfg, const cvs::common::FactoryPtr<std::string> &factory) {
-  auto graph_cfg = cfg.parse<GraphConfig>().value();
-  return factory->create<IExecutionGraphUPtr>(graph_cfg.type).value();
+IExecutionGraphPtr Pipeline::parseGraph(const common::Properties &                  cfg,
+                                        const cvs::common::FactoryPtr<std::string> &factory) {
+  auto graph_cfg = GraphConfig::make(cfg);
+  return factory->create<IExecutionGraphUPtr>(graph_cfg->type).value();
 }
 
-Pipeline::NodesMap Pipeline::parseNodes(common::Config &                            nodes_list,
+Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &                  nodes_list,
                                         const cvs::common::FactoryPtr<std::string> &factory,
                                         IExecutionGraphPtr &                        graph) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
+  auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
-  for (auto &node_cfg : nodes_list.getChildren()) {
-    auto node_params = node_cfg.parse<NodeConfig>().value();
+  for (auto &node_cfg : nodes_list) {
+    auto node_params = NodeConfig::make(node_cfg.second).value();
 
     LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
               node_params.element);
 
-    auto node = factory->create<IExecutionNodeUPtr, const std::string &, common::Config &, IExecutionGraphPtr &>(
-        node_params.element, node_params.node, node_cfg, graph);
+    auto node = factory->create<IExecutionNodeUPtr, const std::string &, const boost::property_tree::ptree &,
+                                IExecutionGraphPtr &>(node_params.element, node_params.node, node_cfg.second, graph);
 
     if (!node.has_value() || !node.value())
       throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
@@ -87,11 +90,11 @@ Pipeline::NodesMap Pipeline::parseNodes(common::Config &                        
   return nodes;
 }
 
-void Pipeline::parseConnections(common::Config &connection_list, const NodesMap &nodes) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.Pipeline");
+void Pipeline::parseConnections(const common::Properties &connection_list, const NodesMap &nodes) {
+  auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
-  for (auto &connection_cfg : connection_list.getChildren()) {
-    auto connection_params = connection_cfg.parse<ConnectionConfig>().value();
+  for (auto &connection_cfg : connection_list) {
+    auto connection_params = ConnectionConfig::make(connection_cfg.second).value();
 
     LOG_TRACE(logger, R"(Try connect node "{}:{}"-"{}:{}")", connection_params.from, connection_params.output,
               connection_params.to, connection_params.input);

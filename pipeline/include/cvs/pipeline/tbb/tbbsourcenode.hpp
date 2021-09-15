@@ -15,7 +15,7 @@ template <typename Output>
 class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::Functional>,
                                           public IOutputExecutionNode<NodeType::Functional, Output> {
  public:
-  static auto make(common::Config&, IExecutionGraphPtr graph, IElementPtr<Output()> element) {
+  static auto make(const common::Properties&, IExecutionGraphPtr graph, IElementPtr<Output()> element) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbSourceNode>(std::move(g), std::move(element));
     return std::unique_ptr<TbbSourceNode>{};

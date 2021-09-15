@@ -24,55 +24,42 @@ TEST(ModuleManagerTest, testPipeline) {
     ]
   },
   "loggers" : [
-    { "name": "", "level": "0", "sink": "1" },
-    { "name": "cvs.pipeline.ModuleManager", "level": "1", "sink": "1" },
-    { "name": "cvs.pipeline.NodeFactory", "level": "0", "sink": "1" },
-    { "name": "cvs.pipeline.tbb.helper", "level": "1", "sink": "1" },
-    { "name": "cvs.pipeline.helper", "level": "0", "sink": "1" }
+    { "name": "", "level": "trace", "sink": "std" },
+    { "name": "cvs.pipeline.ModuleManager", "level": "debug", "sink": "std" },
+    { "name": "cvs.pipeline.NodeFactory", "level": "trace", "sink": "std" },
+    { "name": "cvs.pipeline.tbb.helper", "level": "debug", "sink": "std" },
+    { "name": "cvs.pipeline.helper", "level": "trace", "sink": "std" }
   ]
 }
 )json";
 
   auto factory = std::make_shared<cvs::common::Factory<std::string>>();
 
-  auto cfg_root_opt = cvs::common::Config::make(std::move(config_str));
-  ASSERT_TRUE(cfg_root_opt.has_value());
+  auto cfg_root_opt = cvs::common::CVSConfigBase::load(config_str);
 
   std::string node_cfg_str = R"({
   "name" : "TestName",
   "element" : "TestElement"
 })";
 
-  auto node_cfg = common::Config::make(std::move(node_cfg_str));
-  ASSERT_TRUE(node_cfg.has_value());
+  const auto node_cfg = common::CVSConfigBase::load(node_cfg_str);
 
-  cvs::logger::initLoggers(*cfg_root_opt);
+  cvs::logger::initLoggers(cfg_root_opt);
 
-  auto manager = cvs::pipeline::impl::ModuleManager::make(*cfg_root_opt);
+  auto manager = cvs::pipeline::impl::ModuleManager::make(cfg_root_opt);
   manager->loadModules();
   manager->registerTypes(factory);
 
-  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
-  ASSERT_NE(nullptr, graph);
+  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value();
 
-  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, *node_cfg, graph).value_or(nullptr);
-  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
-  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
-  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
-  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, *node_cfg, graph).value_or(nullptr);
+  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, node_cfg, graph).value();
+  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, node_cfg, graph).value();
 
-  auto bc_node =
-      factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, *node_cfg, graph).value_or(nullptr);
-  auto j_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, *node_cfg, graph).value_or(nullptr);
-
-  ASSERT_NE(nullptr, a_node);
-  ASSERT_NE(nullptr, b_node);
-  ASSERT_NE(nullptr, c_node);
-  ASSERT_NE(nullptr, d_node);
-  ASSERT_NE(nullptr, e_node);
-
-  ASSERT_NE(nullptr, bc_node);
-  ASSERT_NE(nullptr, j_node);
+  auto bc_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, node_cfg, graph).value();
+  auto j_node  = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, node_cfg, graph).value();
 
   ASSERT_TRUE(bc_node->connect(a_node->sender(0), 0));
   ASSERT_TRUE(b_node->connect(bc_node->sender(0), 0));

@@ -69,4 +69,4 @@ target_link_libraries(${PROJECT_NAME}
   Boost::boost Boost::filesystem
   dl
   TBB::tbb
-  cvs::CVSLogger)
+  cvs::Logger)

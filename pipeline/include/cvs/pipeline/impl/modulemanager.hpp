@@ -13,7 +13,7 @@ namespace cvs::pipeline::impl {
 
 class ModuleManager : public IModuleManager, public cvs::logger::Loggable<ModuleManager> {
  public:
-  static std::unique_ptr<ModuleManager> make(cvs::common::Config&);
+  static std::unique_ptr<ModuleManager> make(const common::Properties&);
 
   ModuleManager();
   ~ModuleManager();

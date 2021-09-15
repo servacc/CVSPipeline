@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 find_package(CVSCommonCMakeHelpers REQUIRED)
 list(APPEND CMAKE_MODULE_PATH "${CVSCOMMON_MODULE_PATH}")
-
 include(CVSCommon)
 
 project(CVSPipelineLib CVS_PROJECT
@@ -39,6 +38,7 @@ add_subdirectory(pipeline)
 add_subdirectory(libmain)
 add_subdirectory(tool)
 
+include(CTest)
 add_subdirectory(test)
 
 include(CVSInstall)

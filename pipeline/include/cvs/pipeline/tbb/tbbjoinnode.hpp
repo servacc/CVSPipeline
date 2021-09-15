@@ -19,7 +19,7 @@ class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<Node
 
   static_assert(sizeof...(Args) > 1, "The number of arguments must be equal to or more than two.");
 
-  static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
+  static auto make(const common::Properties&, IExecutionGraphPtr graph, std::shared_ptr<ArgumentsType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbJoinNode>(g);
     return std::unique_ptr<TbbJoinNode>{};

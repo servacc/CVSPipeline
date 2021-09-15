@@ -15,7 +15,7 @@ class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
  public:
   using NodesMap = std::map<std::string, IExecutionNodePtr>;
 
-  static IPipelineUPtr make(cvs::common::Config &, const cvs::common::FactoryPtr<std::string> &);
+  static IPipelineUPtr make(const common::Properties &, const cvs::common::FactoryPtr<std::string> &);
 
   IExecutionNodePtr getNode(std::string_view) const override;
 
@@ -27,10 +27,12 @@ class Pipeline : public IPipeline, public cvs::logger::Loggable<Pipeline> {
   void waitForAll() override;
 
  protected:
-  static IExecutionGraphPtr parseGraph(common::Config &, const cvs::common::FactoryPtr<std::string> &);
-  static NodesMap parseNodes(common::Config &, const cvs::common::FactoryPtr<std::string> &, IExecutionGraphPtr &);
-  static void     parseConnections(common::Config &, const NodesMap &);
-  static void     initPipeline(Pipeline &, common::Config &, const cvs::common::FactoryPtr<std::string> &);
+  static IExecutionGraphPtr parseGraph(const common::Properties &, const cvs::common::FactoryPtr<std::string> &);
+  static NodesMap           parseNodes(const common::Properties &,
+                                       const cvs::common::FactoryPtr<std::string> &,
+                                       IExecutionGraphPtr &);
+  static void               parseConnections(const common::Properties &, const NodesMap &);
+  static void initPipeline(Pipeline &, const common::Properties &, const cvs::common::FactoryPtr<std::string> &);
 
   Pipeline();
 

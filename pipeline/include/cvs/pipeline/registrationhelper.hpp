@@ -46,56 +46,44 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
   using Arg        = typename detail::RegistrationHelper<Element>::Arg;
   using Res        = typename detail::RegistrationHelper<Element>::Res;
 
-  auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
+  auto logger = cvs::logger::createLogger("cvs.pipeline.helper").value();
   LOG_TRACE(logger, R"(Try register element with type "{}" for key "{}")",
             boost::core::demangle(typeid(Element).name()), key);
 
   factory->tryRegisterType<FactoryFunction>(key, Impl::make);
 
-  factory->tryRegisterType<IExecutionNodeUPtr(const std::string&, common::Config&, IExecutionGraphPtr&)>(
+  factory->tryRegisterType<IExecutionNodeUPtr(const std::string&, const common::Properties&, IExecutionGraphPtr&)>(
       key,
-      [key, factory](const std::string& node_name, common::Config& cfg,
+      [key, factory](const std::string& node_name, const common::Properties& cfg,
                      IExecutionGraphPtr& graph) -> IExecutionNodeUPtr {
-        auto logger = cvs::logger::createLogger("cvs.pipeline.helper");
+        try {
+          auto logger = cvs::logger::createLogger("cvs.pipeline.helper").value();
 
-        auto node_type = factory->create<NodeType>(node_name);
-        if (!node_type.has_value()) {
-          LOG_ERROR(logger, R"s(Unable to create node "{}" for key "{}")s",
-                    boost::core::demangle(typeid(NodeType).name()), node_name);
-          return {};
-        }
+          auto node_type = factory->create<NodeType>(node_name).value();
 
-        switch (node_type.value_or(NodeType::Unknown)) {
-          case ServiceIn: {
-            std::shared_ptr<Arg> type;
-            return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value_or(nullptr);
-          }
-          case ServiceOut: {
-            std::shared_ptr<Res> type;
-            return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value_or(nullptr);
-          }
-          case Functional: {
-            auto element = factory->create<std::unique_ptr<Element>>(key, cfg);
-            if (!element) {
-              LOG_ERROR(logger, R"s(Unable to create element "{}" for key "{}")s",
-                        boost::core::demangle(typeid(Element).name()), key);
-              return {};
+          switch (node_type) {
+            case ServiceIn: {
+              std::shared_ptr<Arg> type;
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value();
             }
-            std::shared_ptr<Element> element_ptr{std::move(*element)};
-
-            auto node = factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, element_ptr);
-            if (!node) {
-              LOG_ERROR(logger, R"(Can't create node "{}" with element "{}".)");
-              return nullptr;
+            case ServiceOut: {
+              std::shared_ptr<Res> type;
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value();
             }
-            return std::move(node.value());
+            case Functional: {
+              std::shared_ptr<Element> element = factory->create<std::unique_ptr<Element>>(key, cfg).value();
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, element).value();
+            }
+            default: {
+              throw std::runtime_error("Unknown node type");
+            } break;
           }
-          default: {
-            LOG_ERROR(logger, "Unknown node type");
-          } break;
         }
-
-        return {};
+        catch (...) {
+          std::throw_with_nested(
+              std::runtime_error(fmt::format(R"(Unable to create node "{}" for key "{}")",
+                                             boost::core::demangle(typeid(NodeType).name()), node_name)));
+        }
       });
 }
 

@@ -1,7 +1,6 @@
 #include "../../include/cvs/pipeline/impl/modulemanager.hpp"
 
 #include <boost/dll.hpp>
-#include <cvs/common/configbase.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/imodule.hpp>
@@ -12,9 +11,9 @@ using LibraryUPtr = std::unique_ptr<boost::dll::shared_library>;
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(ModuleManagerConfig, CVSCFG_VALUE_OPTIONAL(module_path, std::string))
+CVS_CONFIG(ModuleManagerConfig, "") { CVS_FIELD_OPT(module_path, std::vector<std::string>, ""); };
 
-}
+}  // namespace
 
 namespace cvs::pipeline::impl {
 
@@ -27,23 +26,21 @@ struct ModuleManager::ModuleInfo {
 
 namespace cvs::pipeline::impl {
 
-std::unique_ptr<ModuleManager> ModuleManager::make(cvs::common::Config& config) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.ModuleManager");
+std::unique_ptr<ModuleManager> ModuleManager::make(const common::Properties& config) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.ModuleManager").value();
 
-  auto manager_cfg = config.getFirstChild("ModuleManager").value();
-
-  auto paths = manager_cfg.getFirstChild("module_path").value();
+  auto manager_cfg = ModuleManagerConfig::make(config.get_child("ModuleManager")).value();
 
   std::set<std::filesystem::path> module_path;
   module_path.insert(CVSPipeline_MODULE_DIR);
-  for (auto& p : paths.getChildren()) {
-    auto path = p.getValueOptional<fs::path>({}).value();
-    module_path.insert(std::move(path));
+  if (manager_cfg.module_path) {
+    for (auto& p : *manager_cfg.module_path)
+      module_path.insert(std::move(p));
   }
 
   for (auto iter = module_path.begin(); iter != module_path.end();) {
     if (!fs::exists(*iter)) {
-      LOG_DEBUG(logger, R"s(Skip "{}")s", iter->string());
+      LOG_DEBUG(logger, R"(Skip "{}")", iter->string());
       iter = module_path.erase(iter);
     } else
       ++iter;
@@ -66,11 +63,11 @@ void ModuleManager::loadModules() {
       const bool is_library =
           file.is_regular_file() && (file.path().extension() == ".so" || file.path().extension() == ".dll");
       if (!is_library) {
-        LOG_TRACE(logger(), R"s(Skip file "{}")s", file.path().string());
+        LOG_TRACE(logger(), R"(Skip file "{}")", file.path().string());
         continue;
       }
 
-      LOG_TRACE(logger(), R"s(Loading "{}"...)s", file.path().string());
+      LOG_TRACE(logger(), R"(Loading "{}"...)", file.path().string());
 
       ModuleInfo info;
 
@@ -80,10 +77,10 @@ void ModuleManager::loadModules() {
       info.module = makeModule(*info.library);
 
       if (info.module) {
-        LOG_DEBUG(logger(), R"s(Add module "{}")s", info.module->name());
+        LOG_DEBUG(logger(), R"(Add module "{}")", info.module->name());
         modules.emplace(info.module->name(), std::move(info));
       } else {
-        LOG_DEBUG(logger(), R"s(Unable to create module from "{}")s", file.path().string());
+        LOG_DEBUG(logger(), R"(Unable to create module from "{}")", file.path().string());
       }
     }
   }
@@ -91,7 +88,7 @@ void ModuleManager::loadModules() {
 
 void ModuleManager::registerTypes(cvs::common::FactoryPtr<std::string> factory) {
   for (auto& module : modules) {
-    LOG_DEBUG(logger(), R"s(Register types from module "{}")s", module.first);
+    LOG_DEBUG(logger(), R"(Register types from module "{}")", module.first);
     module.second.module->registerTypes(factory);
   }
 }

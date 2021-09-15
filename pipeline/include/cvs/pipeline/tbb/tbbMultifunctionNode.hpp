@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cvs/common/config.hpp>
-#include <cvs/common/configbase.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionnode.hpp>
 #include <cvs/pipeline/tbb/tbbflowgraph.hpp>
@@ -30,10 +29,6 @@ struct MultifunctionResult<std::tuple<std::optional<T>...>> {
   using IsTupeOfOptional = std::true_type;
 };
 
-CVSCFG_DECLARE_CONFIG(MultifunctionNodeConfig,
-                      CVSCFG_VALUE_DEFAULT(concurrency, std::size_t, 0),
-                      CVSCFG_VALUE_DEFAULT(priority, unsigned int, 0))
-
 }  // namespace detail
 
 template <typename Element, typename Policy = ::tbb::flow::queueing>
@@ -43,19 +38,19 @@ template <typename Result, typename... Args, typename Policy>
 class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
     : public IInputExecutionNode<NodeType::Functional, Args...> {
   using ArgumentsType  = std::tuple<Args...>;
-  using ResultType     = detail::MultifunctionResult<Result>::Result;
+  using ResultType     = typename detail::MultifunctionResult<Result>::Result;
   using ElementPtrType = IElementPtr<Result(Args...)>;
   using ElementType    = IElement<Result(Args...)>;
   using NodeType       = ::tbb::flow::multifunction_node<std::tuple<Args...>, ResultType, Policy>;
 
  public:
-  static auto make(common::Config &cfg, IExecutionGraphPtr graph, ElementPtrType body) {
-    auto params = cfg.parse<detail::MultifunctionNodeConfig>().value();
-    //    auto node_params = cfg.parse<IExecutionNode::NodeInfo>().value();
+  static auto make(const common::Properties &cfg, IExecutionGraphPtr graph, ElementPtrType body) {
+    auto params      = FunctionNodeConfig::make(cfg).value();
+    auto node_params = NodeInfo::make(cfg).value();
 
     if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph)) {
-      auto node = std::make_unique<TbbMultifunctionNode>(g, params.concurrency, std::move(body), params.priority);
-      //      node->info = std::move(node_params);
+      auto node  = std::make_unique<TbbMultifunctionNode>(g, params.concurrency, std::move(body), params.priority);
+      node->info = std::move(node_params);
       return node;
     }
     return std::unique_ptr<TbbMultifunctionNode>{};
@@ -68,7 +63,8 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
       : node(
             graph->native(),
             concurrency,
-            [e = std::move(element)](const NodeType::input_type &v, NodeType::output_ports_type &ports) {
+            [e = std::move(element)](const typename NodeType::input_type & v,
+                                     typename NodeType::output_ports_type &ports) {
               auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
               sendResult(outputs, ports);
             },
@@ -96,13 +92,13 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
   }
 
   template <typename T>
-  static void sendResult(std::optional<T> &result, NodeType::output_ports_type &ports) {
+  static void sendResult(std::optional<T> &result, typename NodeType::output_ports_type &ports) {
     if (result.has_value())
       std::get<0>(ports).try_put(*result);
   }
 
   template <std::size_t I = 0, typename... T>
-  static void sendResult(std::tuple<std::optional<T>...> &result, NodeType::output_ports_type &ports) {
+  static void sendResult(std::tuple<std::optional<T>...> &result, typename NodeType::output_ports_type &ports) {
     if constexpr (I < std::tuple_size_v<std::tuple<std::optional<T>...>>) {
       if (std::get<I>(result).has_value())
         std::get<I>(ports).try_put(*std::get<I>(result));

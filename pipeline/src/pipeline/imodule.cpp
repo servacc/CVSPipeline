@@ -9,7 +9,7 @@ const int IModule::libVersion = CVSPipeline_VERSION_MAJOR;
 bool IModule::checkCompatibility() const { return libVersion == CVSPipeline_VERSION_MAJOR; }
 
 IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
-  auto logger = cvs::logger::createLogger("cvs.pipeline.module");
+  auto logger = *cvs::logger::createLogger("cvs.pipeline.module");
   if (!lib) {
     LOG_ERROR(logger, "Library is not loaded");
     return nullptr;
