@@ -2,7 +2,7 @@
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/tbb/tbbView.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 #include <gmock/gmock.h>
 
 using namespace std::literals::string_literals;

@@ -3,8 +3,8 @@
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/loggable.hpp>
-#include <cvs/pipeline/iexecutiongraph.hpp>
-#include <cvs/pipeline/iexecutionnode.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
 
 #include <map>

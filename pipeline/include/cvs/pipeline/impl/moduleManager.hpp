@@ -3,7 +3,7 @@
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/loggable.hpp>
 #include <cvs/pipeline/imodule.hpp>
-#include <cvs/pipeline/imodulemanager.hpp>
+#include <cvs/pipeline/imoduleManager.hpp>
 
 #include <filesystem>
 #include <map>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/pipeline/iexecutionnode.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
 
 #include <memory>
 

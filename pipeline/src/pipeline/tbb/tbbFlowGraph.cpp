@@ -1,4 +1,4 @@
-#include "../../../include/cvs/pipeline/tbb/tbbflowgraph.hpp"
+#include "../../../include/cvs/pipeline/tbb/tbbFlowGraph.hpp"
 
 namespace cvs::pipeline::tbb {
 

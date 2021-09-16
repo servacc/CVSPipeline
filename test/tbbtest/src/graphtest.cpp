@@ -1,5 +1,5 @@
 #include <cvs/common/factory.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

@@ -4,8 +4,8 @@
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/ielement.hpp>
-#include <cvs/pipeline/iexecutiongraph.hpp>
-#include <cvs/pipeline/iexecutionnode.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
 
 #include <functional>
 

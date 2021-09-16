@@ -1,4 +1,4 @@
-#include "../../include/cvs/pipeline/impl/modulemanager.hpp"
+#include "../../include/cvs/pipeline/impl/moduleManager.hpp"
 
 #include <boost/dll.hpp>
 #include <cvs/common/factory.hpp>

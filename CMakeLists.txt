@@ -50,28 +50,28 @@ cvs_install(NAME CVSPipeline
   FILES_DEV
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline
     FILES pipeline/include/cvs/pipeline/ipipeline.hpp
-          pipeline/include/cvs/pipeline/imodulemanager.hpp
-          pipeline/include/cvs/pipeline/iexecutionnode.hpp
-          pipeline/include/cvs/pipeline/iexecutiongraph.hpp
+          pipeline/include/cvs/pipeline/imoduleManager.hpp
+          pipeline/include/cvs/pipeline/iexecutionNode.hpp
+          pipeline/include/cvs/pipeline/iexecutionGraph.hpp
           pipeline/include/cvs/pipeline/ielement.hpp
           pipeline/include/cvs/pipeline/iview.hpp
           pipeline/include/cvs/pipeline/imodule.hpp
-          pipeline/include/cvs/pipeline/registrationhelper.hpp
+          pipeline/include/cvs/pipeline/registrationHelper.hpp
           ${CMAKE_CURRENT_BINARY_DIR}/pipeline/generate/cvs/pipeline/version.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/impl
     FILES pipeline/include/cvs/pipeline/impl/pipeline.hpp
-          pipeline/include/cvs/pipeline/impl/modulemanager.hpp
+          pipeline/include/cvs/pipeline/impl/moduleManager.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/tbb
-    FILES pipeline/include/cvs/pipeline/tbb/tbbfunctionnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbflowgraph.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbjoinnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbcontinuenode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbsplitnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbsourcenode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbhelpers.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp
+    FILES pipeline/include/cvs/pipeline/tbb/tbbFunctionNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbFlowGraph.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbJoinNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbContinueNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbSplitNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbSourceNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbHelpers.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbDefinitions.hpp
           pipeline/include/cvs/pipeline/tbb/tbbView.hpp
           pipeline/include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbOverwriteNode.hpp

@@ -2,8 +2,8 @@
 #include <cvs/logger/loggable.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/imodule.hpp>
-#include <cvs/pipeline/registrationhelper.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/registrationHelper.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 
 using namespace std::string_literals;
 using namespace cvs::pipeline::tbb;

@@ -1,11 +1,11 @@
-#include "../../pipeline/include/cvs/pipeline/impl/modulemanager.hpp"
+#include "../../pipeline/include/cvs/pipeline/impl/moduleManager.hpp"
 
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
-#include <cvs/pipeline/iexecutiongraph.hpp>
-#include <cvs/pipeline/iexecutionnode.hpp>
-#include <cvs/pipeline/tbb/tbbdefinitions.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
+#include <cvs/pipeline/tbb/tbbDefinitions.hpp>
 #include <gtest/gtest.h>
 
 using namespace cvs;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/pipeline/iexecutiongraph.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
 #include <tbb/flow_graph.h>
 
 #include <memory>

@@ -1,4 +1,4 @@
-#include "../../../include/cvs/pipeline/tbb/tbbdefinitions.hpp"
+#include "../../../include/cvs/pipeline/tbb/tbbDefinitions.hpp"
 
 namespace cvs::pipeline::tbb {
 

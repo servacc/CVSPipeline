@@ -21,17 +21,17 @@ cvs_library_version(TARGET ${PROJECT_NAME}
 target_sources(${PROJECT_NAME}
     PRIVATE
         include/cvs/pipeline/ipipeline.hpp
-        include/cvs/pipeline/imodulemanager.hpp
-        include/cvs/pipeline/iexecutionnode.hpp
-        include/cvs/pipeline/iexecutiongraph.hpp
+        include/cvs/pipeline/imoduleManager.hpp
+        include/cvs/pipeline/iexecutionNode.hpp
+        include/cvs/pipeline/iexecutionGraph.hpp
         include/cvs/pipeline/ielement.hpp
         include/cvs/pipeline/imodule.hpp
         include/cvs/pipeline/iview.hpp
-        include/cvs/pipeline/registrationhelper.hpp
+        include/cvs/pipeline/registrationHelper.hpp
 
         include/cvs/pipeline/impl/pipeline.hpp
         include/cvs/pipeline/impl/guiPipeline.hpp
-        include/cvs/pipeline/impl/modulemanager.hpp
+        include/cvs/pipeline/impl/moduleManager.hpp
 
         include/cvs/pipeline/tbb/tbbBufferTemplateNode.hpp
         include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
@@ -39,22 +39,22 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbBufferNode.hpp
 
         include/cvs/pipeline/tbb/tbbMultifunctionNode.hpp
-        include/cvs/pipeline/tbb/tbbfunctionnode.hpp
-        include/cvs/pipeline/tbb/tbbflowgraph.hpp
-        include/cvs/pipeline/tbb/tbbjoinnode.hpp
-        include/cvs/pipeline/tbb/tbbcontinuenode.hpp
-        include/cvs/pipeline/tbb/tbbsplitnode.hpp
-        include/cvs/pipeline/tbb/tbbsourcenode.hpp
-        include/cvs/pipeline/tbb/tbbhelpers.hpp
-        include/cvs/pipeline/tbb/tbbdefinitions.hpp
+        include/cvs/pipeline/tbb/tbbFunctionNode.hpp
+        include/cvs/pipeline/tbb/tbbFlowGraph.hpp
+        include/cvs/pipeline/tbb/tbbJoinNode.hpp
+        include/cvs/pipeline/tbb/tbbContinueNode.hpp
+        include/cvs/pipeline/tbb/tbbSplitNode.hpp
+        include/cvs/pipeline/tbb/tbbSourceNode.hpp
+        include/cvs/pipeline/tbb/tbbHelpers.hpp
+        include/cvs/pipeline/tbb/tbbDefinitions.hpp
         include/cvs/pipeline/tbb/tbbView.hpp
 
-        src/pipeline/tbb/tbbdefinitions.cpp
-        src/pipeline/tbb/tbbhelpers.cpp
-        src/pipeline/tbb/tbbflowgraph.cpp
+        src/pipeline/tbb/tbbDefinitions.cpp
+        src/pipeline/tbb/tbbHelpers.cpp
+        src/pipeline/tbb/tbbFlowGraph.cpp
 
-        src/pipeline/registrationhelper.cpp
-        src/pipeline/modulemanager.cpp
+        src/pipeline/registrationHelper.cpp
+        src/pipeline/moduleManager.cpp
         src/pipeline/pipeline.cpp
         src/pipeline/guiPipeline.cpp
         src/pipeline/imodule.cpp

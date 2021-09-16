@@ -1,7 +1,7 @@
-#include "../../include/cvs/pipeline/registrationhelper.hpp"
+#include "../../include/cvs/pipeline/registrationHelper.hpp"
 
 #include "../../include/cvs/pipeline/impl/guiPipeline.hpp"
-#include "../../include/cvs/pipeline/impl/modulemanager.hpp"
+#include "../../include/cvs/pipeline/impl/moduleManager.hpp"
 #include "../../include/cvs/pipeline/impl/pipeline.hpp"
 
 namespace cvs::pipeline {

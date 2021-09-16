@@ -1,9 +1,9 @@
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
-#include <cvs/pipeline/imodulemanager.hpp>
+#include <cvs/pipeline/imoduleManager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
-#include <cvs/pipeline/registrationhelper.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/registrationHelper.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 #include <gtest/gtest.h>
 
 TEST(Pipeline, createGraph) {

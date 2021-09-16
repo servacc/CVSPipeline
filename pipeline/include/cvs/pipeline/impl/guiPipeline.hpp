@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cvs/pipeline/iexecutiongraph.hpp>
-#include <cvs/pipeline/iexecutionnode.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
 #include <cvs/pipeline/impl/pipeline.hpp>
 #include <cvs/pipeline/iview.hpp>
 

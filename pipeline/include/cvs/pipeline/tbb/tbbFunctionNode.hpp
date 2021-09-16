@@ -2,8 +2,8 @@
 
 #include <cvs/common/config.hpp>
 #include <cvs/pipeline/ielement.hpp>
-#include <cvs/pipeline/iexecutionnode.hpp>
-#include <cvs/pipeline/tbb/tbbflowgraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
+#include <cvs/pipeline/tbb/tbbFlowGraph.hpp>
 #include <tbb/flow_graph.h>
 
 // TODO: void(Args...) && Res() => ::tbb::flow::continue_msg(Args...) && Res(::tbb::flow::continue_msg) ????
