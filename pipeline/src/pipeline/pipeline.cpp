@@ -68,14 +68,13 @@ Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &              
   auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
-  for (auto &node_cfg : nodes_list) {
-    auto node_params = NodeConfig::make(node_cfg.second).value();
+  for (const auto &node_cfg : nodes_list) {
+    const auto node_params = NodeConfig::make(node_cfg.second).value();
 
     LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
               node_params.element);
 
-    auto node = factory->create<IExecutionNodeUPtr, const std::string &, const boost::property_tree::ptree &,
-                                IExecutionGraphPtr &>(node_params.element, node_params.node, node_cfg.second, graph);
+    auto node = factory->create<IExecutionNodeUPtr>(node_params.element, node_params.node, node_cfg.second, graph);
 
     if (!node.has_value() || !node.value())
       throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",

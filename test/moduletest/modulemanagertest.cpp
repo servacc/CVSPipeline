@@ -39,7 +39,8 @@ TEST(ModuleManagerTest, testPipeline) {
 
   std::string node_cfg_str = R"({
   "name" : "TestName",
-  "element" : "TestElement"
+  "element" : "TestElement",
+  "node" : "TestNode"
 })";
 
   const auto node_cfg = common::CVSConfigBase::load(node_cfg_str);

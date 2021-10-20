@@ -166,7 +166,8 @@ TEST_F(GraphTest, branch_graph) {
 
   std::string cfg_str = R"({
   "name" : "TestName",
-  "element" : "TestElement"
+  "element" : "TestElement",
+  "node" : "TestNode"
 })";
 
   const common::Properties cfg = common::CVSConfigBase::load(cfg_str);
@@ -203,7 +204,8 @@ TEST_F(GraphTest, branch_graph) {
 TEST_F(GraphTest, multifunctional) {
   std::string cfg_str = R"({
   "name" : "TestName",
-  "element" : "TestElement"
+  "element" : "TestElement",
+  "node" : "TestNode"
 })";
 
   const common::Properties cfg = common::CVSConfigBase::load(cfg_str);

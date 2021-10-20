@@ -2,6 +2,7 @@
 
 #include <cvs/common/config.hpp>
 #include <cvs/logger/loggable.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
 
 #include <any>
 #include <memory>
@@ -19,8 +20,9 @@ enum NodeType {
 };
 
 CVS_CONFIG(NodeInfo, "") {
-  CVS_FIELD(name, std::string, "");
-  CVS_FIELD(element, std::string, "");
+  CVS_FIELD(name, std::string, "Node name.");
+  CVS_FIELD(element, std::string, "Element type.");
+  CVS_FIELD(node, std::string, "Node type.");
 };
 
 CVS_CONFIG(FunctionNodeConfig, "") {
@@ -36,10 +38,30 @@ class IExecutionNode : public cvs::logger::Loggable<IExecutionNode> {
 
   virtual NodeType type() const = 0;
 
+  const std::string &name() const { return info.name; }
+  const std::string &element() const { return info.element; }
+  const std::string &nodeName() const { return info.node; }
+
   virtual std::any receiver(std::size_t index) = 0;
   virtual std::any sender(std::size_t index)   = 0;
 
   virtual bool connect(std::any, std::size_t index) = 0;
+
+ protected:
+  template <typename Node, typename Graph>
+  static std::unique_ptr<Node> createNode(const common::Properties &properties, IExecutionGraphPtr graph) {
+    auto g = std::dynamic_pointer_cast<Graph>(graph);
+    if (!g)
+      cvs::common::throwException<std::runtime_error>(R"(The type of the graph must be "{}".)",
+                                                      boost::core::demangle(typeid(Graph).name()));
+
+    auto info = NodeInfo::make(properties).value();
+
+    auto node  = std::make_unique<Node>(g);
+    node->info = std::move(info);
+
+    return node;
+  }
 
  protected:
   NodeInfo info;

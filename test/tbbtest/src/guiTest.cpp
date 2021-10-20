@@ -1,8 +1,8 @@
 #include <cvs/common/config.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/pipeline/ielement.hpp>
-#include <cvs/pipeline/tbb/tbbView.hpp>
 #include <cvs/pipeline/tbb/tbbHelpers.hpp>
+#include <cvs/pipeline/tbb/tbbView.hpp>
 #include <gmock/gmock.h>
 
 using namespace std::literals::string_literals;
@@ -100,9 +100,9 @@ TEST_F(GuiTest, in_out) {
   //     |   |
   //    Buf Buf
 
-  std::string config_1_json = R"({ "value": 1, "name" : "TestName", "element" : "TestElement" })";
-  std::string config_3_json = R"({ "value": 3, "name" : "TestName", "element" : "TestElement" })";
-  std::string config_2_json = R"({"name" : "TestName", "element" : "TestElement"})";
+  std::string config_1_json = R"({ "value": 1, "name" : "TestName", "element" : "TestElement", "node" : "TestNode" })";
+  std::string config_3_json = R"({ "value": 3, "name" : "TestName", "element" : "TestElement", "node" : "TestNode" })";
+  std::string config_2_json = R"({ "name" : "TestName", "element" : "TestElement", "node" : "TestNode" })";
 
   const auto cfg_1 = cvs::common::CVSConfigBase::load(config_1_json);
   const auto cfg_3 = cvs::common::CVSConfigBase::load(config_3_json);
