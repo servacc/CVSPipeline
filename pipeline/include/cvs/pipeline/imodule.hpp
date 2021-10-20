@@ -34,9 +34,9 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib);
 
 }  // namespace cvs::pipeline
 
-#define REGISTER_MODULE(module)                                                                 \
-  extern "C" cvs::pipeline::IModule *newModule() { return new module; }                         \
-  extern "C" void                    deleteModule(cvs::pipeline::IModule *ptr) { delete ptr; }  \
-  extern "C" unsigned int            moduleVersionMajor() { return CVSPipeline_VERSION_MAJOR; } \
-  extern "C" unsigned int            moduleVersionMinor() { return CVSPipeline_VERSION_MINOR; } \
-  extern "C" unsigned int            moduleVersionPatch() { return CVSPipeline_VERSION_PATCH; }
+#define REGISTER_MODULE(module)                                                                             \
+  extern "C" cvs::pipeline::IModule *newModule() { return new module; }                                     \
+  extern "C" void                    deleteModule(cvs::pipeline::IModule *ptr) { delete ptr; }              \
+  extern "C" unsigned int            moduleVersionMajor() { return cvs::pipeline::Pipeline_VERSION_MAJOR; } \
+  extern "C" unsigned int            moduleVersionMinor() { return cvs::pipeline::Pipeline_VERSION_MINOR; } \
+  extern "C" unsigned int            moduleVersionPatch() { return cvs::pipeline::Pipeline_VERSION_PATCH; }

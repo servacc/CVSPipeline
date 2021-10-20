@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(CVSPipeline)
+project(Pipeline)
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(TBB REQUIRED)
@@ -63,7 +63,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generate>
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/CVS${PROJECT_NAME}>)
 
 target_link_libraries(${PROJECT_NAME}
   Boost::boost Boost::filesystem

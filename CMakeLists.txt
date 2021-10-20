@@ -44,8 +44,8 @@ add_subdirectory(test)
 include(CVSInstall)
 
 cvs_install(NAME CVSPipeline
-  TARGETS_BIN CVSPipelineTool CVSPipeline
-  TARGETS_DEV CVSPipelineMain
+  TARGETS_BIN CVSPipelineTool Pipeline
+  TARGETS_DEV PipelineMain
   VERSION ${CVSPipelineLib_VERSION_MAJOR}.${CVSPipelineLib_VERSION_MINOR}.${CVSPipelineLib_VERSION_PATCH}
   FILES_DEV
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline

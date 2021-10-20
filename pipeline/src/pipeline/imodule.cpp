@@ -4,9 +4,9 @@
 
 namespace cvs::pipeline {
 
-const int IModule::libVersion = CVSPipeline_VERSION_MAJOR;
+const int IModule::libVersion = Pipeline_VERSION_MAJOR;
 
-bool IModule::checkCompatibility() const { return libVersion == CVSPipeline_VERSION_MAJOR; }
+bool IModule::checkCompatibility() const { return libVersion == Pipeline_VERSION_MAJOR; }
 
 IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
   auto logger = *cvs::logger::createLogger("cvs.pipeline.module");
@@ -42,15 +42,15 @@ IModuleUPtr makeModule(const boost::dll::shared_library &lib) {
   const auto version_minor = lib.get<detail::IModuleVersion>("moduleVersionMinor")();
   const auto version_patch = lib.get<detail::IModuleVersion>("moduleVersionPatch")();
 
-  if (version_major != CVSPipeline_VERSION_MAJOR) {
+  if (version_major != Pipeline_VERSION_MAJOR) {
     LOG_ERROR(logger, "Incompatible version of the CVSPipeline (current {}.{}.{} required {}.{}.{}).",
-              CVSPipeline_VERSION_MAJOR, CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, version_major,
-              version_minor, version_patch);
+              Pipeline_VERSION_MAJOR, Pipeline_VERSION_MINOR, Pipeline_VERSION_PATCH, version_major, version_minor,
+              version_patch);
     return nullptr;
   }
 
-  LOG_DEBUG(logger, "Current version of the CVSPipeline: {}.{}.{}. Required: {}.{}.{}.", CVSPipeline_VERSION_MAJOR,
-            CVSPipeline_VERSION_MINOR, CVSPipeline_VERSION_PATCH, version_major, version_minor, version_patch);
+  LOG_DEBUG(logger, "Current version of the CVSPipeline: {}.{}.{}. Required: {}.{}.{}.", Pipeline_VERSION_MAJOR,
+            Pipeline_VERSION_MINOR, Pipeline_VERSION_PATCH, version_major, version_minor, version_patch);
 
   IModuleUPtr result{lib.get<detail::IModuleCreator>("newModule")(), &lib.get<detail::IModuleDeleter>("deleteModule")};
   if (!result->checkCompatibility()) {
