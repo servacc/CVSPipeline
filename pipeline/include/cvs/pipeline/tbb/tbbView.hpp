@@ -63,8 +63,8 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
         throw std::runtime_error("Can't find node " + params.from);
       auto sender = sender_iter->second->sender(params.output);
       if (!view.addSender(params.input, std::move(sender)))
-        throw std::runtime_error(
-            fmt::format("Can't connect node {}:{} with input {}", params.from, params.output, params.input));
+        common::throwException<std::runtime_error>("Can't connect node {}:{} with input {}", params.from, params.output,
+                                                   params.input);
     }
 
     auto outputs = config.get_child("outputs");
@@ -76,8 +76,8 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
         throw std::runtime_error("Can't find node " + params.to);
       auto receiver = receiver_iter->second->receiver(params.input);
       if (!view.addReceiver(params.output, std::move(receiver)))
-        throw std::runtime_error(
-            fmt::format("Can't connect node {}:{} with output {}", params.to, params.input, params.output));
+        common::throwException<std::runtime_error>("Can't connect node {}:{} with output {}", params.to, params.input,
+                                                   params.output);
     }
   }
 
@@ -102,7 +102,13 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
 
       if (!std::get<I>(list)) {
         // TODO: find buffer settings
-        std::get<I>(list) = std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(config, graph, {});
+        common::Properties node_config = config;
+        node_config.put("name", "port" + std::to_string(I));
+        node_config.put("element", "View internal element");
+        node_config.put("node", "View internal node");
+
+        std::get<I>(list) =
+            std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(node_config, graph, {});
       }
 
       if (!connectToInternalNode(node, std::get<I>(list))) {

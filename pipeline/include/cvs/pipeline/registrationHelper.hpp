@@ -58,6 +58,7 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
                      IExecutionGraphPtr& graph) -> IExecutionNodeUPtr {
         try {
           auto logger = cvs::logger::createLogger("cvs.pipeline.helper").value();
+          LOG_TRACE(logger, R"(Trying to create a node "{}"...)", node_name);
 
           auto node_type = factory->create<NodeType>(node_name).value();
 
@@ -80,10 +81,11 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
           }
         }
         catch (...) {
-          std::throw_with_nested(
-              std::runtime_error(fmt::format(R"(Unable to create node "{}" for key "{}")",
-                                             boost::core::demangle(typeid(NodeType).name()), node_name)));
+          common::throwWithNested<std::runtime_error>(R"(Unable to create node for key "{}")", node_name);
         }
+
+        // fix warning
+        return {};
       });
 }
 

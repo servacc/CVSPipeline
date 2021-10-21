@@ -20,30 +20,26 @@ namespace {
 CVS_CONFIG(PipelineConfig, "") { CVS_FIELD_DEF(type, std::string, "Default", ""); };
 
 int execPipeline(const std::string &module_manager_key, const std::string &config_path_string) {
-  auto config = cvs::common::CVSConfigBase::load(std::filesystem::path(config_path_string));
+  const auto config = cvs::common::CVSConfigBase::load(std::filesystem::path(config_path_string));
 
   LOG_GLOB_INFO(R"(Config "{}" loaded)", config_path_string);
 
   cvs::logger::initLoggers(config);
 
-  auto factory = pipelineFactory();
+  const auto factory = pipelineFactory();
 
   cvs::pipeline::registerDefault(factory);
   cvs::pipeline::tbb::registerBase(factory);
 
   auto module_manager = factory->create<cvs::pipeline::IModuleManagerUPtr>(module_manager_key, config);
-  if (!module_manager)
-    throw std::runtime_error(fmt::format(R"(Can't create module manager for key "{}")", module_manager_key));
 
   module_manager.value()->loadModules();
   module_manager.value()->registerTypes(factory);
 
-  auto pipeline_cfg  = config.get_child("Pipeline");
-  auto pipeline_type = PipelineConfig::make(pipeline_cfg);
+  const auto pipeline_cfg  = config.get_child("Pipeline");
+  auto       pipeline_type = PipelineConfig::make(pipeline_cfg);
 
-  auto pipeline =
-      factory->create<cvs::pipeline::IPipelineUPtr, const boost::property_tree::ptree &,
-                      const cvs::common::FactoryPtr<std::string> &>(pipeline_type->type, pipeline_cfg, factory);
+  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr>(pipeline_type->type, pipeline_cfg, factory);
 
   return pipeline.value()->exec();
 }

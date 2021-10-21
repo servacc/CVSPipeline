@@ -68,22 +68,23 @@ Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &              
   auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
-  for (const auto &node_cfg : nodes_list) {
-    const auto node_params = NodeConfig::make(node_cfg.second).value();
+  try {
+    for (const auto &node_cfg : nodes_list) {
+      const auto node_params = NodeConfig::make(node_cfg.second).value();
 
-    LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name, node_params.node,
-              node_params.element);
+      LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name,
+                node_params.node, node_params.element);
 
-    auto node = factory->create<IExecutionNodeUPtr>(node_params.element, node_params.node, node_cfg.second, graph);
+      auto node = factory->create<IExecutionNodeUPtr>(node_params.element, node_params.node, node_cfg.second, graph);
 
-    if (!node.has_value() || !node.value())
-      throw std::runtime_error(fmt::format(R"(Can't create node "{}" with element "{}" and type "{}".)",
-                                           node_params.name, node_params.element, node_params.node));
+      nodes.emplace(node_params.name, std::move(node.value()));
 
-    nodes.emplace(node_params.name, std::move(node.value()));
-
-    LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
-              node_params.element);
+      LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
+                node_params.element);
+    }
+  }
+  catch (...) {
+    cvs::common::throwWithNested<std::runtime_error>("Can't create pipeline nodes.");
   }
 
   return nodes;
