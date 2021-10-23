@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cvs/common/config.hpp>
+#include <cvs/common/factory.hpp>
+#include <cvs/pipeline/dataCounter.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionNode.hpp>
 #include <cvs/pipeline/tbb/tbbFlowGraph.hpp>
@@ -36,7 +38,7 @@ class TbbMultifunctionNode;
 
 template <typename Result, typename... Args, typename Policy>
 class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
-    : public IInputExecutionNode<NodeType::Functional, Args...> {
+    : public IInputExecutionNode<NodeType::Functional, Args...>, public DataCounter {
   using ArgumentsType  = std::tuple<Args...>;
   using ResultType     = typename detail::MultifunctionResult<Result>::Result;
   using ElementPtrType = IElementPtr<Result(Args...)>;
@@ -44,13 +46,17 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
   using NodeType       = ::tbb::flow::multifunction_node<std::tuple<Args...>, ResultType, Policy>;
 
  public:
-  static auto make(const common::Properties &cfg, IExecutionGraphPtr graph, ElementPtrType body) {
+  static auto make(const common::Properties &             cfg,
+                   IExecutionGraphPtr                     graph,
+                   const common::FactoryPtr<std::string> &factory,
+                   ElementPtrType                         body) {
     auto params      = FunctionNodeConfig::make(cfg).value();
     auto node_params = NodeInfo::make(cfg).value();
 
     if (auto g = std::dynamic_pointer_cast<cvs::pipeline::tbb::TbbFlowGraph>(graph)) {
       auto node  = std::make_unique<TbbMultifunctionNode>(g, params.concurrency, std::move(body), params.priority);
       node->info = std::move(node_params);
+      DataCounter::init(*node, cfg, factory);
       return node;
     }
     return std::unique_ptr<TbbMultifunctionNode>{};
@@ -63,9 +69,11 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
       : node(
             graph->native(),
             concurrency,
-            [e = std::move(element)](const typename NodeType::input_type & v,
-                                     typename NodeType::output_ports_type &ports) {
+            [this, e = std::move(element)](const typename NodeType::input_type & v,
+                                           typename NodeType::output_ports_type &ports) {
+              beforeProcessing();
               auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
+              afterProcessing();
               sendResult(outputs, ports);
             },
             priority) {}

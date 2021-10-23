@@ -49,6 +49,10 @@ target_sources(${PROJECT_NAME}
         include/cvs/pipeline/tbb/tbbDefinitions.hpp
         include/cvs/pipeline/tbb/tbbView.hpp
 
+        include/cvs/pipeline/dataCounter.hpp
+
+        src/pipeline/dataCounter.cpp
+
         src/pipeline/tbb/tbbDefinitions.cpp
         src/pipeline/tbb/tbbHelpers.cpp
         src/pipeline/tbb/tbbFlowGraph.cpp

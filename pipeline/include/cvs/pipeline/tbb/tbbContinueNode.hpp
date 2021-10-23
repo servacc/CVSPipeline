@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cvs/common/config.hpp>
+#include <cvs/common/factory.hpp>
+#include <cvs/pipeline/dataCounter.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/iexecutionNode.hpp>
 #include <cvs/pipeline/tbb/tbbFlowGraph.hpp>
@@ -12,15 +14,21 @@ class TbbContinueNodeBase;
 
 template <typename Result>
 class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeType::Functional>,
-                                                public IOutputExecutionNode<NodeType::Functional, Result> {
+                                                public IOutputExecutionNode<NodeType::Functional, Result>,
+                                                public DataCounter {
  public:
   using ElementResultType = Result;
   using NodeResultType    = Result;
 
   TbbContinueNodeBase(TbbFlowGraphPtr graph, int number_of_predecessors, IElementPtr<ElementResultType()> element)
-      : node(graph->native(), number_of_predecessors, [e = std::move(element)](::tbb::flow::continue_msg) -> Result {
-        return e->process();
-      }) {}
+      : node(graph->native(),
+             number_of_predecessors,
+             [this, e = std::move(element)](::tbb::flow::continue_msg) -> Result {
+               beforeProcessing();
+               auto result = e->process();
+               afterProcessing();
+               return result;
+             }) {}
 
   bool tryGet(Result& val) override { return node.try_get(val); }
 
@@ -30,7 +38,8 @@ class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeT
 
 template <>
 class TbbContinueNodeBase<IElement<void()>> : public IInputExecutionNode<NodeType::Functional>,
-                                              public IOutputExecutionNode<NodeType::Functional> {
+                                              public IOutputExecutionNode<NodeType::Functional>,
+                                              public DataCounter {
  public:
   using ElementResultType = void;
   using NodeResultType    = ::tbb::flow::continue_msg;
@@ -38,8 +47,10 @@ class TbbContinueNodeBase<IElement<void()>> : public IInputExecutionNode<NodeTyp
   TbbContinueNodeBase(TbbFlowGraphPtr graph, int number_of_predecessors, IElementPtr<ElementResultType()> element)
       : node(graph->native(),
              number_of_predecessors,
-             [e = std::move(element)](::tbb::flow::continue_msg) -> NodeResultType {
+             [this, e = std::move(element)](::tbb::flow::continue_msg) -> NodeResultType {
+               beforeProcessing();
                e->process();
+               afterProcessing();
                return NodeResultType{};
              }) {}
 
@@ -62,10 +73,16 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
   using ElementResultType = typename TbbContinueNodeBase<Element>::ElementResultType;
   using NodeResultType    = typename TbbContinueNodeBase<Element>::NodeResultType;
 
-  static auto make(const common::Properties&, IExecutionGraphPtr graph, IElementPtr<ElementResultType()> element) {
+  static auto make(const common::Properties&              properties,
+                   IExecutionGraphPtr                     graph,
+                   const common::FactoryPtr<std::string>& factory,
+                   IElementPtr<ElementResultType()>       element) {
     int number_of_predecessors = 0;
-    if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
-      return std::make_unique<TbbContinueNode>(g, number_of_predecessors, std::move(element));
+    if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph)) {
+      auto node = std::make_unique<TbbContinueNode>(g, number_of_predecessors, std::move(element));
+      DataCounter::init(*node, properties, factory);
+      return node;
+    }
     return std::unique_ptr<TbbContinueNode>{};
   }
 

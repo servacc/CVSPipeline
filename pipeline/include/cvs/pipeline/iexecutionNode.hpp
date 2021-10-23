@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cvs/common/config.hpp>
+#include <cvs/common/factory.hpp>
 #include <cvs/logger/loggable.hpp>
+#include <cvs/logger/tools/fpsCounter.hpp>
 #include <cvs/pipeline/iexecutionGraph.hpp>
 
 #include <any>

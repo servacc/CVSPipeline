@@ -108,7 +108,7 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
         node_config.put("node", "View internal node");
 
         std::get<I>(list) =
-            std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(node_config, graph, {});
+            std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(node_config, graph, {}, {});
       }
 
       if (!connectToInternalNode(node, std::get<I>(list))) {

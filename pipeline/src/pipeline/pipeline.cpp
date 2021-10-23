@@ -11,12 +11,6 @@ CVS_CONFIG(PipelineConfig, "") { CVS_FIELD_DEF(autostart, bool, false, ""); };
 
 CVS_CONFIG(GraphConfig, "") { CVS_FIELD(type, std::string, ""); };
 
-CVS_CONFIG(NodeConfig, "") {
-  CVS_FIELD(node, std::string, "");
-  CVS_FIELD(element, std::string, "");
-  CVS_FIELD(name, std::string, "");
-};
-
 CVS_CONFIG(ConnectionConfig, "") {
   CVS_FIELD(from, std::string, "");
   CVS_FIELD(to, std::string, "");
@@ -70,7 +64,7 @@ Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &              
   std::map<std::string, IExecutionNodePtr> nodes;
   try {
     for (const auto &node_cfg : nodes_list) {
-      const auto node_params = NodeConfig::make(node_cfg.second).value();
+      const auto node_params = NodeInfo::make(node_cfg.second).value();
 
       LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name,
                 node_params.node, node_params.element);

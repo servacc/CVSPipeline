@@ -57,6 +57,7 @@ cvs_install(NAME CVSPipeline
           pipeline/include/cvs/pipeline/iview.hpp
           pipeline/include/cvs/pipeline/imodule.hpp
           pipeline/include/cvs/pipeline/registrationHelper.hpp
+          pipeline/include/cvs/pipeline/dataCounter.hpp
           ${CMAKE_CURRENT_BINARY_DIR}/pipeline/generate/cvs/pipeline/version.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/impl

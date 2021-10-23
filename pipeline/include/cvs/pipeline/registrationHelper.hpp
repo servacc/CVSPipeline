@@ -65,15 +65,15 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
           switch (node_type) {
             case ServiceIn: {
               std::shared_ptr<Arg> type;
-              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value();
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, factory, type).value();
             }
             case ServiceOut: {
               std::shared_ptr<Res> type;
-              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, type).value();
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, factory, type).value();
             }
             case Functional: {
               std::shared_ptr<Element> element = factory->create<std::unique_ptr<Element>>(key, cfg).value();
-              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, element).value();
+              return factory->create<IExecutionNodeUPtr>(node_name, cfg, graph, factory, element).value();
             }
             default: {
               throw std::runtime_error("Unknown node type");

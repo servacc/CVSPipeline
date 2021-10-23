@@ -19,7 +19,10 @@ class TbbSplitNode<std::tuple<RX...>> : public IInputExecutionNode<NodeType::Ser
 
   static_assert(sizeof...(RX) > 1, "The number of arguments must be equal to or more than two.");
 
-  static auto make(const common::Properties&, IExecutionGraphPtr graph, std::shared_ptr<ResultType>) {
+  static auto make(const common::Properties&,
+                   IExecutionGraphPtr graph,
+                   const common::FactoryPtr<std::string>&,
+                   std::shared_ptr<ResultType>) {
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
       return std::make_unique<TbbSplitNode>(g);
     return std::unique_ptr<TbbSplitNode>{};
