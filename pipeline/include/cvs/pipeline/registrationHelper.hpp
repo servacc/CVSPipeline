@@ -84,7 +84,7 @@ void registerElemetHelper(const std::string key, const cvs::common::FactoryPtr<s
           common::throwWithNested<std::runtime_error>(R"(Unable to create node for key "{}")", node_name);
         }
 
-        // fix warning
+        // fix Warning: No return, in function returning non-void
         return {};
       });
 }
