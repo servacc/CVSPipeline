@@ -1,31 +1,31 @@
 #include "../../include/cvs/pipeline/impl/guiPipeline.hpp"
 
-#include <cvs/common/configbase.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/logger/logging.hpp>
 
 #include <exception>
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(ViewConfig, CVSCFG_VALUE(type, std::string))
+CVS_CONFIG(ViewConfig, "") { CVS_FIELD(type, std::string, ""); };
 
 }  // namespace
 
 namespace cvs::pipeline::impl {
 
-IPipelineUPtr GuiPipeline::make(common::Config &cfg, const cvs::common::FactoryPtr<std::string> &factory) {
+IPipelineUPtr GuiPipeline::make(const common::Properties &cfg, const cvs::common::FactoryPtr<std::string> &factory) {
   std::unique_ptr<GuiPipeline> pipeline{new GuiPipeline};
 
   initPipeline(*pipeline, cfg, factory);
 
-  auto view_cfg    = cfg.getFirstChild("view").value();
-  auto view_params = view_cfg.parse<ViewConfig>().value();
+  auto view_cfg    = cfg.get_child("view");
+  auto view_params = ViewConfig::make(view_cfg).value();
 
-  pipeline->view =
-      factory
-          ->create<IViewUPtr, common::Config &, IExecutionGraphPtr &, const std::map<std::string, IExecutionNodePtr> &>(
-              view_params.type, view_cfg, pipeline->graph, pipeline->nodes)
-          .value();
+  pipeline->view = factory
+                       ->create<IViewUPtr, const common::Properties &, IExecutionGraphPtr &,
+                                const std::map<std::string, IExecutionNodePtr> &>(view_params.type, view_cfg,
+                                                                                  pipeline->graph, pipeline->nodes)
+                       .value();
 
   return pipeline;
 }

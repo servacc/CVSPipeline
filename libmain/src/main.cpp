@@ -1,12 +1,11 @@
 #include <boost/program_options.hpp>
 #include <cvs/common/config.hpp>
-#include <cvs/common/configbase.hpp>
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
-#include <cvs/pipeline/imodulemanager.hpp>
+#include <cvs/pipeline/imoduleManager.hpp>
 #include <cvs/pipeline/ipipeline.hpp>
-#include <cvs/pipeline/registrationhelper.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/registrationHelper.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 #include <fmt/format.h>
 
 #include <iostream>
@@ -18,36 +17,29 @@ namespace po = boost::program_options;
 
 namespace {
 
-CVSCFG_DECLARE_CONFIG(PipelineConfig, CVSCFG_VALUE_DEFAULT(type, std::string, "Default"))
+CVS_CONFIG(PipelineConfig, "") { CVS_FIELD_DEF(type, std::string, "Default", ""); };
 
 int execPipeline(const std::string &module_manager_key, const std::string &config_path_string) {
-  auto config_opt = cvs::common::Config::makeFromFile(config_path_string);
-
-  auto config = *config_opt;
+  const auto config = cvs::common::CVSConfigBase::load(std::filesystem::path(config_path_string));
 
   LOG_GLOB_INFO(R"(Config "{}" loaded)", config_path_string);
 
   cvs::logger::initLoggers(config);
 
-  auto factory = pipelineFactory();
+  const auto factory = pipelineFactory();
 
   cvs::pipeline::registerDefault(factory);
   cvs::pipeline::tbb::registerBase(factory);
 
   auto module_manager = factory->create<cvs::pipeline::IModuleManagerUPtr>(module_manager_key, config);
-  if (!module_manager)
-    throw std::runtime_error(fmt::format(R"s(Can't create module manager for key "{}")s", module_manager_key));
 
   module_manager.value()->loadModules();
   module_manager.value()->registerTypes(factory);
 
-  auto pipeline_cfg  = config.getFirstChild("Pipeline").value();
-  auto pipeline_type = pipeline_cfg.parse<PipelineConfig>()->type;
+  const auto pipeline_cfg  = config.get_child("Pipeline");
+  auto       pipeline_type = PipelineConfig::make(pipeline_cfg);
 
-  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr, cvs::common::Config &,
-                                  const cvs::common::FactoryPtr<std::string> &>(pipeline_type, pipeline_cfg, factory);
-  if (!pipeline)
-    throw std::runtime_error(fmt::format(R"s(Can't create pipeline object for type "{}")s", pipeline_type));
+  auto pipeline = factory->create<cvs::pipeline::IPipelineUPtr>(pipeline_type->type, pipeline_cfg, factory);
 
   return pipeline.value()->exec();
 }

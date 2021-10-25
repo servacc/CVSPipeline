@@ -1,5 +1,5 @@
 #include <cvs/common/factory.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -15,7 +15,7 @@ namespace {
 
 class AElement : public IElement<int()> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<AElement>();
 
     EXPECT_CALL(*e, process()).Times(2).WillRepeatedly([]() {
@@ -34,7 +34,7 @@ class AElement : public IElement<int()> {
 
 class BElement : public IElement<int(int)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<BElement>();
     EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> int { return a; });
     return e;
@@ -45,7 +45,7 @@ class BElement : public IElement<int(int)> {
 
 class CElement : public IElement<float(int)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<CElement>();
     EXPECT_CALL(*e, process(10)).WillOnce([](int a) -> float { return a / 100.f; });
     return e;
@@ -56,7 +56,7 @@ class CElement : public IElement<float(int)> {
 
 class DElement : public IElement<float(int, float)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<DElement>();
     EXPECT_CALL(*e, process(10, 0.1f)).WillOnce([](int a, float b) -> float { return a + b; });
     return e;
@@ -67,7 +67,7 @@ class DElement : public IElement<float(int, float)> {
 
 class EElement : public IElement<void(float)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<EElement>();
     EXPECT_CALL(*e, process(10.1f));
     return e;
@@ -82,7 +82,7 @@ namespace {
 
 class MultiElementA : public IElement<std::optional<int>(std::size_t, std::size_t)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<MultiElementA>();
     EXPECT_CALL(*e, process(_, _))
         .WillOnce([](std::size_t, std::size_t) -> std::optional<int> { return std::nullopt; })
@@ -95,7 +95,7 @@ class MultiElementA : public IElement<std::optional<int>(std::size_t, std::size_
 
 class MultiElementB : public IElement<std::tuple<std::optional<int>, std::optional<int>>(std::size_t)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<MultiElementB>();
     EXPECT_CALL(*e, process(1)).WillOnce([](std::size_t) -> std::tuple<std::optional<int>, std::optional<int>> {
       return {std::nullopt, 0};
@@ -111,7 +111,7 @@ class MultiElementB : public IElement<std::tuple<std::optional<int>, std::option
 
 class MultiElementResult : public IElement<void(int)> {
  public:
-  static auto make(common::Config&) {
+  static auto make(const common::Properties&) {
     auto e = std::make_unique<MultiElementResult>();
     EXPECT_CALL(*e, process(_));
     return e;
@@ -131,18 +131,18 @@ class GraphTest : public ::testing::Test {
 
     registerBase(factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<int()>(common::Config&), AElement>("A"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<int(int)>(common::Config&), BElement>("B"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config&), CElement>("C"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config&), DElement>("D"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<void(float)>(common::Config&), EElement>("E"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int()>(const common::Properties&), AElement>("A"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<int(int)>(const common::Properties&), BElement>("B"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int)>(const common::Properties&), CElement>("C"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(const common::Properties&), DElement>("D"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<void(float)>(const common::Properties&), EElement>("E"s, factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<std::optional<int>(std::size_t, std::size_t)>(common::Config&),
+    registerElemetAndTbbHelper<IElementUPtr<std::optional<int>(std::size_t, std::size_t)>(const common::Properties&),
                                MultiElementA>("MA"s, factory);
-    registerElemetAndTbbHelper<
-        IElementUPtr<std::tuple<std::optional<int>, std::optional<int>>(std::size_t)>(common::Config&), MultiElementB>(
-        "MB"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<void(int)>(common::Config&), MultiElementResult>("MR"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<std::tuple<std::optional<int>, std::optional<int>>(std::size_t)>(
+                                   const common::Properties&),
+                               MultiElementB>("MB"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<void(int)>(const common::Properties&), MultiElementResult>("MR"s, factory);
   }
 
   static cvs::common::FactoryPtr<std::string> factory;
@@ -166,31 +166,22 @@ TEST_F(GraphTest, branch_graph) {
 
   std::string cfg_str = R"({
   "name" : "TestName",
-  "element" : "TestElement"
+  "element" : "TestElement",
+  "node" : "TestNode"
 })";
 
-  common::Config cfg = common::Config::make(std::move(cfg_str)).value();
+  const common::Properties cfg = common::CVSConfigBase::load(cfg_str);
 
-  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
-  ASSERT_NE(nullptr, graph);
+  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value();
 
-  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, cfg, graph).value_or(nullptr);
-  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
-  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
-  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
-  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, cfg, graph).value_or(nullptr);
+  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, cfg, graph).value();
+  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, cfg, graph).value();
+  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, cfg, graph).value();
+  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, cfg, graph).value();
+  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, cfg, graph).value();
 
-  auto bc_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, cfg, graph).value_or(nullptr);
-  auto j_node  = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, cfg, graph).value_or(nullptr);
-
-  ASSERT_NE(nullptr, a_node);
-  ASSERT_NE(nullptr, b_node);
-  ASSERT_NE(nullptr, c_node);
-  ASSERT_NE(nullptr, d_node);
-  ASSERT_NE(nullptr, e_node);
-
-  ASSERT_NE(nullptr, bc_node);
-  ASSERT_NE(nullptr, j_node);
+  auto bc_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, cfg, graph).value();
+  auto j_node  = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, cfg, graph).value();
 
   ASSERT_TRUE(bc_node->connect(a_node->sender(0), 0));
   ASSERT_TRUE(b_node->connect(bc_node->sender(0), 0));
@@ -213,12 +204,13 @@ TEST_F(GraphTest, branch_graph) {
 TEST_F(GraphTest, multifunctional) {
   std::string cfg_str = R"({
   "name" : "TestName",
-  "element" : "TestElement"
+  "element" : "TestElement",
+  "node" : "TestNode"
 })";
 
-  common::Config cfg = common::Config::make(std::move(cfg_str)).value();
+  const common::Properties cfg = common::CVSConfigBase::load(cfg_str);
 
-  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value_or(nullptr);
+  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value();
   ASSERT_NE(nullptr, graph);
 
   auto ma_node = factory->create<IExecutionNodeUPtr>("MA"s, TbbDefaultName::multifunction, cfg, graph).value();

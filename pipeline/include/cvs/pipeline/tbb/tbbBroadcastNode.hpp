@@ -9,10 +9,11 @@ namespace cvs::pipeline::tbb {
 template <NodeType Type, typename T>
 class TbbBroadcastNode : public TbbBufferTemplateNode<Type, ::tbb::flow::broadcast_node, T> {
  public:
-  static auto make(common::Config&, IExecutionGraphPtr graph, std::shared_ptr<T>) {
-    if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
-      return std::make_unique<TbbBroadcastNode>(g);
-    return std::unique_ptr<TbbBroadcastNode>{};
+  static auto make(const common::Properties& properties,
+                   IExecutionGraphPtr        graph,
+                   const common::FactoryPtr<std::string>&,
+                   std::shared_ptr<T>) {
+    return createNode<TbbBroadcastNode<Type, T>, TbbFlowGraph>(properties, std::move(graph));
   }
 
   TbbBroadcastNode(const TbbFlowGraphPtr& graph)

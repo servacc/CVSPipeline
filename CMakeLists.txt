@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 find_package(CVSCommonCMakeHelpers REQUIRED)
 list(APPEND CMAKE_MODULE_PATH "${CVSCOMMON_MODULE_PATH}")
-
 include(CVSCommon)
 
 project(CVSPipelineLib CVS_PROJECT
@@ -39,39 +38,41 @@ add_subdirectory(pipeline)
 add_subdirectory(libmain)
 add_subdirectory(tool)
 
+include(CTest)
 add_subdirectory(test)
 
 include(CVSInstall)
 
 cvs_install(NAME CVSPipeline
-  TARGETS_BIN CVSPipelineTool CVSPipeline
-  TARGETS_DEV CVSPipelineMain
+  TARGETS_BIN CVSPipelineTool Pipeline
+  TARGETS_DEV PipelineMain
   VERSION ${CVSPipelineLib_VERSION_MAJOR}.${CVSPipelineLib_VERSION_MINOR}.${CVSPipelineLib_VERSION_PATCH}
   FILES_DEV
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline
     FILES pipeline/include/cvs/pipeline/ipipeline.hpp
-          pipeline/include/cvs/pipeline/imodulemanager.hpp
-          pipeline/include/cvs/pipeline/iexecutionnode.hpp
-          pipeline/include/cvs/pipeline/iexecutiongraph.hpp
+          pipeline/include/cvs/pipeline/imoduleManager.hpp
+          pipeline/include/cvs/pipeline/iexecutionNode.hpp
+          pipeline/include/cvs/pipeline/iexecutionGraph.hpp
           pipeline/include/cvs/pipeline/ielement.hpp
           pipeline/include/cvs/pipeline/iview.hpp
           pipeline/include/cvs/pipeline/imodule.hpp
-          pipeline/include/cvs/pipeline/registrationhelper.hpp
+          pipeline/include/cvs/pipeline/registrationHelper.hpp
+          pipeline/include/cvs/pipeline/dataCounter.hpp
           ${CMAKE_CURRENT_BINARY_DIR}/pipeline/generate/cvs/pipeline/version.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/impl
     FILES pipeline/include/cvs/pipeline/impl/pipeline.hpp
-          pipeline/include/cvs/pipeline/impl/modulemanager.hpp
+          pipeline/include/cvs/pipeline/impl/moduleManager.hpp
 
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/CVSPipeline/cvs/pipeline/tbb
-    FILES pipeline/include/cvs/pipeline/tbb/tbbfunctionnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbflowgraph.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbjoinnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbcontinuenode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbsplitnode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbsourcenode.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbhelpers.hpp
-          pipeline/include/cvs/pipeline/tbb/tbbdefinitions.hpp
+    FILES pipeline/include/cvs/pipeline/tbb/tbbFunctionNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbFlowGraph.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbJoinNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbContinueNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbSplitNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbSourceNode.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbHelpers.hpp
+          pipeline/include/cvs/pipeline/tbb/tbbDefinitions.hpp
           pipeline/include/cvs/pipeline/tbb/tbbView.hpp
           pipeline/include/cvs/pipeline/tbb/tbbBroadcastNode.hpp
           pipeline/include/cvs/pipeline/tbb/tbbOverwriteNode.hpp

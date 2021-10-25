@@ -4,19 +4,19 @@
 #include <cvs/common/factory.hpp>
 #include <cvs/logger/logging.hpp>
 #include <cvs/pipeline/ielement.hpp>
-#include <cvs/pipeline/iexecutiongraph.hpp>
-#include <cvs/pipeline/registrationhelper.hpp>
+#include <cvs/pipeline/iexecutionGraph.hpp>
+#include <cvs/pipeline/registrationHelper.hpp>
 #include <cvs/pipeline/tbb/tbbBroadcastNode.hpp>
 #include <cvs/pipeline/tbb/tbbBufferNode.hpp>
+#include <cvs/pipeline/tbb/tbbContinueNode.hpp>
+#include <cvs/pipeline/tbb/tbbDefinitions.hpp>
+#include <cvs/pipeline/tbb/tbbFlowGraph.hpp>
+#include <cvs/pipeline/tbb/tbbFunctionNode.hpp>
+#include <cvs/pipeline/tbb/tbbJoinNode.hpp>
 #include <cvs/pipeline/tbb/tbbMultifunctionNode.hpp>
 #include <cvs/pipeline/tbb/tbbOverwriteNode.hpp>
-#include <cvs/pipeline/tbb/tbbcontinuenode.hpp>
-#include <cvs/pipeline/tbb/tbbdefinitions.hpp>
-#include <cvs/pipeline/tbb/tbbflowgraph.hpp>
-#include <cvs/pipeline/tbb/tbbfunctionnode.hpp>
-#include <cvs/pipeline/tbb/tbbjoinnode.hpp>
-#include <cvs/pipeline/tbb/tbbsourcenode.hpp>
-#include <cvs/pipeline/tbb/tbbsplitnode.hpp>
+#include <cvs/pipeline/tbb/tbbSourceNode.hpp>
+#include <cvs/pipeline/tbb/tbbSplitNode.hpp>
 
 #include <iostream>
 #include <type_traits>
@@ -36,7 +36,7 @@ struct remove_optional<std::optional<T>> {
 };
 
 template <typename T>
-using remove_optional_t = remove_optional<T>::Type;
+using remove_optional_t = typename remove_optional<T>::Type;
 
 template <typename>
 struct is_optional : std::false_type {};
@@ -59,7 +59,7 @@ struct is_tuple<std::tuple<T...>> : std::true_type {};
 template <typename T>
 class HelperElement : public cvs::pipeline::IElement<void(T)> {
  public:
-  static std::unique_ptr<HelperElement> make(cvs::common::Config&) { return std::make_unique<HelperElement>(); }
+  static std::unique_ptr<HelperElement> make(const common::Properties&) { return std::make_unique<HelperElement>(); }
 
   void process(T) override {}
 };
@@ -70,7 +70,7 @@ template <typename NType>
 bool registerNodeTypeFun(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
   auto type_reg = factory->tryRegisterType<NodeType()>(key, []() -> NodeType { return NType::node_type; });
 
-  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
+  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper").value();
 
   if (!type_reg) {
     auto registred_type = factory->create<NodeType>(key).value();
@@ -88,16 +88,14 @@ bool registerNodeTypeFun(const std::string& key, const cvs::common::FactoryPtr<s
 
 template <typename BaseElement, template <typename...> class Node, bool Enable>
 void registerNode(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
+  auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper").value();
   if constexpr (Enable) {
     if (!registerNodeTypeFun<Node<BaseElement>>(key, factory))
       return;
 
-    auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
-
-    auto reg =
-        factory
-            ->tryRegisterType<IExecutionNodeUPtr(common::Config&, IExecutionGraphPtr&, std::shared_ptr<BaseElement>&)>(
-                key, Node<BaseElement>::make);
+    auto reg = factory->tryRegisterType<IExecutionNodeUPtr(
+        const common::Properties&, IExecutionGraphPtr&, const common::FactoryPtr<std::string>&,
+        std::shared_ptr<BaseElement>&)>(key, Node<BaseElement>::make);
     if (reg) {
       LOG_DEBUG(logger, R"s(Register: node "{}" for element "{}")s", key,
                 boost::core::demangle(typeid(BaseElement).name()));
@@ -106,7 +104,6 @@ void registerNode(const std::string& key, const cvs::common::FactoryPtr<std::str
                 boost::core::demangle(typeid(BaseElement).name()));
     }
   } else {
-    auto logger = cvs::logger::createLogger("cvs.pipeline.tbb.helper");
     LOG_TRACE(logger, R"s(Ignore: node "{}" for element "{}")s", key,
               boost::core::demangle(typeid(BaseElement).name()));
   }
@@ -114,17 +111,17 @@ void registerNode(const std::string& key, const cvs::common::FactoryPtr<std::str
 
 template <typename T>
 void registerServiceNodes(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
-  registerNode<T, TbbOverwriteNodeOut, !std::is_same<T, void>::value>(TbbDefaultName::overwrite_out, factory);
-  registerNode<T, TbbOverwriteNodeIn, !std::is_same<T, void>::value>(TbbDefaultName::overwrite_in, factory);
-  registerNode<T, TbbBroadcastNodeOut, !std::is_same<T, void>::value>(TbbDefaultName::broadcast_out, factory);
-  registerNode<T, TbbBroadcastNodeIn, !std::is_same<T, void>::value>(TbbDefaultName::broadcast_in, factory);
-  registerNode<T, TbbBufferNodeOut, !std::is_same<T, void>::value>(TbbDefaultName::buffer_out, factory);
-  registerNode<T, TbbBufferNodeIn, !std::is_same<T, void>::value>(TbbDefaultName::buffer_in, factory);
+  registerNode<T, TbbOverwriteNodeOut, !std::is_void<T>::value>(TbbDefaultName::overwrite_out, factory);
+  registerNode<T, TbbOverwriteNodeIn, !std::is_void<T>::value>(TbbDefaultName::overwrite_in, factory);
+  registerNode<T, TbbBroadcastNodeOut, !std::is_void<T>::value>(TbbDefaultName::broadcast_out, factory);
+  registerNode<T, TbbBroadcastNodeIn, !std::is_void<T>::value>(TbbDefaultName::broadcast_in, factory);
+  registerNode<T, TbbBufferNodeOut, !std::is_void<T>::value>(TbbDefaultName::buffer_out, factory);
+  registerNode<T, TbbBufferNodeIn, !std::is_void<T>::value>(TbbDefaultName::buffer_in, factory);
   registerNode<T, TbbJoinNode, detail::is_tuple<T>::value>(TbbDefaultName::join, factory);
   registerNode<T, TbbSplitNode, detail::is_tuple<T>::value>(TbbDefaultName::split, factory);
   if constexpr (detail::is_optional<T>::value) {
     auto helper_key = "*" + key;
-    registerElemetHelper<IElementUPtr<void(detail::remove_optional_t<T>)>(common::Config&),
+    registerElemetHelper<IElementUPtr<void(detail::remove_optional_t<T>)>(common::Properties&),
                          detail::HelperElement<detail::remove_optional_t<T>>>(helper_key, factory);
     registerServiceNodes<detail::remove_optional_t<T>>(helper_key, factory);
   }
@@ -138,7 +135,7 @@ void registerServiceNodesForTupleElements(const std::string&                    
                                           const cvs::common::FactoryPtr<std::string>& factory,
                                           std::tuple<T, Args...>*) {
   std::string key = fmt::format("{}[{}]", root_key, I);
-  registerElemetHelper<IElementUPtr<void(T)>(common::Config&), detail::HelperElement<T>>(key, factory);
+  registerElemetHelper<IElementUPtr<void(T)>(common::Properties&), detail::HelperElement<T>>(key, factory);
 
   registerNode<IElement<void(T)>, TbbFunctionNode, !std::is_same<T, void>::value>(TbbDefaultName::function, factory);
 
@@ -148,6 +145,20 @@ void registerServiceNodesForTupleElements(const std::string&                    
 
   registerServiceNodesForTupleElements<I + 1>(root_key, factory, (std::tuple<Args...>*)nullptr);
 }
+
+template <typename T>
+void registerDummy(const std::string&                          key,
+                   const cvs::common::FactoryPtr<std::string>& factory,
+                   typename std::enable_if_t<!std::is_void_v<T>>* = nullptr) {
+  auto dummy_key = key + ".dummy";
+  registerElemetHelper<IElementUPtr<void(T)>(common::Properties&), detail::HelperElement<T>>(dummy_key, factory);
+  registerServiceNodes<T>(dummy_key, factory);
+}
+
+template <typename T, typename = std::enable_if_t<std::is_void_v<T>>>
+void registerDummy(const std::string&,
+                   const cvs::common::FactoryPtr<std::string>&,
+                   typename std::enable_if_t<std::is_void_v<T>>* = nullptr) {}
 
 template <typename FactoryFunction, typename Impl>
 void registerElemetAndTbbHelper(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
@@ -163,11 +174,11 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
   registerElemetHelper<FactoryFunction, Impl>(key, factory);
 
   // functional nodes
-  registerNode<BaseElement, TbbContinueNode, std::is_same<Arg, void>::value>(TbbDefaultName::continue_name, factory);
-  registerNode<BaseElement, TbbSourceNode, std::is_same<Arg, void>::value>(TbbDefaultName::source, factory);
-  registerNode<BaseElement, TbbFunctionNode, !std::is_same<Arg, void>::value>(TbbDefaultName::function, factory);
+  registerNode<BaseElement, TbbContinueNode, std::is_void<Arg>::value>(TbbDefaultName::continue_name, factory);
+  registerNode<BaseElement, TbbSourceNode, std::is_void<Arg>::value>(TbbDefaultName::source, factory);
+  registerNode<BaseElement, TbbFunctionNode, !std::is_void<Arg>::value>(TbbDefaultName::function, factory);
   registerNode<BaseElement, TbbMultifunctionNode,
-               !std::is_same<Arg, void>::value &&
+               !std::is_void<Arg>::value &&
                    (detail::is_optional<Res>::value || detail::is_tuple_of_optional<Res>::value)>(
       TbbDefaultName::multifunction, factory);
 
@@ -177,6 +188,8 @@ void registerElemetAndTbbHelper(const std::string& key, const cvs::common::Facto
 
   registerServiceNodesForTupleElements(key + ".in", factory, (Arg*)nullptr);
   registerServiceNodesForTupleElements(key + ".out", factory, (Res*)nullptr);
+
+  registerDummy<Res>(key, factory);
 }
 
 void registerBase(const cvs::common::FactoryPtr<std::string>& factory);

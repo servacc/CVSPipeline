@@ -2,8 +2,8 @@
 #include <cvs/logger/loggable.hpp>
 #include <cvs/pipeline/ielement.hpp>
 #include <cvs/pipeline/imodule.hpp>
-#include <cvs/pipeline/registrationhelper.hpp>
-#include <cvs/pipeline/tbb/tbbhelpers.hpp>
+#include <cvs/pipeline/registrationHelper.hpp>
+#include <cvs/pipeline/tbb/tbbHelpers.hpp>
 
 using namespace std::string_literals;
 using namespace cvs::pipeline::tbb;
@@ -13,7 +13,7 @@ using namespace cvs::common;
 
 class CElement : public IElement<float(int)>, public cvs::logger::Loggable<CElement> {
  public:
-  static auto make(common::Config &) { return std::make_unique<CElement>(); }
+  static auto make(const common::Properties &) { return std::make_unique<CElement>(); }
 
   float process(int a) override {
     LOG_INFO(logger(), "{}", a);
@@ -23,7 +23,7 @@ class CElement : public IElement<float(int)>, public cvs::logger::Loggable<CElem
 
 class DElement : public IElement<float(int, float)>, public cvs::logger::Loggable<DElement> {
  public:
-  static auto make(common::Config &) { return std::make_unique<DElement>(); }
+  static auto make(const common::Properties &) { return std::make_unique<DElement>(); }
 
   float process(int a, float b) override {
     LOG_INFO(logger(), "{} {}", a, b);
@@ -38,8 +38,8 @@ class DummyB : public cvs::pipeline::IModule {
   void        registerTypes(const cvs::common::FactoryPtr<std::string> &factory) const override {
     registerBase(factory);
 
-    registerElemetAndTbbHelper<IElementUPtr<float(int)>(common::Config &), CElement>("C"s, factory);
-    registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(common::Config &), DElement>("D"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int)>(const common::Properties &), CElement>("C"s, factory);
+    registerElemetAndTbbHelper<IElementUPtr<float(int, float)>(const common::Properties &), DElement>("D"s, factory);
   }
 };
 

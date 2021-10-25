@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cvs/common/configbase.hpp>
+#include <cvs/common/config.hpp>
 #include <cvs/pipeline/iview.hpp>
 #include <cvs/pipeline/tbb/tbbBroadcastNode.hpp>
 #include <cvs/pipeline/tbb/tbbBufferNode.hpp>
@@ -14,15 +14,17 @@ namespace cvs::pipeline::tbb {
 
 namespace detail {
 
-CVSCFG_DECLARE_CONFIG(InputsConfig,
-                      CVSCFG_VALUE(from, std::string),
-                      CVSCFG_VALUE_DEFAULT(output, std::size_t, 0),
-                      CVSCFG_VALUE(input, std::size_t))
+CVS_CONFIG(InputsConfig, "Input slots description.") {
+  CVS_FIELD(from, std::string, "Output node name.");
+  CVS_FIELD_DEF(output, std::size_t, 0, "Output node slot.");
+  CVS_FIELD(input, std::size_t, "View input slot.");
+};
 
-CVSCFG_DECLARE_CONFIG(OutputsConfig,
-                      CVSCFG_VALUE(to, std::string),
-                      CVSCFG_VALUE_DEFAULT(input, std::size_t, 0),
-                      CVSCFG_VALUE(output, std::size_t))
+CVS_CONFIG(OutputsConfig, "Output slots description.") {
+  CVS_FIELD(to, std::string, "Input node name.");
+  CVS_FIELD_DEF(input, std::size_t, 0, "Input node slot.");
+  CVS_FIELD(output, std::size_t, "View output slot.");
+};
 
 }  // namespace detail
 
@@ -45,41 +47,37 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
   using InputTuple  = std::tuple<In...>;
   using OutputTuple = std::tuple<Out...>;
 
-  TbbView(cvs::common::Config& cfg, cvs::pipeline::IExecutionGraphPtr g)
+  TbbView(const boost::property_tree::ptree& cfg, cvs::pipeline::IExecutionGraphPtr g)
       : graph(g)
       , config(cfg) {}
 
   static void parseSettings(TbbView&                                                       view,
-                            cvs::common::Config&                                           config,
+                            const common::Properties&                                      config,
                             const std::map<std::string, cvs::pipeline::IExecutionNodePtr>& nodes) {
-    auto inputs = config.getFirstChild("inputs");
-    if (inputs.has_value()) {
-      for (auto in : inputs->getChildren()) {
-        auto params = in.parse<detail::InputsConfig>().value();
+    auto inputs = config.get_child("inputs");
+    for (auto in : inputs) {
+      auto params = detail::InputsConfig::make(in.second).value();
 
-        auto sender_iter = nodes.find(params.from);
-        if (sender_iter == nodes.end())
-          throw std::runtime_error("Can't find node " + params.from);
-        auto sender = sender_iter->second->sender(params.output);
-        if (!view.addSender(params.input, std::move(sender)))
-          throw std::runtime_error(
-              fmt::format("Can't connect node {}:{} with input {}", params.from, params.output, params.input));
-      }
+      auto sender_iter = nodes.find(params.from);
+      if (sender_iter == nodes.end())
+        throw std::runtime_error("Can't find node " + params.from);
+      auto sender = sender_iter->second->sender(params.output);
+      if (!view.addSender(params.input, std::move(sender)))
+        common::throwException<std::runtime_error>("Can't connect node {}:{} with input {}", params.from, params.output,
+                                                   params.input);
     }
 
-    auto outputs = config.getFirstChild("outputs");
-    if (outputs.has_value()) {
-      for (auto out : outputs->getChildren()) {
-        auto params = out.parse<detail::OutputsConfig>().value();
+    auto outputs = config.get_child("outputs");
+    for (auto out : outputs) {
+      auto params = detail::OutputsConfig::make(out.second).value();
 
-        auto receiver_iter = nodes.find(params.to);
-        if (receiver_iter == nodes.end())
-          throw std::runtime_error("Can't find node " + params.to);
-        auto receiver = receiver_iter->second->receiver(params.input);
-        if (!view.addReceiver(params.output, std::move(receiver)))
-          throw std::runtime_error(
-              fmt::format("Can't connect node {}:{} with output {}", params.to, params.input, params.output));
-      }
+      auto receiver_iter = nodes.find(params.to);
+      if (receiver_iter == nodes.end())
+        throw std::runtime_error("Can't find node " + params.to);
+      auto receiver = receiver_iter->second->receiver(params.input);
+      if (!view.addReceiver(params.output, std::move(receiver)))
+        common::throwException<std::runtime_error>("Can't connect node {}:{} with output {}", params.to, params.input,
+                                                   params.output);
     }
   }
 
@@ -104,7 +102,13 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
 
       if (!std::get<I>(list)) {
         // TODO: find buffer settings
-        std::get<I>(list) = std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(config, graph, {});
+        common::Properties node_config = config;
+        node_config.put("name", "port" + std::to_string(I));
+        node_config.put("element", "View internal element");
+        node_config.put("node", "View internal node");
+
+        std::get<I>(list) =
+            std::remove_cvref_t<decltype(std::get<I>(list))>::element_type::make(node_config, graph, {}, {});
       }
 
       if (!connectToInternalNode(node, std::get<I>(list))) {
@@ -158,7 +162,7 @@ class TbbView<std::tuple<In...>, std::tuple<Out...>> : public cvs::pipeline::IVi
   std::tuple<Brodcast<Out>...> outputs;
 
   cvs::pipeline::IExecutionGraphPtr graph;
-  cvs::common::Config               config;
+  const common::Properties          config;
 };
 
 }  // namespace cvs::pipeline::tbb

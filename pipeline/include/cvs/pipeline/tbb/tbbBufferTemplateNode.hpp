@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cvs/pipeline/iexecutionnode.hpp>
-#include <cvs/pipeline/tbb/tbbflowgraph.hpp>
+#include <cvs/pipeline/iexecutionNode.hpp>
+#include <cvs/pipeline/tbb/tbbFlowGraph.hpp>
 
 namespace cvs::pipeline::tbb {
 

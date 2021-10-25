@@ -17,8 +17,8 @@ add_executable(moduleManagerTest
 target_compile_definitions(${PROJECT_NAME} PRIVATE TEST_MODULES_PATH="${CMAKE_CURRENT_BINARY_DIR}/dummymodules")
 target_compile_definitions(moduleManagerTest PRIVATE TEST_MODULES_PATH="${CMAKE_CURRENT_BINARY_DIR}/dummymodules")
 
-target_link_libraries(${PROJECT_NAME} cvs::CVSPipeline Boost::boost Boost::filesystem dl)
-target_link_libraries(moduleManagerTest cvs::CVSPipeline Boost::boost Boost::filesystem dl PkgConfig::gmock_main)
+target_link_libraries(${PROJECT_NAME} cvs::Pipeline Boost::boost Boost::filesystem dl)
+target_link_libraries(moduleManagerTest cvs::Pipeline Boost::boost Boost::filesystem dl PkgConfig::gmock_main)
 
 add_test(ModuleTest ${PROJECT_NAME})
 add_test(ModuleManagerTest moduleManagerTest)

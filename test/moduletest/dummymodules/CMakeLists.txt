@@ -9,10 +9,10 @@ add_library(dummyA SHARED dummyA.cpp)
 add_library(dummyB SHARED dummyB.cpp)
 add_library(dummyC SHARED dummyC.cpp)
 
-target_link_libraries(dummyA cvs::CVSPipeline PkgConfig::gmock)
-target_link_libraries(dummyB cvs::CVSPipeline PkgConfig::gmock)
-target_link_libraries(dummyC cvs::CVSPipeline PkgConfig::gmock)
+target_link_libraries(dummyA cvs::Pipeline PkgConfig::gmock)
+target_link_libraries(dummyB cvs::Pipeline PkgConfig::gmock)
+target_link_libraries(dummyC cvs::Pipeline PkgConfig::gmock)
 
 add_library(dummymodule SHARED module.cpp)
 
-target_link_libraries(dummymodule cvs::CVSPipeline)
+target_link_libraries(dummymodule cvs::Pipeline)
