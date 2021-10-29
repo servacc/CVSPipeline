@@ -16,5 +16,7 @@ const std::string TbbDefaultName::multifunction = "TbbMultifunctionDefault";
 const std::string TbbDefaultName::join          = "TbbJoinDefault";
 const std::string TbbDefaultName::source        = "TbbSourceDefault";
 const std::string TbbDefaultName::split         = "TbbSplitDefault";
+const std::string TbbDefaultName::queue_in      = "TbbQueueInDefault";
+const std::string TbbDefaultName::queue_out     = "TbbQueueOutDefault";
 
 }  // namespace cvs::pipeline::tbb
