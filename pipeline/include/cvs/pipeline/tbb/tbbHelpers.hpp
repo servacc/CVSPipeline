@@ -15,6 +15,7 @@
 #include <cvs/pipeline/tbb/tbbJoinNode.hpp>
 #include <cvs/pipeline/tbb/tbbMultifunctionNode.hpp>
 #include <cvs/pipeline/tbb/tbbOverwriteNode.hpp>
+#include <cvs/pipeline/tbb/tbbQueueNode.hpp>
 #include <cvs/pipeline/tbb/tbbSourceNode.hpp>
 #include <cvs/pipeline/tbb/tbbSplitNode.hpp>
 
@@ -113,12 +114,19 @@ template <typename T>
 void registerServiceNodes(const std::string& key, const cvs::common::FactoryPtr<std::string>& factory) {
   registerNode<T, TbbOverwriteNodeOut, !std::is_void<T>::value>(TbbDefaultName::overwrite_out, factory);
   registerNode<T, TbbOverwriteNodeIn, !std::is_void<T>::value>(TbbDefaultName::overwrite_in, factory);
+
   registerNode<T, TbbBroadcastNodeOut, !std::is_void<T>::value>(TbbDefaultName::broadcast_out, factory);
   registerNode<T, TbbBroadcastNodeIn, !std::is_void<T>::value>(TbbDefaultName::broadcast_in, factory);
+
   registerNode<T, TbbBufferNodeOut, !std::is_void<T>::value>(TbbDefaultName::buffer_out, factory);
   registerNode<T, TbbBufferNodeIn, !std::is_void<T>::value>(TbbDefaultName::buffer_in, factory);
+
+  registerNode<T, TbbQueueNodeOut, !std::is_void<T>::value>(TbbDefaultName::queue_out, factory);
+  registerNode<T, TbbQueueNodeIn, !std::is_void<T>::value>(TbbDefaultName::queue_in, factory);
+
   registerNode<T, TbbJoinNode, detail::is_tuple<T>::value>(TbbDefaultName::join, factory);
   registerNode<T, TbbSplitNode, detail::is_tuple<T>::value>(TbbDefaultName::split, factory);
+
   if constexpr (detail::is_optional<T>::value) {
     auto helper_key = "*" + key;
     registerElemetHelper<IElementUPtr<void(detail::remove_optional_t<T>)>(common::Properties&),

@@ -62,9 +62,11 @@ Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &              
   auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
-  try {
-    for (const auto &node_cfg : nodes_list) {
+  for (const auto &node_cfg : nodes_list) {
+    std::string node_name = "<nameless>";
+    try {
       const auto node_params = NodeInfo::make(node_cfg.second).value();
+      node_name              = node_params.name;
 
       LOG_TRACE(logger, R"s(Try create node "{}" with element "{}" and type "{}".)s", node_params.name,
                 node_params.node, node_params.element);
@@ -76,9 +78,9 @@ Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &              
       LOG_DEBUG(logger, R"s(Node "{}" with element "{}" and type "{}" created.)s", node_params.name, node_params.node,
                 node_params.element);
     }
-  }
-  catch (...) {
-    cvs::common::throwWithNested<std::runtime_error>("Can't create pipeline nodes.");
+    catch (...) {
+      cvs::common::throwWithNested<std::runtime_error>(R"(Can't create node "{}".)", node_name);
+    }
   }
 
   return nodes;

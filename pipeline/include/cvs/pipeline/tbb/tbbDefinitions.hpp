@@ -19,6 +19,8 @@ struct TbbDefaultName {
   static const std::string join;
   static const std::string source;
   static const std::string split;
+  static const std::string queue_in;
+  static const std::string queue_out;
 };
 
 }  // namespace cvs::pipeline::tbb

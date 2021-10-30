@@ -8,27 +8,40 @@
 
 namespace cvs::pipeline::tbb {
 
-template <typename Tuple, typename Policy = ::tbb::flow::queueing>
+template <typename Tuple>
 class TbbJoinNode;
 
-template <typename Policy, typename... Args>
-class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<NodeType::ServiceIn, Args...>,
-                                                 public IOutputExecutionNode<NodeType::ServiceIn, std::tuple<Args...>> {
+template <typename... Args>
+class TbbJoinNode<std::tuple<Args...>> : public IInputExecutionNode<NodeType::ServiceIn, Args...>,
+                                         public IOutputExecutionNode<NodeType::ServiceIn, std::tuple<Args...>> {
  public:
   using ArgumentsType = std::tuple<Args...>;
 
   static_assert(sizeof...(Args) > 1, "The number of arguments must be equal to or more than two.");
 
-  static auto make(const common::Properties&,
-                   IExecutionGraphPtr graph,
-                   const common::FactoryPtr<std::string>&,
-                   std::shared_ptr<ArgumentsType>) {
-    if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph))
-      return std::make_unique<TbbJoinNode>(g);
-    return std::unique_ptr<TbbJoinNode>{};
-  }
+  static std::unique_ptr<TbbJoinNode> make(const common::Properties& config,
+                                           IExecutionGraphPtr        graph,
+                                           const common::FactoryPtr<std::string>&,
+                                           std::shared_ptr<ArgumentsType>);
 
-  TbbJoinNode(TbbFlowGraphPtr g)
+  virtual ~TbbJoinNode() = default;
+};
+
+class TbbJoinNodeConstructor {};
+
+}  // namespace cvs::pipeline::tbb
+
+namespace cvs::pipeline::tbb {
+
+template <typename Tuple, typename Policy>
+class TbbJoinNodePolicy;
+
+template <typename Policy, typename... Args>
+class TbbJoinNodePolicy<std::tuple<Args...>, Policy> : public TbbJoinNode<std::tuple<Args...>> {
+ public:
+  using ArgumentsType = std::tuple<Args...>;
+
+  TbbJoinNodePolicy(TbbFlowGraphPtr g)
       : node(g->native()) {}
 
   bool tryPut(const Args&...) override { return false; }
@@ -75,5 +88,72 @@ class TbbJoinNode<std::tuple<Args...>, Policy> : public IInputExecutionNode<Node
  private:
   ::tbb::flow::join_node<ArgumentsType, Policy> node;
 };
+
+}  // namespace cvs::pipeline::tbb
+
+namespace cvs::pipeline::tbb {
+
+enum class JoinPolicy {
+  queueing,
+  reserving,
+  // TODO:
+  //  key_matching,
+  //  tag_matching,
+};
+
+}
+
+namespace boost::property_tree {
+
+template <>
+struct translator_between<std::string, cvs::pipeline::tbb::JoinPolicy> {
+  class Translator {
+   public:
+    using internal_type = std::string;
+    using external_type = cvs::pipeline::tbb::JoinPolicy;
+
+    inline static const std::map<external_type, std::string> names = {
+        {cvs::pipeline::tbb::JoinPolicy::queueing, "QUEUEING"},
+        {cvs::pipeline::tbb::JoinPolicy::reserving, "RESERVING"},
+    };
+
+    boost::optional<external_type> get_value(const internal_type& v) {
+      auto iter = std::find_if(names.begin(), names.end(), [&](auto& pair) { return pair.second == v; });
+      if (iter != names.end())
+        return iter->first;
+      return {};
+    }
+    boost::optional<internal_type> put_value(const external_type& v) {
+      if (auto iter = names.find(v); iter != names.end())
+        return iter->second;
+      return {};
+    }
+  };
+
+  using type = Translator;
+};
+}  // namespace boost::property_tree
+
+namespace cvs::pipeline::tbb {
+
+CVS_CONFIG(JoinNodeConfig, "") { CVS_FIELD_DEF(policy, JoinPolicy, JoinPolicy::queueing, ""); };
+
+template <typename... Args>
+std::unique_ptr<TbbJoinNode<std::tuple<Args...>>> TbbJoinNode<std::tuple<Args...>>::make(
+    const common::Properties& config,
+    IExecutionGraphPtr        graph,
+    const common::FactoryPtr<std::string>&,
+    std::shared_ptr<ArgumentsType>) {
+  if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph)) {
+    auto params = JoinNodeConfig::make(config).value();
+    switch (params.policy) {
+      case cvs::pipeline::tbb::JoinPolicy::queueing:
+        return std::make_unique<TbbJoinNodePolicy<std::tuple<Args...>, ::tbb::flow::queueing>>(g);
+      case cvs::pipeline::tbb::JoinPolicy::reserving:
+        return std::make_unique<TbbJoinNodePolicy<std::tuple<Args...>, ::tbb::flow::reserving>>(g);
+    }
+  }
+  return std::unique_ptr<TbbJoinNode>{};
+}
 
 }  // namespace cvs::pipeline::tbb
