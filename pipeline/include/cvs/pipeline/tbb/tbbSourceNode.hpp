@@ -32,12 +32,17 @@ class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::
 
   TbbSourceNode(TbbFlowGraphPtr graph, IElementPtr<Output()> element)
       : node(graph->native(), std::function([this, element](::tbb::flow_control& fc) -> Output {
-               beforeProcessing();
-               auto res = element->process();
-               afterProcessing();
-               if (element->isStopped())
-                 fc.stop();
-               return res;
+               try {
+                 beforeProcessing();
+                 auto res = element->process();
+                 afterProcessing();
+                 if (element->isStopped())
+                   fc.stop();
+                 return res;
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
              })) {}
 
   void activate() override { node.activate(); }

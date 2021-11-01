@@ -71,10 +71,15 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
             concurrency,
             [this, e = std::move(element)](const typename NodeType::input_type & v,
                                            typename NodeType::output_ports_type &ports) {
-              beforeProcessing();
-              auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
-              afterProcessing();
-              sendResult(outputs, ports);
+              try {
+                beforeProcessing();
+                auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
+                afterProcessing();
+                sendResult(outputs, ports);
+              }
+              catch (...) {
+                cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+              }
             },
             priority) {}
 

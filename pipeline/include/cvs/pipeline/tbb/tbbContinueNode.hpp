@@ -24,10 +24,15 @@ class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeT
       : node(graph->native(),
              number_of_predecessors,
              [this, e = std::move(element)](::tbb::flow::continue_msg) -> Result {
-               beforeProcessing();
-               auto result = e->process();
-               afterProcessing();
-               return result;
+               try {
+                 beforeProcessing();
+                 auto result = e->process();
+                 afterProcessing();
+                 return result;
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
              }) {}
 
   bool tryGet(Result& val) override { return node.try_get(val); }
@@ -48,10 +53,15 @@ class TbbContinueNodeBase<IElement<void()>> : public IInputExecutionNode<NodeTyp
       : node(graph->native(),
              number_of_predecessors,
              [this, e = std::move(element)](::tbb::flow::continue_msg) -> NodeResultType {
-               beforeProcessing();
-               e->process();
-               afterProcessing();
-               return NodeResultType{};
+               try {
+                 beforeProcessing();
+                 e->process();
+                 afterProcessing();
+                 return NodeResultType{};
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
              }) {}
 
   bool tryGet() override {
@@ -109,8 +119,6 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
     }
     return false;
   }
-
- private:
 };
 
 }  // namespace cvs::pipeline::tbb
