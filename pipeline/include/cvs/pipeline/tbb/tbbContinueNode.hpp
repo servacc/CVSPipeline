@@ -25,9 +25,11 @@ class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeT
              number_of_predecessors,
              [this, e = std::move(element)](::tbb::flow::continue_msg) -> Result {
                try {
+                 LOG_TRACE(IExecutionNode::logger(), "Begin processing continue node {}", IExecutionNode::info.name);
                  beforeProcessing();
                  auto result = e->process();
                  afterProcessing();
+                 LOG_TRACE(IExecutionNode::logger(), "End processing continue node {}", IExecutionNode::info.name);
                  return result;
                }
                catch (...) {

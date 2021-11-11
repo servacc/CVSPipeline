@@ -74,9 +74,11 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [this, e = std::move(element)](std::tuple<Args...> a) -> ::tbb::flow::continue_msg {
         try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
           beforeProcessing();
           std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
           afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
           return ::tbb::flow::continue_msg{};
         }
         catch (...) {
@@ -86,9 +88,11 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
     } else {
       return [this, e = std::move(element)](Args... a) -> ::tbb::flow::continue_msg {
         try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
           beforeProcessing();
           e->process(a...);
           afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
           return ::tbb::flow::continue_msg{};
         }
         catch (...) {
@@ -127,9 +131,11 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [this, e = std::move(element)](std::tuple<Args...> a) -> Result {
         try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
           beforeProcessing();
           auto result = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
           afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
           return result;
         }
         catch (...) {
@@ -139,9 +145,11 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
     } else {
       return [this, e = std::move(element)](Args... a) -> Result {
         try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
           beforeProcessing();
           auto result = e->process(a...);
           afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
           return result;
         }
         catch (...) {

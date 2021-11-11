@@ -72,9 +72,12 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
             [this, e = std::move(element)](const typename NodeType::input_type & v,
                                            typename NodeType::output_ports_type &ports) {
               try {
+                LOG_TRACE(IExecutionNode::logger(), "Begin processing multifunction node {}",
+                          IExecutionNode::info.name);
                 beforeProcessing();
                 auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
                 afterProcessing();
+                LOG_TRACE(IExecutionNode::logger(), "End processing multifunction node {}", IExecutionNode::info.name);
                 sendResult(outputs, ports);
               }
               catch (...) {
