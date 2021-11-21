@@ -22,9 +22,11 @@ class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::
                    IExecutionGraphPtr                     graph,
                    const common::FactoryPtr<std::string>& factory,
                    IElementPtr<Output()>                  element) {
+    auto node_params = NodeInfo::make(properties).value();
     if (auto g = std::dynamic_pointer_cast<TbbFlowGraph>(graph)) {
       auto node = std::make_unique<TbbSourceNode>(std::move(g), std::move(element));
       DataCounter::init(*node, properties, factory);
+      node->info = std::move(node_params);
       return node;
     }
     return std::unique_ptr<TbbSourceNode>{};
@@ -32,12 +34,21 @@ class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::
 
   TbbSourceNode(TbbFlowGraphPtr graph, IElementPtr<Output()> element)
       : node(graph->native(), std::function([this, element](::tbb::flow_control& fc) -> Output {
-               beforeProcessing();
-               auto res = element->process();
-               afterProcessing();
-               if (element->isStopped())
-                 fc.stop();
-               return res;
+               try {
+                 LOG_TRACE(IExecutionNode::logger(), "Begin processing source node {}", IExecutionNode::info.name);
+                 beforeProcessing();
+                 auto res = element->process();
+                 afterProcessing();
+                 LOG_TRACE(IExecutionNode::logger(), "End processing source node {}", IExecutionNode::info.name);
+                 if (element->isStopped())
+                   fc.stop();
+                 return res;
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
+
+               throw std::runtime_error(R"(Someone removed "return" from the method body of SourceNode.)");
              })) {}
 
   void activate() override { node.activate(); }

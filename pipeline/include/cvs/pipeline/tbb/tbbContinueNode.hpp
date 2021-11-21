@@ -24,10 +24,19 @@ class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeT
       : node(graph->native(),
              number_of_predecessors,
              [this, e = std::move(element)](::tbb::flow::continue_msg) -> Result {
-               beforeProcessing();
-               auto result = e->process();
-               afterProcessing();
-               return result;
+               try {
+                 LOG_TRACE(IExecutionNode::logger(), "Begin processing continue node {}", IExecutionNode::info.name);
+                 beforeProcessing();
+                 auto result = e->process();
+                 afterProcessing();
+                 LOG_TRACE(IExecutionNode::logger(), "End processing continue node {}", IExecutionNode::info.name);
+                 return result;
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
+
+               throw std::runtime_error(R"(Someone removed "return" from the method body of ContinueNode.)");
              }) {}
 
   bool tryGet(Result& val) override { return node.try_get(val); }
@@ -48,10 +57,17 @@ class TbbContinueNodeBase<IElement<void()>> : public IInputExecutionNode<NodeTyp
       : node(graph->native(),
              number_of_predecessors,
              [this, e = std::move(element)](::tbb::flow::continue_msg) -> NodeResultType {
-               beforeProcessing();
-               e->process();
-               afterProcessing();
-               return NodeResultType{};
+               try {
+                 beforeProcessing();
+                 e->process();
+                 afterProcessing();
+                 return NodeResultType{};
+               }
+               catch (...) {
+                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+               }
+
+               throw std::runtime_error(R"(Someone removed "return" from the method body of ContinueNode.)");
              }) {}
 
   bool tryGet() override {
@@ -109,8 +125,6 @@ class TbbContinueNode : public TbbContinueNodeBase<Element> {
     }
     return false;
   }
-
- private:
 };
 
 }  // namespace cvs::pipeline::tbb

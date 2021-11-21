@@ -73,17 +73,35 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
   auto createExecuteFunction(IElementPtr<void(Args...)> element) {
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [this, e = std::move(element)](std::tuple<Args...> a) -> ::tbb::flow::continue_msg {
-        beforeProcessing();
-        std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
-        afterProcessing();
-        return ::tbb::flow::continue_msg{};
+        try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
+          beforeProcessing();
+          std::apply(&IElement<void(Args...)>::process, std::tuple_cat(std::make_tuple(e), a));
+          afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
+          return ::tbb::flow::continue_msg{};
+        }
+        catch (...) {
+          cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+        }
+
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     } else {
       return [this, e = std::move(element)](Args... a) -> ::tbb::flow::continue_msg {
-        beforeProcessing();
-        e->process(a...);
-        afterProcessing();
-        return ::tbb::flow::continue_msg{};
+        try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
+          beforeProcessing();
+          e->process(a...);
+          afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
+          return ::tbb::flow::continue_msg{};
+        }
+        catch (...) {
+          cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+        }
+
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     }
   }
@@ -116,17 +134,35 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
   auto createExecuteFunction(ElementPtrType element) {
     if constexpr (1 < std::tuple_size_v<std::tuple<Args...>>) {
       return [this, e = std::move(element)](std::tuple<Args...> a) -> Result {
-        beforeProcessing();
-        auto result = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
-        afterProcessing();
-        return result;
+        try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
+          beforeProcessing();
+          auto result = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), a));
+          afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
+          return result;
+        }
+        catch (...) {
+          cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+        }
+
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     } else {
       return [this, e = std::move(element)](Args... a) -> Result {
-        beforeProcessing();
-        auto result = e->process(a...);
-        afterProcessing();
-        return result;
+        try {
+          LOG_TRACE(IExecutionNode::logger(), "Begin processing function node {}", IExecutionNode::info.name);
+          beforeProcessing();
+          auto result = e->process(a...);
+          afterProcessing();
+          LOG_TRACE(IExecutionNode::logger(), "End processing function node {}", IExecutionNode::info.name);
+          return result;
+        }
+        catch (...) {
+          cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+        }
+
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     }
   }

@@ -71,10 +71,20 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
             concurrency,
             [this, e = std::move(element)](const typename NodeType::input_type & v,
                                            typename NodeType::output_ports_type &ports) {
-              beforeProcessing();
-              auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
-              afterProcessing();
-              sendResult(outputs, ports);
+              try {
+                LOG_TRACE(IExecutionNode::logger(), "Begin processing multifunction node {}",
+                          IExecutionNode::info.name);
+                beforeProcessing();
+                auto outputs = std::apply(&ElementType::process, std::tuple_cat(std::make_tuple(e), v));
+                afterProcessing();
+                LOG_TRACE(IExecutionNode::logger(), "End processing multifunction node {}", IExecutionNode::info.name);
+                sendResult(outputs, ports);
+              }
+              catch (...) {
+                cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
+              }
+
+              throw std::runtime_error(R"(Someone removed "return" from the method body of MultifunctionNode.)");
             },
             priority) {}
 
