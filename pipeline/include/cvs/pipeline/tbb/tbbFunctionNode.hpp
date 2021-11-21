@@ -85,8 +85,7 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
           cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
         }
 
-        cvs::common::throwException<std::runtime_error>(
-            R"(Someone removed "return" from the method body of FunctionNode. )");
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     } else {
       return [this, e = std::move(element)](Args... a) -> ::tbb::flow::continue_msg {
@@ -102,8 +101,7 @@ class TbbFunctionNodeBase<IElement<void(Args...)>, Policy> : public IInputExecut
           cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
         }
 
-        cvs::common::throwException<std::runtime_error>(
-            R"(Someone removed "return" from the method body of FunctionNode. )");
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     }
   }
@@ -148,8 +146,7 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
           cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
         }
 
-        cvs::common::throwException<std::runtime_error>(
-            R"(Someone removed "return" from the method body of FunctionNode. )");
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     } else {
       return [this, e = std::move(element)](Args... a) -> Result {
@@ -165,8 +162,7 @@ class TbbFunctionNodeBase<IElement<Result(Args...)>, Policy>
           cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
         }
 
-        cvs::common::throwException<std::runtime_error>(
-            R"(Someone removed "return" from the method body of FunctionNode. )");
+        throw std::runtime_error(R"(Someone removed "return" from the method body of FunctionNode.)");
       };
     }
   }
