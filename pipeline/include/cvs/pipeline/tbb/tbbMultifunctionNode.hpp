@@ -83,8 +83,6 @@ class TbbMultifunctionNode<IElement<Result(Args...)>, Policy>
               catch (...) {
                 cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
               }
-
-              throw std::runtime_error(R"(Someone removed "return" from the method body of MultifunctionNode.)");
             },
             priority) {}
 
