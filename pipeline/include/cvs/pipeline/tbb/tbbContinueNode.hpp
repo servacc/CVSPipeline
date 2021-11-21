@@ -35,6 +35,9 @@ class TbbContinueNodeBase<IElement<Result()>> : public IInputExecutionNode<NodeT
                catch (...) {
                  cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
                }
+
+               cvs::common::throwException<std::runtime_error>(
+                   R"(Someone removed "return" from the method body of ContinueNode. )");
              }) {}
 
   bool tryGet(Result& val) override { return node.try_get(val); }
@@ -64,6 +67,9 @@ class TbbContinueNodeBase<IElement<void()>> : public IInputExecutionNode<NodeTyp
                catch (...) {
                  cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
                }
+
+               cvs::common::throwException<std::runtime_error>(
+                   R"(Someone removed "return" from the method body of ContinueNode. )");
              }) {}
 
   bool tryGet() override {

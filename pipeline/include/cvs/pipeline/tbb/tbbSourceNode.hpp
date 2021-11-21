@@ -47,6 +47,9 @@ class TbbSourceNode<IElement<Output()>> : public ISourceExecutionNode<NodeType::
                catch (...) {
                  cvs::common::throwWithNested<std::runtime_error>("Exception in {}", IExecutionNode::info.name);
                }
+
+               cvs::common::throwException<std::runtime_error>(
+                   R"(Someone removed "return" from the method body of SourceNode. )");
              })) {}
 
   void activate() override { node.activate(); }
