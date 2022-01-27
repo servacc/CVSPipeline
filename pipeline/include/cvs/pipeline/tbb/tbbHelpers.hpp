@@ -58,11 +58,11 @@ template <typename... T>
 struct is_tuple<std::tuple<T...>> : std::true_type {};
 
 template <typename T>
-class HelperElement : public cvs::pipeline::IElement<void(T)> {
+class HelperElement : public cvs::pipeline::IElement<T(T)> {
  public:
   static std::unique_ptr<HelperElement> make(const common::Properties&) { return std::make_unique<HelperElement>(); }
 
-  void process(T) override {}
+  T process(T) override { return {}; }
 };
 
 }  // namespace detail
@@ -129,7 +129,7 @@ void registerServiceNodes(const std::string& key, const cvs::common::FactoryPtr<
 
   if constexpr (detail::is_optional<T>::value) {
     auto helper_key = "*" + key;
-    registerElemetHelper<IElementUPtr<void(detail::remove_optional_t<T>)>(common::Properties&),
+    registerElemetHelper<IElementUPtr<detail::remove_optional_t<T>(detail::remove_optional_t<T>)>(common::Properties&),
                          detail::HelperElement<detail::remove_optional_t<T>>>(helper_key, factory);
     registerServiceNodes<detail::remove_optional_t<T>>(helper_key, factory);
   }
@@ -143,7 +143,7 @@ void registerServiceNodesForTupleElements(const std::string&                    
                                           const cvs::common::FactoryPtr<std::string>& factory,
                                           std::tuple<T, Args...>*) {
   std::string key = fmt::format("{}[{}]", root_key, I);
-  registerElemetHelper<IElementUPtr<void(T)>(common::Properties&), detail::HelperElement<T>>(key, factory);
+  registerElemetHelper<IElementUPtr<T(T)>(common::Properties&), detail::HelperElement<T>>(key, factory);
 
   registerNode<IElement<void(T)>, TbbFunctionNode, !std::is_same<T, void>::value>(TbbDefaultName::function, factory);
 
@@ -159,7 +159,7 @@ void registerDummy(const std::string&                          key,
                    const cvs::common::FactoryPtr<std::string>& factory,
                    typename std::enable_if_t<!std::is_void_v<T>>* = nullptr) {
   auto dummy_key = key + ".dummy";
-  registerElemetHelper<IElementUPtr<void(T)>(common::Properties&), detail::HelperElement<T>>(dummy_key, factory);
+  registerElemetHelper<IElementUPtr<T(T)>(common::Properties&), detail::HelperElement<T>>(dummy_key, factory);
   registerServiceNodes<T>(dummy_key, factory);
 }
 
