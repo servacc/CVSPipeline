@@ -22,21 +22,21 @@ CVS_CONFIG(ConnectionConfig, "") {
 
 namespace cvs::pipeline::impl {
 
-IPipelineUPtr Pipeline::make(const common::Properties &                  pipeline_cfg,
+IPipelineUPtr Pipeline::make(const common::Properties                   &pipeline_cfg,
                              const cvs::common::FactoryPtr<std::string> &factory) {
+  std::unique_ptr<Pipeline> pipeline;
   try {
-    std::unique_ptr<Pipeline> pipeline{new Pipeline};
+    pipeline = std::unique_ptr<Pipeline>{new Pipeline};
     initPipeline(*pipeline, pipeline_cfg, factory);
-
-    return pipeline;
   }
   catch (...) {
     cvs::common::throwWithNested<std::runtime_error>("Can't init Pipeline.");
   }
+  return pipeline;
 }
 
-void Pipeline::initPipeline(Pipeline &                                  pipeline,
-                            const common::Properties &                  cfg,
+void Pipeline::initPipeline(Pipeline                                   &pipeline,
+                            const common::Properties                   &cfg,
                             const cvs::common::FactoryPtr<std::string> &factory) {
   auto graph = parseGraph(cfg.get_child("graph"), factory);
   auto nodes = parseNodes(cfg.get_child("nodes"), factory, graph);
@@ -50,15 +50,15 @@ void Pipeline::initPipeline(Pipeline &                                  pipeline
   pipeline.nodes     = std::move(nodes);
 }
 
-IExecutionGraphPtr Pipeline::parseGraph(const common::Properties &                  cfg,
+IExecutionGraphPtr Pipeline::parseGraph(const common::Properties                   &cfg,
                                         const cvs::common::FactoryPtr<std::string> &factory) {
   auto graph_cfg = GraphConfig::make(cfg);
   return factory->create<IExecutionGraphUPtr>(graph_cfg->type).value();
 }
 
-Pipeline::NodesMap Pipeline::parseNodes(const common::Properties &                  nodes_list,
+Pipeline::NodesMap Pipeline::parseNodes(const common::Properties                   &nodes_list,
                                         const cvs::common::FactoryPtr<std::string> &factory,
-                                        IExecutionGraphPtr &                        graph) {
+                                        IExecutionGraphPtr                         &graph) {
   auto logger = *cvs::logger::createLogger("cvs.pipeline.Pipeline");
 
   std::map<std::string, IExecutionNodePtr> nodes;
