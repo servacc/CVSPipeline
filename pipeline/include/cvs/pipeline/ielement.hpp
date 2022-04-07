@@ -69,7 +69,7 @@ class ElementHelper : public common::CVSConfig<Type, Description>, public IEleme
     std::array<std::string, std::tuple_size_v<std::tuple<T, Args...>>> result;
     using ArgDesc = typename T::description;
     result[0]     = fmt::format("{: <10} {}", boost::core::demangle(typeid(typename T::type).name()),
-                                std::string{ArgDesc::value, ArgDesc::size});
+                            std::string{ArgDesc::value, ArgDesc::size});
 
     auto tail = describeArguments((std::tuple<Args...>*)nullptr);
     std::move(tail.begin(), tail.end(), std::next(result.begin()));
@@ -108,16 +108,18 @@ class ElementHelper : public common::CVSConfig<Type, Description>, public IEleme
     std::vector<std::string> result;
 
     auto signature = describeSignature<Signature...>();
-    auto settings  = cvs::common::CVSConfig<Type, Description>::describeFields();
+    auto settings  = cvs::common::CVSConfig<Type, Description>::fields();
 
     result.push_back("Description: " + std::string{Description::value, Description::size});
     result.push_back("Signatures: " + signature.front());
     std::transform(std::next(signature.begin()), signature.end(), std::back_inserter(result),
                    [](const std::string& str) { return std::string(12, ' ') + str; });
 
-    result.push_back("Settings: " + settings.front());
-    std::transform(std::next(settings.begin()), settings.end(), std::back_inserter(result),
-                   [](const std::string& str) { return std::string(10, ' ') + str; });
+    if (!settings.empty()) {
+      result.push_back("Settings: " + settings.front()->descriptionString());
+      std::transform(std::next(settings.begin()), settings.end(), std::back_inserter(result),
+                     [](const common::ICVSField* field) { return std::string(10, ' ') + field->descriptionString(); });
+    }
 
     return result;
   }
@@ -126,7 +128,7 @@ class ElementHelper : public common::CVSConfig<Type, Description>, public IEleme
 }  // namespace cvs::pipeline
 
 #define Arg(type, description) cvs::pipeline::ArgHelper<type, CVS_CONSTEXPRSTRING(description)>
-#define Fun(result, ...)       cvs::pipeline::SignatureHelper<result, __VA_ARGS__>
+#define Fun(...)               cvs::pipeline::SignatureHelper<__VA_ARGS__>
 
 #define CVS_ELEMENT(name, description, ...) \
   class name : public cvs::pipeline::ElementHelper<name, CVS_CONSTEXPRSTRING(description), __VA_ARGS__>

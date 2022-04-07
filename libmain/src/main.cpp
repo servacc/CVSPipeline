@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   try {
     std::string             module_manager_key;
     std::string             config_path_string;
-    po::options_description desc("Allowed options:");
+    po::options_description desc("Allowed options");
     // clang-format off
     desc.add_options()
         ("help,h"    , "Produce help message")

@@ -15,8 +15,9 @@ using namespace cvs::pipeline::tbb;
 
 using namespace std::string_literals;
 
-TEST(ModuleManagerTest, testPipeline) {
-  std::string config_str = R"json(
+class ModuleManagerTest : public ::testing::Test {
+  void SetUp() override {
+    std::string config_str = R"json(
 {
   "ModuleManager" : {
     "module_path": [")json" TEST_MODULES_PATH R"json(",
@@ -32,11 +33,25 @@ TEST(ModuleManagerTest, testPipeline) {
   ]
 }
 )json";
+    properties             = cvs::common::CVSConfigBase::load(config_str);
 
-  auto factory = std::make_shared<cvs::common::Factory<std::string>>();
+    cvs::logger::initLoggers(properties);
 
-  auto cfg_root_opt = cvs::common::CVSConfigBase::load(config_str);
+    factory = std::make_shared<cvs::common::Factory<std::string>>();
 
+    module_mngr = cvs::pipeline::impl::ModuleManager::make(properties);
+
+    module_mngr->loadModules();
+    module_mngr->registerTypes(factory);
+  }
+
+ protected:
+  cvs::common::FactoryPtr<std::string> factory;
+  cvs::common::Properties              properties;
+  cvs::pipeline::IModuleManagerUPtr    module_mngr;
+};
+
+TEST_F(ModuleManagerTest, testPipeline) {
   std::string node_cfg_str = R"({
   "name" : "TestName",
   "element" : "TestElement",
@@ -45,22 +60,17 @@ TEST(ModuleManagerTest, testPipeline) {
 
   const auto node_cfg = common::CVSConfigBase::load(node_cfg_str);
 
-  cvs::logger::initLoggers(cfg_root_opt);
+  IExecutionGraphPtr graph = this->factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value();
 
-  auto manager = cvs::pipeline::impl::ModuleManager::make(cfg_root_opt);
-  manager->loadModules();
-  manager->registerTypes(factory);
+  auto a_node = this->factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, node_cfg, graph).value();
+  auto b_node = this->factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto c_node = this->factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto d_node = this->factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, node_cfg, graph).value();
+  auto e_node = this->factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, node_cfg, graph).value();
 
-  IExecutionGraphPtr graph = factory->create<IExecutionGraphUPtr>(TbbDefaultName::graph).value();
-
-  auto a_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::source, node_cfg, graph).value();
-  auto b_node = factory->create<IExecutionNodeUPtr>("B"s, TbbDefaultName::function, node_cfg, graph).value();
-  auto c_node = factory->create<IExecutionNodeUPtr>("C"s, TbbDefaultName::function, node_cfg, graph).value();
-  auto d_node = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::function, node_cfg, graph).value();
-  auto e_node = factory->create<IExecutionNodeUPtr>("E"s, TbbDefaultName::function, node_cfg, graph).value();
-
-  auto bc_node = factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, node_cfg, graph).value();
-  auto j_node  = factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, node_cfg, graph).value();
+  auto bc_node =
+      this->factory->create<IExecutionNodeUPtr>("A"s, TbbDefaultName::broadcast_out, node_cfg, graph).value();
+  auto j_node = this->factory->create<IExecutionNodeUPtr>("D"s, TbbDefaultName::join, node_cfg, graph).value();
 
   ASSERT_TRUE(bc_node->connect(a_node->sender(0), 0));
   ASSERT_TRUE(b_node->connect(bc_node->sender(0), 0));
@@ -78,4 +88,13 @@ TEST(ModuleManagerTest, testPipeline) {
   src_node->activate();
 
   graph->waitForAll();
+}
+
+TEST_F(ModuleManagerTest, info) {
+  auto info_map = this->factory->create<std::map<std::string, std::vector<std::string>>*>("info").value();
+  for (auto i = info_map->begin(); i != info_map->end(); ++i) {
+    std::cout << "Element key: " << i->first << std::endl;
+    for (auto str : i->second)
+      std::cout << str << std::endl;
+  }
 }
