@@ -26,7 +26,6 @@ CVS_ELEMENT(AElement, "AElement description", Fun(int)), cvs::logger::Loggable<A
   int cnt = 0;
 };
 
-// class BElement : public IElement<int(int)>
 // clang-format off
 CVS_ELEMENT(BElement,
             "BElement description",
