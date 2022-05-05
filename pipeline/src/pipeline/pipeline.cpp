@@ -24,15 +24,15 @@ namespace cvs::pipeline::impl {
 
 IPipelineUPtr Pipeline::make(const common::Properties &                  pipeline_cfg,
                              const cvs::common::FactoryPtr<std::string> &factory) {
+  std::unique_ptr<Pipeline> pipeline;
   try {
-    std::unique_ptr<Pipeline> pipeline{new Pipeline};
+    pipeline = std::unique_ptr<Pipeline>{new Pipeline};
     initPipeline(*pipeline, pipeline_cfg, factory);
-
-    return pipeline;
   }
   catch (...) {
     cvs::common::throwWithNested<std::runtime_error>("Can't init Pipeline.");
   }
+  return pipeline;
 }
 
 void Pipeline::initPipeline(Pipeline &                                  pipeline,

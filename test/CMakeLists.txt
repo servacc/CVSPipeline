@@ -6,3 +6,4 @@ enable_testing()
 
 add_subdirectory(tbbtest)
 add_subdirectory(moduletest)
+add_subdirectory(elementtest)

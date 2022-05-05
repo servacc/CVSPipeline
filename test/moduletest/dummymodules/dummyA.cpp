@@ -11,7 +11,7 @@ using namespace cvs;
 using namespace cvs::pipeline;
 using namespace cvs::common;
 
-class AElement : public IElement<int()>, cvs::logger::Loggable<AElement> {
+CVS_ELEMENT(AElement, "AElement description", Fun(int)), cvs::logger::Loggable<AElement> {
  public:
   static auto make(const common::Properties &) { return std::make_unique<AElement>(); }
 
@@ -26,15 +26,19 @@ class AElement : public IElement<int()>, cvs::logger::Loggable<AElement> {
   int cnt = 0;
 };
 
-class BElement : public IElement<int(int)>, cvs::logger::Loggable<BElement> {
- public:
-  static auto make(const common::Properties &) { return std::make_unique<BElement>(); }
-
+// clang-format off
+CVS_ELEMENT(BElement,
+            "BElement description",
+            Fun(int, Arg(int, "First input argument"))), cvs::logger::Loggable<BElement> {
+public:
+  static auto make(const common::Properties &){ return std::make_unique<BElement>(); }
+    
   int process(int a) override {
     LOG_INFO(logger(), "{}", a);
     return a;
   }
 };
+// clang-format on
 
 class DummyA : public cvs::pipeline::IModule {
  public:
