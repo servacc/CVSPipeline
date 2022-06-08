@@ -21,7 +21,19 @@ class ModuleManager : public IModuleManager, public cvs::logger::Loggable<Module
   void loadModules() override;
   void registerTypes(cvs::common::FactoryPtr<std::string>) override;
 
+  std::string loadModule(const std::filesystem::path&);
+
+  std::vector<std::string> loadedModules() const;
+
   void clear();
+
+  const std::set<std::filesystem::path>& modulesPaths() const;
+
+  std::vector<std::string> loadModulesFrom(const std::filesystem::path&);
+  void                     registerTypesFrom(const std::string&, cvs::common::FactoryPtr<std::string>);
+
+  std::string moduleName(const std::string& name) const;
+  int         moduleVersion(const std::string& name) const;
 
  private:
   struct ModuleInfo;

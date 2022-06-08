@@ -102,4 +102,77 @@ void ModuleManager::clear() {
   modules.clear();
 }
 
+std::vector<std::string> ModuleManager::loadedModules() const {
+  std::vector<std::string> result;
+  result.reserve(modules.size());
+
+  for (auto& m : modules)
+    result.push_back(m.first);
+
+  return result;
+}
+
+std::string ModuleManager::loadModule(const std::filesystem::path& file) {
+  LOG_TRACE(logger(), R"(Loading "{}"...)", file.string());
+
+  ModuleInfo info;
+
+  info.library = std::make_unique<LibraryUPtr::element_type>(
+      file.string(), boost::dll::load_mode::rtld_global | boost::dll::load_mode::rtld_lazy);
+
+  info.module = makeModule(*info.library);
+
+  std::string name;
+  if (info.module) {
+    name = info.module->name();
+    LOG_DEBUG(logger(), R"(Add module "{}")", info.module->name());
+    modules.emplace(info.module->name(), std::move(info));
+  } else {
+    LOG_DEBUG(logger(), R"(Unable to create module from "{}")", file.string());
+  }
+
+  return name;
+}
+
+const std::set<std::filesystem::path>& ModuleManager::modulesPaths() const { return module_path; }
+
+std::vector<std::string> ModuleManager::loadModulesFrom(const std::filesystem::path& path) {
+  std::vector<std::string> module_names;
+
+  for (auto& file : fs::directory_iterator(path)) {
+    const bool is_library =
+        file.is_regular_file() && (file.path().extension() == ".so" || file.path().extension() == ".dll");
+    if (!is_library) {
+      LOG_TRACE(logger(), R"(Skip file "{}")", file.path().string());
+      continue;
+    }
+
+    LOG_TRACE(logger(), R"(Loading "{}"...)", file.path().string());
+
+    ModuleInfo info;
+
+    info.library = std::make_unique<LibraryUPtr::element_type>(
+        file.path().string(), boost::dll::load_mode::rtld_global | boost::dll::load_mode::rtld_lazy);
+
+    info.module = makeModule(*info.library);
+
+    if (info.module) {
+      module_names.push_back(info.module->name());
+      LOG_DEBUG(logger(), R"(Add module "{}")", info.module->name());
+      modules.emplace(info.module->name(), std::move(info));
+    } else {
+      LOG_DEBUG(logger(), R"(Unable to create module from "{}")", file.path().string());
+    }
+  }
+
+  return module_names;
+}
+
+void ModuleManager::registerTypesFrom(const std::string& name, cvs::common::FactoryPtr<std::string> factory) {
+  modules[name].module->registerTypes(factory);
+}
+
+std::string ModuleManager::moduleName(const std::string& name) const { return modules.at(name).module->name(); }
+int         ModuleManager::moduleVersion(const std::string& name) const { return modules.at(name).module->version(); }
+
 }  // namespace cvs::pipeline::impl
